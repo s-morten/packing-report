@@ -18,7 +18,7 @@ league_list = []
 for x in data['data']:
     league_list.append(x['id'])
 
-print(len(league_list))
+print(f"{time.asctime(time.time())} Number of Leagues: {len(league_list)}")
 
 game_list = []
 for season in league_list:
@@ -31,7 +31,8 @@ for season in league_list:
             # print(f"{gameday['name']}, {game['id']}, {game['localteam_id']}, {game['visitorteam_id']}" )
             game_list.append(game['id'])
 
-print(len(game_list))
+print(f"{time.asctime(time.time())} Number of Games: {len(game_list)}")
+time.sleep(7200)
 
 while game_list:
 
@@ -40,11 +41,12 @@ while game_list:
         game_sub_list = game_list[:num_requests]
         game_list = game_list[num_requests:]
 
-        print(len(game_sub_list))
-        print(len(game_list))
+        print(f"{time.asctime(time.time())} Number of new Requests: {len(game_sub_list)}")
+        print(f"{time.asctime(time.time())} Number of Requests left: {len(game_list)}")
 
     else: 
         game_sub_list = game_list
+        print(f"{time.asctime(time.time())} Number of new Requests: {len(game_sub_list)}")
 
     for game in game_sub_list:
         request = f"https://soccer.sportmonks.com/api/v2.0/fixtures/{game}?api_token={API_TOKEN}&include=lineup,substitutions,events,corners"
@@ -54,12 +56,11 @@ while game_list:
         data = r.json()
 
         # print(json.dumps(data, indent=2))
-
-        if data['data']['corners']['data']:
-            print('corners is empty: skip')
-            continue
         if data['data']['lineup']['data']:
-            print('lineup is empty: skip')
+            print(f"{time.asctime(time.time())} Lineup is empty: skip {game}")
+            continue
+        if data['data']['corners']['data']:
+            print(f"{time.asctime(time.time())} Corners is empty: skip {game}")
             continue
 
         con = sqlite3.connect("cI.db")
@@ -79,6 +80,7 @@ while game_list:
             team_id = x['team_id'] 
             corner_min = x['minute']
             cur.execute(f"INSERT INTO game (game_id, corner_min, team_id, date) VALUES ({game},{corner_min},{team_id},{date})")
+            print(f"{time.asctime(time.time())} Added Corners to Game: {game}")
 
         for x in data["data"]["lineup"]["data"]:
             player_id = x["player_id"]
@@ -86,6 +88,7 @@ while game_list:
             min_on = 0
             min_off = x['stats']['other']['minutes_played']
             cur.execute(f"INSERT INTO lineup (game_id, player_id, home, min_on, min_off, team_id) VALUES ({game},{player_id},{home},{min_on},{min_off},{x['team_id']})")
+            print(f"{time.asctime(time.time())} Added Lineup for Game: {game}")
 
         for x in data["data"]["substitutions"]["data"]:
             player_id = x["player_in_id"]
@@ -93,6 +96,7 @@ while game_list:
             min_on = x["minute"]
             min_off = 90
             cur.execute(f"INSERT INTO lineup (game_id, player_id, home, min_on, min_off, team_id) VALUES ({game},{player_id},{home},{min_on},{min_off},{x['team_id']})")
+            print(f"{time.asctime(time.time())} Added Subs for Game: {game}")
 
         con.commit()
 
