@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+message game{
+    float game_id = 1;
+    string game_date = 2;
+    float xG = 3;
+    float xG_pm = 4;
+    float xT = 5;
+    float xT_pm = 6;
+    float xD = 7;
+    float xD_pm = 8;
+    float xK = 9;
+    float xK_pm = 10;
+    float gI = 11;
+    float gI_pm = 12;
+    int32 minutes_played = 13;
+    bool starter = 14;
+    int32 team = 15;
+    float opposition_elo = 16;
+    float league_elo = 17;
+}
+
+message form{
+    string game_date = 1;
+    float xG_form = 2;
+    float xT_form = 3;
+    float xD_form = 4;
+    float xK_form = 5;
+    float gI_form = 6;
+}
+
+message xI{
+    repeated game xI = 1;
+    repeated form xI_form = 2;
+}
+
+message player{
+    int32 player_id = 1;
+    string player_name = 2;
+    xI starter = 3;
+    xI sub = 4;
+}
