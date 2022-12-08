@@ -11,42 +11,36 @@ import betterproto
 class Game(betterproto.Message):
     game_id: float = betterproto.float_field(1)
     game_date: str = betterproto.string_field(2)
-    x_g: float = betterproto.float_field(3)
-    x_g_pm: float = betterproto.float_field(4)
-    x_t: float = betterproto.float_field(5)
-    x_t_pm: float = betterproto.float_field(6)
-    x_d: float = betterproto.float_field(7)
-    x_d_pm: float = betterproto.float_field(8)
-    x_k: float = betterproto.float_field(9)
-    x_k_pm: float = betterproto.float_field(10)
-    g_i: float = betterproto.float_field(11)
-    g_i_pm: float = betterproto.float_field(12)
-    minutes_played: int = betterproto.int32_field(13)
-    starter: bool = betterproto.bool_field(14)
-    team: int = betterproto.int32_field(15)
-    opposition_elo: float = betterproto.float_field(16)
-    league_elo: float = betterproto.float_field(17)
-
-
-@dataclass
-class Form(betterproto.Message):
-    game_date: str = betterproto.string_field(1)
-    x_g_form: float = betterproto.float_field(2)
-    x_t_form: float = betterproto.float_field(3)
-    x_d_form: float = betterproto.float_field(4)
-    x_k_form: float = betterproto.float_field(5)
-    g_i_form: float = betterproto.float_field(6)
-
-
-@dataclass
-class XI(betterproto.Message):
-    x_i: List["Game"] = betterproto.message_field(1)
-    x_i_form: List["Form"] = betterproto.message_field(2)
+    xg: float = betterproto.float_field(3)
+    xt_all: float = betterproto.float_field(4)
+    xt_only_pos: float = betterproto.float_field(8)
+    xd_press: float = betterproto.float_field(5)
+    xd_def: float = betterproto.float_field(6)
+    xk_save: float = betterproto.float_field(7)
+    xg_against: float = betterproto.float_field(9)
+    xt_against_all: float = betterproto.float_field(10)
+    xt_against_only_pos: float = betterproto.float_field(28)
+    gi: float = betterproto.float_field(11)
+    starter: bool = betterproto.bool_field(12)
+    team: int = betterproto.int32_field(13)
+    home: bool = betterproto.bool_field(14)
+    minutes_played: int = betterproto.int32_field(15)
+    team_elo: float = betterproto.float_field(16)
+    opposition_elo: float = betterproto.float_field(17)
+    league_elo: float = betterproto.float_field(18)
+    top_league_elo: float = betterproto.float_field(19)
+    team_pos: int = betterproto.int32_field(20)
+    opp_position: int = betterproto.int32_field(21)
+    team_pos_home_away: int = betterproto.int32_field(22)
+    opp_position_home_away: int = betterproto.int32_field(23)
+    team_form: int = betterproto.int32_field(24)
+    opp_form: int = betterproto.int32_field(25)
+    team_form_home_away: int = betterproto.int32_field(26)
+    opp_form_home_away: int = betterproto.int32_field(27)
 
 
 @dataclass
 class Player(betterproto.Message):
     player_id: int = betterproto.int32_field(1)
     player_name: str = betterproto.string_field(2)
-    starter: "XI" = betterproto.message_field(3)
-    sub: "XI" = betterproto.message_field(4)
+    expected_game_impact: List["Game"] = betterproto.message_field(3)
