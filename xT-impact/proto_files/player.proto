@@ -12,7 +12,7 @@ message game{
     float xk_save = 7;
     float xg_against = 9;
     float xt_against_all = 10;
-    float xt_against_only_pos = 28;
+    float xt_against_only_pos = 32;
     float gi = 11;
     
     bool starter = 12;
@@ -29,10 +29,14 @@ message game{
     int32 opp_position = 21;
     int32 team_pos_home_away = 22;
     int32 opp_position_home_away = 23;
-    int32 team_form = 24;
-    int32 opp_form = 25;
-    int32 team_form_home_away = 26;
-    int32 opp_form_home_away = 27;
+    int32 team_form_for = 24;
+    int32 team_form_against = 25;
+    int32 opp_form_for = 26;
+    int32 opp_form_against = 27;
+    int32 team_form_home_away_for = 28;
+    int32 team_form_home_away_against = 29;
+    int32 opp_form_home_away_for = 30;
+    int32 opp_form_home_away_against = 31;
 }
 
 // message form{

@@ -19,7 +19,7 @@ class Game(betterproto.Message):
     xk_save: float = betterproto.float_field(7)
     xg_against: float = betterproto.float_field(9)
     xt_against_all: float = betterproto.float_field(10)
-    xt_against_only_pos: float = betterproto.float_field(28)
+    xt_against_only_pos: float = betterproto.float_field(32)
     gi: float = betterproto.float_field(11)
     starter: bool = betterproto.bool_field(12)
     team: int = betterproto.int32_field(13)
@@ -33,10 +33,14 @@ class Game(betterproto.Message):
     opp_position: int = betterproto.int32_field(21)
     team_pos_home_away: int = betterproto.int32_field(22)
     opp_position_home_away: int = betterproto.int32_field(23)
-    team_form: int = betterproto.int32_field(24)
-    opp_form: int = betterproto.int32_field(25)
-    team_form_home_away: int = betterproto.int32_field(26)
-    opp_form_home_away: int = betterproto.int32_field(27)
+    team_form_for: int = betterproto.int32_field(24)
+    team_form_against: int = betterproto.int32_field(25)
+    opp_form_for: int = betterproto.int32_field(26)
+    opp_form_against: int = betterproto.int32_field(27)
+    team_form_home_away_for: int = betterproto.int32_field(28)
+    team_form_home_away_against: int = betterproto.int32_field(29)
+    opp_form_home_away_for: int = betterproto.int32_field(30)
+    opp_form_home_away_against: int = betterproto.int32_field(31)
 
 
 @dataclass
