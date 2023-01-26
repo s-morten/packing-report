@@ -1,5 +1,15 @@
 class OddToPercentage:
     def odd_to_percentage(self, input_odd):
+        """calculates the probability of a team winning from the bookie odds.
+
+        Args:
+            input_odd (float): the bookie odd
+
+        Returns:
+            (probability, precentage): 
+            Probability: The probability in range 0-1
+            Percentage: The percentage in %
+        """
         divisor = 1
 
         while input_odd % 1 != 0:
