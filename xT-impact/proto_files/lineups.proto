@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message lineup{
+    repeated int64 player_id = 1;
+}
+
+message team{
+    lineup last_starting_11 = 1;
+    string team_name = 2;
+}
+
+message team_list{
+    repeated team teams = 1;
+}

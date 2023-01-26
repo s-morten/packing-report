@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+message team{
+    float team_id = 1;
+    string team_name = 2;
+    int32 num_games = 3;
+    int32 points = 4;
+    int32 points_home = 5;
+    int32 points_away = 6;
+    repeated int32 form_goals_for = 7;
+    repeated int32 form_goals_for_home = 8;
+    repeated int32 form_goals_for_away = 9;
+    repeated int32 form_goals_against = 10;
+    repeated int32 form_goals_against_home = 11;
+    repeated int32 form_goals_against_away = 12;
+}
+
+message table{
+    repeated team team = 1;
+    string competition = 2;
+}
+
+message table_list{
+    repeated table tables = 1;
+}

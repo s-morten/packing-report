@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message game{
+    float game_id = 1;
+    string game_date = 2;
+    string home_team = 3;
+    string away_team = 4;
+    string league = 5;
+}
+
+message game_list{
+    repeated game games = 1;
+}
