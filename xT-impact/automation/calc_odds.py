@@ -6,10 +6,9 @@ from datetime import datetime, timedelta
 import os
 import sys
 sys.path.append('/home/morten/Develop/packing-report/xT-impact/')
-from proto_files.games import GameList, Game
-from proto_files.player import Player
-from proto_files.player import Game as PlayerGame
-from proto_files.lineups import TeamList
+from proto_files.python.games import Schedule, ScheduleGame
+from proto_files.python.player import Player, Game
+from proto_files.python.lineups import LineupList
 
 import pandas as pd
 
@@ -18,6 +17,7 @@ import socceraction.xthreat as xthreat
 import numpy as np
 import math
 from pymc_model import Poisson_Prediction_Model
+sys.path.append("/home/morten/Develop/packing-report/OddsToPercentage/")
 from oddCalculation import OddToPercentage
 import smtplib
 from datetime import datetime
@@ -28,7 +28,7 @@ import pandas as pd
 from pathlib import PosixPath
 from soccerapi.api import Api888Sport
 import json
-from handlers_packing import ScheduleHandler
+from handlers_packing import ScheduleHandler, EvalHandler
 
 def get_bookie_oods(home, away, league):
     league_dict = {"GER-Bundesliga": "https://www.888sport.com/#/filter/football/germany/bundesliga/", 
@@ -58,13 +58,13 @@ def get_bookie_oods(home, away, league):
     draw_perc = draw_perc / bookie_sum
     away_perc = away_perc / bookie_sum
 
-    return [home_perc, draw_perc, away_perc] 
+    return [home_perc, draw_perc, away_perc, h_odds, d_odds, a_odds]
 
 def get_lineup_data(team_name):
-    lineups = TeamList().parse(open("/home/morten/Develop/packing-report/xT-impact/automation/database/lineups.pb", "rb").read())
+    lineups = LineupList().parse(open("/home/morten/Develop/packing-report/xT-impact/automation/database/lineups.pb", "rb").read())
     for t in lineups.teams:
         if t.team_name == team_name:
-            return t.last_starting_11.player_id
+            return t.last_starting_11.players_id
 
 def most_common(lst):
     return max(set(lst), key=lst.count)
@@ -253,31 +253,42 @@ def calc_odds():
 
     ppm = Poisson_Prediction_Model()
     quotes = ppm.predict(p_data)
+    eval_handler = EvalHandler()
     for idx, game in next_games_df.reset_index().iterrows():
+        h_bet = False
+        d_bet = False
+        a_bet = False
         telegram_s = ""
         # get betting odds
         bo = get_bookie_oods(game.home_team, game.away_team, game.league)
         # compare odds
         if (quotes[idx][0]*100) - bo[0] > 10:
             telegram_s += f"Bet on {game.home_team}\n"
+            h_bet = True
         if (quotes[idx][1]*100) - bo[1] > 10:
             telegram_s += f"Bet on draw\n"
+            d_bet = True
         if (quotes[idx][2]*100) - bo[2] > 10:
             telegram_s += f"Bet on {game.away_team}\n"
+            a_bet = True
         if (quotes[idx][0]*100) > 60:
             telegram_s += f"Bet on {game.home_team}\n"
+            h_bet = True
         if (quotes[idx][1]*100) > 60:
             telegram_s += f"Bet on draw\n"
+            d_bet = True
         if (quotes[idx][2]*100) > 60:
             telegram_s += f"Bet on {game.away_team}\n"
+            a_bet = True
 
+        eval_handler.add_bet(game.game_id, h_bet, d_bet, a_bet, bo[3:])
         if telegram_s != "":
             telegram_s += f"{game.home_team}:{game.away_team}\n"
             telegram_s += f"Model: {round(quotes[idx][0]*100)}-{round(quotes[idx][1]*100)}-{round(quotes[idx][2]*100)}\n"
             telegram_s += f"Bookie: {round(bo[0])}-{round(bo[1])}-{round(bo[2])}\n"
             subject = f"{game.home_team}:{game.away_team}"
             logger.info(telegram_s)
-            sendMail(subject, telegram_s)
+            # sendMail(subject, telegram_s)
 
     for idx, game in next_games_df.reset_index().iterrows():
         for ng in next_games.games:
@@ -287,6 +298,7 @@ def calc_odds():
 
     schedule_handler.write_schedule("n")
     schedule_handler.write_schedule("p")
+    eval_handler.write_bets()
 
 if __name__ == "__main__":
     calc_odds()

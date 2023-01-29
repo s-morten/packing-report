@@ -1,10 +1,10 @@
 import os
 import sys
 sys.path.append("/home/morten/Develop/packing-report/xT-impact/")
-from proto_files.games import GameList, Game
-from proto_files.lineups import TeamList, Lineup
-from proto_files.lineups import Team as Team_lineup
-from proto_files.table import TableList, Team, Table
+from proto_files.python.games import Schedule, ScheduleGame
+from proto_files.python.lineups import LineupList, LineupTeam, Lineup
+from proto_files.python.table import TableList, TableCompetition, TableTeam
+from proto_files.python.eval import BetList, Evaluations, Bet, Eval
 
 from global_packing import init_logging
 import pandas as pd
@@ -23,7 +23,7 @@ class TableHandler:
     def _add_competition(self, league):
         available_comps = pd.DataFrame(self.table_list.tables)
         if available_comps.empty or league not in available_comps.competition.values:
-            table = Table()
+            table = TableCompetition()
             table.competition = league
             self.table_list.tables.append(table)
             self.logger.info(f"Inserted new competition {league} into tables")
@@ -69,16 +69,16 @@ class TableHandler:
         self._add_competition(league)
         for table in self.table_list.tables:
             if table.competition == league:
-                table_df = pd.DataFrame(table.team)
+                table_df = pd.DataFrame(table.table_teams)
                 if table_df.empty or team_id not in table_df.team_id.values:
-                    team = Team()
+                    team = TableTeam()
                     team.team_id = team_id
                     team.team_name = team_name
                     self._update_team_entry(team, home, goals_for, goals_against)
-                    table.team.append(team)
+                    table.table_teams.append(team)
                     self.logger.info(f"Team {team_name} not in table, inserting it")
                 else:
-                    for team in table.team:
+                    for team in table.table_teams:
                         if team.team_id == team_id:
                             self._update_team_entry(team, home, goals_for, goals_against)
     
@@ -86,8 +86,8 @@ class TableHandler:
         table_dict = {}
         for table in self.table_list.tables:
             if table.competition == league:
-                print(pd.DataFrame(table.team))
-                table_df = pd.DataFrame(table.team).sort_values("points").reset_index()
+                print(pd.DataFrame(table.table_teams))
+                table_df = pd.DataFrame(table.table_teams).sort_values("points").reset_index()
                 # TODO table information
                 table_dict["team_table_pos"] = 1
                 table_dict["opp_table_pos"] = 1
@@ -168,18 +168,18 @@ class TableHandler:
 ##############################################################################################################
 class LineupHandler:
     logger = init_logging()
-    lineup_list = TeamList()
+    lineup_list = LineupList()
     def __init__(self):
         if "lineups.pb" in os.listdir("/home/morten/Develop/packing-report/xT-impact/automation/database/"):
-            self.lineup_list = TeamList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/lineups.pb", "rb").read())
+            self.lineup_list = LineupList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/lineups.pb", "rb").read())
             self.logger.info("Created empty Lineups file")
         else:
-            self.lineup_list = TeamList()
+            self.lineup_list = LineupList()
     
     def add_lineup(self, team_name, df_players):
         df_lineup_list = pd.DataFrame(self.lineup_list.teams)
         if df_lineup_list.empty or team_name not in df_lineup_list.team_name.values:
-            team = Team_lineup()
+            team = LineupTeam()
             team.team_name = team_name
             team.last_starting_11 = self._create_lineup(team_name, df_players)
             self.lineup_list.teams.append(team)
@@ -194,7 +194,7 @@ class LineupHandler:
             (df_players["team_name"] == team_name) & (df_players["is_starter"])
         ]
         for _, player in df_lineup.iterrows():
-            line_up.player_id.append(player.player_id)
+            line_up.players_id.append(player.player_id)
         return line_up
 
     def write_lineup(self):
@@ -204,25 +204,25 @@ class LineupHandler:
 
 class ScheduleHandler:
     logger = init_logging()
-    next_games = GameList()
-    past_games = GameList()
+    next_games = Schedule()
+    past_games = Schedule()
     def __init__(self):
         database_files = os.listdir("/home/morten/Develop/packing-report/xT-impact/automation/database/")
         if "next_games.pb" not in database_files:
-            self.next_games = GameList()
+            self.next_games = Schedule()
             self.logger.info("Created empty next games files")
         else:
-            self.next_games = GameList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/next_games.pb", "rb").read())
+            self.next_games = Schedule().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/next_games.pb", "rb").read())
         if "past_games.pb" not in database_files:
-            self.past_games = GameList()
+            self.past_games = Schedule()
             self.logger.info("Created empty past games files")
         else:
-            self.past_games = GameList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb", "rb").read())
+            self.past_games = Schedule().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb", "rb").read())
     
     def add_game(self, schedule_line, next_or_past):
         schedule = self.next_games if next_or_past == "n" else self.past_games
         if pd.DataFrame(schedule.games).empty or schedule_line.game_id not in pd.DataFrame(schedule.games).game_id.values:
-            game = Game()
+            game = ScheduleGame()
             game.game_id = schedule_line.game_id
             game.game_date = str(schedule_line.date)
             game.home_team = schedule_line.home_team
@@ -256,3 +256,99 @@ class ScheduleHandler:
 
 class PlayerHandler:
     pass
+
+
+class EvalHandler:
+    logger = init_logging()
+    bet_list = BetList()
+    evaluations = Evaluations()
+    def __init__(self):
+        database_files = os.listdir("/home/morten/Develop/packing-report/xT-impact/automation/database/")
+        if "evaluations.pb" not in database_files:
+            self.evaluations = Evaluations()
+            self.logger.info("Created empty evaluations file")
+        else:
+            self.evaluations = Evaluations().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/evaluations.pb", "rb").read())
+        if "bets.pb" not in database_files:
+            self.bet_list = BetList()
+            self.logger.info("Created empty bet list file")
+        else:
+            self.bet_list = BetList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/bets.pb", "rb").read())
+    
+    def add_bet(self, g_id, home, draw, away, odds):
+        bet = Bet()
+        bet.bet_home = home
+        bet.bet_draw = draw
+        bet.bet_away = away
+        bet.game_id = g_id 
+        bet.home_odd = odds[0]
+        bet.draw_odd = odds[1]
+        bet.away_odd = odds[2]
+        self.bet_list.bets.append(bet)
+        self.logger.info(f"Added id {g_id} bet list")
+
+    def remove_bet(self, g_id):
+        for bet in self.bet_list.bets:
+            if bet.game_id == g_id:
+                self.bet_list.bets.remove(bet)
+                self.logger.info(f"Removed id {g_id} bet list")
+
+    def get_bet(self, g_id):
+        for bet in self.bet_list.bets:
+            if g_id == bet.game_id:
+                return bet  
+
+    def write_bets(self):
+        with open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/bets.pb", "wb") as f:
+            f.write(bytes(self.bet_list))
+
+    def update_eval(self, result_hda, bet_hda, odds_hda):
+        einsatz = 1
+        for update in [self.evaluations.all_time_evaluation, self.evaluations.week_evaluation, self.evaluations.month_evaluation]:
+            update.num_games += 1
+            if any(bet_hda):
+                if bet_hda[0]:
+                    update.num_bets += 1
+                    update.num_bets_home += 1
+                    if result_hda == 0:
+                        update.num_bets_home_won += 1
+                        update.money_won_home += ((einsatz * odds_hda[0]) - einsatz)
+                        update.money_won += ((einsatz * odds_hda[0]) - einsatz)
+                    else:
+                        update.money_won_home += (-einsatz)
+                        update.money_won += (-einsatz)
+            if bet_hda[1]:
+                    update.num_bets += 1
+                    update.num_bets_draw += 1
+                    if result_hda == 1:
+                        update.num_bets_draw_won += 1
+                        update.money_won_draw += ((einsatz * odds_hda[1]) - einsatz)
+                        update.money_won += ((einsatz * odds_hda[1]) - einsatz)
+                    else:
+                        update.money_won_draw += (-einsatz)
+                        update.money_won += (-einsatz)
+            if bet_hda[2]:
+                    update.num_bets += 1
+                    update.num_bets_away += 1
+                    if result_hda == 2:
+                        update.num_bets_away_won += 1
+                        update.money_won_away += ((einsatz * odds_hda[2]) - einsatz)
+                        update.money_won += ((einsatz * odds_hda[2]) - einsatz)
+                    else:
+                        update.money_won_away += (-einsatz)
+                        update.money_won += (-einsatz)
+
+    def get_eval(self):
+        return self.evaluations
+
+    def reset_week(self):
+        self.evaluations.week_evaluation = Eval()
+        self.logger.info(f"Reset weekly eval")
+
+    def reset_month(self):
+        self.evaluations.month_evaluation = Eval()
+        self.logger.info(f"Reset monthly eval")
+
+    def write_eval(self):
+        with open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/evaluations.pb", "wb") as f:
+            f.write(bytes(self.evaluations))

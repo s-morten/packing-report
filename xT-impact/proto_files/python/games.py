@@ -8,7 +8,7 @@ import betterproto
 
 
 @dataclass
-class Game(betterproto.Message):
+class ScheduleGame(betterproto.Message):
     game_id: float = betterproto.float_field(1)
     game_date: str = betterproto.string_field(2)
     home_team: str = betterproto.string_field(3)
@@ -17,5 +17,5 @@ class Game(betterproto.Message):
 
 
 @dataclass
-class GameList(betterproto.Message):
-    games: List["Game"] = betterproto.message_field(1)
+class Schedule(betterproto.Message):
+    games: List["ScheduleGame"] = betterproto.message_field(1)

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-message team{
+message table_team{
     float team_id = 1;
     string team_name = 2;
     int32 num_games = 3;
@@ -15,11 +15,11 @@ message team{
     repeated int32 form_goals_against_away = 12;
 }
 
-message table{
-    repeated team team = 1;
+message table_competition{
+    repeated table_team table_teams = 1;
     string competition = 2;
 }
 
 message table_list{
-    repeated table tables = 1;
+    repeated table_competition tables = 1;
 }

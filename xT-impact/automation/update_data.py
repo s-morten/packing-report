@@ -6,9 +6,8 @@ import os
 import sys
 
 sys.path.append("/home/morten/Develop/packing-report/xT-impact/")
-from proto_files.games import GameList, Game
-from proto_files.player import Player
-from proto_files.player import Game as PlayerGame
+from proto_files.python.games import Schedule, ScheduleGame
+from proto_files.python.player import Player, Game
 
 from pathlib import PosixPath
 import pandas as pd
@@ -16,7 +15,7 @@ from global_packing import init_logging, get_xT_modell, LEAGUE_LIST
 import socceraction.spadl as spadl
 import socceraction.xthreat as xthreat
 import numpy as np
-from handlers_packing import LineupHandler, TableHandler
+from handlers_packing import LineupHandler, TableHandler, EvalHandler
 
 keeper_actions_save = ["keeper_save"]
 # keeper_actions_other = ["keeper_claim", "keeper_punch"] #, "keeper_pick_up"
@@ -90,13 +89,27 @@ def calc_game_score(df_teams, df_players, df_events):
     ].shape[0]
     return home_goals, away_goals
 
+def update_eval(game_entry, ws, live, eval_handler):
+    game_id = int(game_entry.game_id)
+    bet = eval_handler.get_bet(game_id)
+    loader = ws.read_events(
+        match_id=int(game_id), force_cache=True, output_fmt="loader", live=live
+    )
+    df_players = loader.players(game_id=game_id)
+    df_teams = loader.teams(game_id=game_id)
+    df_events = loader.events(game_id=game_id)
+    df_events.dropna(subset=["player_id"], inplace=True)
+    home_score, away_score = calc_game_score(df_teams, df_players, df_events)
+    result = 0 if home_score > away_score else 1 if home_score == away_score else 2
+    eval_handler.update_eval(result, [bet.bet_home, bet.bet_draw, bet.bet_away],[bet.home_odd, bet.draw_odd, bet.away_odd])
+    eval_handler.remove_bet(game_id)
+
 def update_proto(xTModell, game_entry, ws, live, ce):
     league = game_entry.league
     game_id = int(game_entry.game_id)
     loader = ws.read_events(
         match_id=int(game_id), force_cache=True, output_fmt="loader", live=live
     )
-    df_teams = loader.teams(game_id=game_id)
     df_players = loader.players(game_id=game_id)
     df_teams = loader.teams(game_id=game_id)
     add_lineup(df_players.merge(df_teams))
@@ -383,7 +396,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
                 open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.3/{str(player_id)}.pb", "rb").read()
             )
         # create game
-        player_game = PlayerGame()
+        player_game = Game()
         player_game.game_id = game_id
         player_game.game_date = people_dict[player_id]["game_date"]
         player_game.xg = people_dict[player_id]["xG"]
@@ -453,7 +466,7 @@ def load_data(xTModell):
     game_id = 0 
     logger = init_logging()
     # load past_games.pb
-    past_games = GameList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb", "rb").read())
+    past_games = Schedule().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb", "rb").read())
     logger.info("Loaded past games data")
     # scrape game data
     df_games = pd.DataFrame(past_games.games)
@@ -472,19 +485,23 @@ def load_data(xTModell):
         path_to_browser="/usr/bin/chromium",
         headless=False,
     )
+    eval_handler = EvalHandler()
     for _, game_entry in df_games.iterrows():
         try:
             update_proto(xTModell, game_entry, ws, False, ce)
+            update_eval(game_entry, ws, False, eval_handler)
         except TypeError:
             logger.error(f"Failed to retrieve game with id {game_id}")
             try:
                 update_proto(xTModell, game_entry, ws, True, ce)
+                update_eval(game_entry, ws, True, eval_handler)
                 logger.error(f"Got it anyway")
             except TypeError:
                 logger.error(f"Couldnt get it anyway")
     # remove game from past_games (Just remove file?)
     os.remove("/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb")
-
+    eval_handler.write_eval()
+    eval_handler.write_bets()
 
 if __name__ == "__main__":
     xTModell = get_xT_modell()

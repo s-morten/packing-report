@@ -9,15 +9,15 @@ import betterproto
 
 @dataclass
 class Lineup(betterproto.Message):
-    player_id: List[int] = betterproto.int64_field(1)
+    players_id: List[int] = betterproto.int64_field(1)
 
 
 @dataclass
-class Team(betterproto.Message):
+class LineupTeam(betterproto.Message):
     last_starting_11: "Lineup" = betterproto.message_field(1)
     team_name: str = betterproto.string_field(2)
 
 
 @dataclass
-class TeamList(betterproto.Message):
-    teams: List["Team"] = betterproto.message_field(1)
+class LineupList(betterproto.Message):
+    teams: List["LineupTeam"] = betterproto.message_field(1)
