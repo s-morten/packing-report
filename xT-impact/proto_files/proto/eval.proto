@@ -23,7 +23,7 @@ message evaluations{
 }
 
 message bet{
-    string game_id = 1;
+    int32 game_id = 1;
     bool bet_home = 2;
     bool bet_draw = 3;
     bool bet_away = 4;

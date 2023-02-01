@@ -10,6 +10,8 @@ from global_packing import init_logging
 import pandas as pd
 import numpy as np
 
+from typing import List
+
 class TableHandler:
     logger = init_logging()
     table_list = TableList()
@@ -86,7 +88,6 @@ class TableHandler:
         table_dict = {}
         for table in self.table_list.tables:
             if table.competition == league:
-                print(pd.DataFrame(table.table_teams))
                 table_df = pd.DataFrame(table.table_teams).sort_values("points").reset_index()
                 # TODO table information
                 table_dict["team_table_pos"] = 1
@@ -172,9 +173,9 @@ class LineupHandler:
     def __init__(self):
         if "lineups.pb" in os.listdir("/home/morten/Develop/packing-report/xT-impact/automation/database/"):
             self.lineup_list = LineupList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/lineups.pb", "rb").read())
-            self.logger.info("Created empty Lineups file")
         else:
             self.lineup_list = LineupList()
+            self.logger.info("Created empty Lineups file")
     
     def add_lineup(self, team_name, df_players):
         df_lineup_list = pd.DataFrame(self.lineup_list.teams)
@@ -183,10 +184,12 @@ class LineupHandler:
             team.team_name = team_name
             team.last_starting_11 = self._create_lineup(team_name, df_players)
             self.lineup_list.teams.append(team)
+            self.logger.info(f"added new team {team_name} to lineups")
         else:
             for t in self.lineup_list.teams:
                 if t.team_name == team_name:
                     t.last_starting_11 = self._create_lineup(team_name, df_players)
+                    self.logger.info(f"Updated team {team_name} in lineups")
         
     def _create_lineup(self, team_name, df_players):
         line_up = Lineup()
@@ -196,6 +199,13 @@ class LineupHandler:
         for _, player in df_lineup.iterrows():
             line_up.players_id.append(player.player_id)
         return line_up
+
+    def get_lineup(self, team_name):
+        for t in self.lineup_list.teams:
+            if t.team_name == team_name:
+                return True, t.last_starting_11.players_id
+        self.logger.error(f"Team {team_name} not found")
+        return False, [[]]
 
     def write_lineup(self):
         with open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/lineups.pb", "wb") as f:
@@ -275,7 +285,7 @@ class EvalHandler:
         else:
             self.bet_list = BetList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/bets.pb", "rb").read())
     
-    def add_bet(self, g_id, home, draw, away, odds):
+    def add_bet(self, g_id:int, home: bool, draw: bool, away: bool, odds: List[float]):
         bet = Bet()
         bet.bet_home = home
         bet.bet_draw = draw
@@ -296,7 +306,8 @@ class EvalHandler:
     def get_bet(self, g_id):
         for bet in self.bet_list.bets:
             if g_id == bet.game_id:
-                return bet  
+                return bet
+        return None
 
     def write_bets(self):
         with open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/bets.pb", "wb") as f:

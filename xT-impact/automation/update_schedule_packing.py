@@ -5,6 +5,7 @@ from pathlib import PosixPath
 import pandas as pd
 from global_packing import init_logging, LEAGUE_LIST, DEBUG
 from handlers_packing import ScheduleHandler
+from pathlib import Path
 
 # read shedule every monday morning
 def update_schedule(league_list):
@@ -17,7 +18,7 @@ def update_schedule(league_list):
         no_cache=False,
         no_store=False,
         data_dir=PosixPath("/home/morten/Develop/Open-Data/soccerdata"),
-        path_to_browser="/usr/bin/chromium",
+        path_to_browser=Path("/usr/bin/chromium"),
         headless=False,
     )
     schedule = ws.read_schedule()

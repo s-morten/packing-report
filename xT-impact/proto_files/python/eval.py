@@ -33,7 +33,7 @@ class Evaluations(betterproto.Message):
 
 @dataclass
 class Bet(betterproto.Message):
-    game_id: str = betterproto.string_field(1)
+    game_id: int = betterproto.int32_field(1)
     bet_home: bool = betterproto.bool_field(2)
     bet_draw: bool = betterproto.bool_field(3)
     bet_away: bool = betterproto.bool_field(4)

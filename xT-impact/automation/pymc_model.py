@@ -2,6 +2,9 @@ import pymc as pm
 import numpy as np
 import arviz as az
 import pandas as pd
+import pymc.math as pmmath
+
+from typing import List, DefaultDict
 
 
 class Poisson_Prediction_Model:
@@ -59,7 +62,7 @@ class Poisson_Prediction_Model:
                 + 0.5 * (pm_features @ coefs_features),
             )
 
-            lam = pm.math.exp(log_lam)
+            lam = pmmath.exp(log_lam)
 
             obs = pm.Poisson("obs", mu=lam, observed=pm_goals)
 
@@ -110,11 +113,11 @@ class Poisson_Prediction_Model:
         trace = az.from_netcdf("/home/morten/Develop/packing-report/xT-impact/models/traces/independent_trace.nc").load()
         return trace
 
-    def predict(self, prediction_data):
+    def predict(self, prediction_data) -> List[List[float]]:
         model = self.model()
         trace = self.get_trace()
         orig_size, features, form, elo = self.prepare_data(prediction_data)
-        predictions = None
+        predictions = {}
         with model:
             pm.set_data(
                 {"pm_elo_diff": elo, "pm_features": features, "pm_form_diff": form}
@@ -123,10 +126,10 @@ class Poisson_Prediction_Model:
             sample_res = pm.sample_posterior_predictive(trace, predictions=True)
             predictions = sample_res["predictions"]
 
-        predictions_home = np.swapaxes(np.array(predictions.obs[0].values), 0, 1)[
+        predictions_home = np.swapaxes(np.array(predictions["obs"][0].values), 0, 1)[
             :orig_size
         ][:, :, 0]
-        predictions_away = np.swapaxes(np.array(predictions.obs[0].values), 0, 1)[
+        predictions_away = np.swapaxes(np.array(predictions["obs"][0].values), 0, 1)[
             :orig_size
         ][:, :, 1]
         game_quotes = []

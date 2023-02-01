@@ -4,6 +4,7 @@ import soccerdata as sd
 from datetime import datetime
 import os
 import sys
+from pathlib import Path
 
 sys.path.append("/home/morten/Develop/packing-report/xT-impact/")
 from proto_files.python.games import Schedule, ScheduleGame
@@ -53,11 +54,8 @@ def get_table_info(team, opp, league, home):
 
 
 def calc_game_score(df_teams, df_players, df_events):
-    df_actions = (
-        spadl.opta.convert_to_actions(df_events, df_teams["team_id"].values[0])
-        .merge(spadl.actiontypes_df())
-        .merge(df_players[["player_name", "player_id"]])
-    )
+    df_events = df_events.merge(spadl.actiontypes_df()).merge(df_players[["player_name", "player_id"]])
+    df_actions = spadl.opta.convert_to_actions(df_events, df_teams["team_id"].values[0])
     df_actions_ltr = spadl.play_left_to_right(df_actions, df_teams["team_id"].values[0])
     df_shot_actions = pd.concat(
         [
@@ -89,7 +87,7 @@ def calc_game_score(df_teams, df_players, df_events):
     ].shape[0]
     return home_goals, away_goals
 
-def update_eval(game_entry, ws, live, eval_handler):
+def update_eval_(game_entry, ws, live, eval_handler):
     game_id = int(game_entry.game_id)
     bet = eval_handler.get_bet(game_id)
     loader = ws.read_events(
@@ -101,8 +99,9 @@ def update_eval(game_entry, ws, live, eval_handler):
     df_events.dropna(subset=["player_id"], inplace=True)
     home_score, away_score = calc_game_score(df_teams, df_players, df_events)
     result = 0 if home_score > away_score else 1 if home_score == away_score else 2
-    eval_handler.update_eval(result, [bet.bet_home, bet.bet_draw, bet.bet_away],[bet.home_odd, bet.draw_odd, bet.away_odd])
-    eval_handler.remove_bet(game_id)
+    if bet is not None:
+        eval_handler.update_eval(result, [bet.bet_home, bet.bet_draw, bet.bet_away],[bet.home_odd, bet.draw_odd, bet.away_odd])
+        eval_handler.remove_bet(game_id)
 
 def update_proto(xTModell, game_entry, ws, live, ce):
     league = game_entry.league
@@ -127,11 +126,8 @@ def update_proto(xTModell, game_entry, ws, live, ce):
     )
     ce_df = ce.read_by_date(game_entry["game_date"][:10])
     # defensive actions
-    df_actions = (
-        spadl.opta.convert_to_actions(df_events, df_teams.team_id.values[0])
-        .merge(spadl.actiontypes_df())
-        .merge(df_players[["player_name", "player_id"]])
-    )
+    df_events = df_events.merge(spadl.actiontypes_df()).merge(df_players[["player_name", "player_id"]])
+    df_actions = spadl.opta.convert_to_actions(df_events, df_teams.team_id.values[0])
     df_actions_ltr = spadl.play_left_to_right(
         df_actions, df_teams.team_id.values[0]
     )
@@ -376,7 +372,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
             # only handle player if he played
             continue
         # search dir for existing proto file:
-        if str(player_id) + ".pb" not in os.listdir("/home/morten/Develop/packing-report/xT-impact/data/data_0.3/"):
+        if str(player_id) + ".pb" not in os.listdir("/home/morten/Develop/packing-report/xT-impact/data/data_0.31/"):
             # create new proto obj
             proto_player = Player()
             proto_player.player_id = player_id
@@ -385,7 +381,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
             pd.DataFrame(
                 {"player_name": [people_dict[player_id]["name"]], "id": [player_id]}
             ).to_csv(
-                "/home/morten/Develop/packing-report/xT-impact/data/data_0.3/player_db.csv",
+                "/home/morten/Develop/packing-report/xT-impact/data/data_0.31/player_db.csv",
                 mode="a",
                 header=False,
                 index=False,
@@ -393,7 +389,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
             )
         else:
             proto_player = Player().parse(
-                open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.3/{str(player_id)}.pb", "rb").read()
+                open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.31/{str(player_id)}.pb", "rb").read()
             )
         # create game
         player_game = Game()
@@ -458,7 +454,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
         ]["opp_home_away_form_against"]
 
         proto_player.expected_game_impact.append(player_game)
-        with open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.3/{str(player_id)}.pb", "wb") as f:
+        with open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.31/{str(player_id)}.pb", "wb") as f:
             f.write(bytes(proto_player))
 
 
@@ -466,7 +462,7 @@ def load_data(xTModell):
     game_id = 0 
     logger = init_logging()
     # load past_games.pb
-    past_games = Schedule().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb", "rb").read())
+    past_games = Schedule().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games2.pb", "rb").read())
     logger.info("Loaded past games data")
     # scrape game data
     df_games = pd.DataFrame(past_games.games)
@@ -482,24 +478,24 @@ def load_data(xTModell):
         no_cache=False,
         no_store=False,
         data_dir=PosixPath("/home/morten/Develop/Open-Data/soccerdata"),
-        path_to_browser="/usr/bin/chromium",
+        path_to_browser=Path("/usr/bin/chromium"),
         headless=False,
     )
     eval_handler = EvalHandler()
     for _, game_entry in df_games.iterrows():
         try:
             update_proto(xTModell, game_entry, ws, False, ce)
-            update_eval(game_entry, ws, False, eval_handler)
+            update_eval_(game_entry, ws, False, eval_handler)
         except TypeError:
             logger.error(f"Failed to retrieve game with id {game_id}")
             try:
                 update_proto(xTModell, game_entry, ws, True, ce)
-                update_eval(game_entry, ws, True, eval_handler)
+                update_eval_(game_entry, ws, True, eval_handler)
                 logger.error(f"Got it anyway")
             except TypeError:
                 logger.error(f"Couldnt get it anyway")
     # remove game from past_games (Just remove file?)
-    os.remove("/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb")
+    os.remove("/home/morten/Develop/packing-report/xT-impact/automation/database/past_games2.pb")
     eval_handler.write_eval()
     eval_handler.write_bets()
 

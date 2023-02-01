@@ -9,6 +9,7 @@ sys.path.append('/home/morten/Develop/packing-report/xT-impact/')
 from proto_files.python.games import Schedule, ScheduleGame
 from proto_files.python.player import Player, Game
 from proto_files.python.lineups import LineupList
+from handlers_packing import LineupHandler
 
 import pandas as pd
 
@@ -60,25 +61,23 @@ def get_bookie_oods(home, away, league):
 
     return [home_perc, draw_perc, away_perc, h_odds, d_odds, a_odds]
 
-def get_lineup_data(team_name):
-    lineups = LineupList().parse(open("/home/morten/Develop/packing-report/xT-impact/automation/database/lineups.pb", "rb").read())
-    for t in lineups.teams:
-        if t.team_name == team_name:
-            return t.last_starting_11.players_id
-
 def most_common(lst):
     return max(set(lst), key=lst.count)
 
-def create_prediction_data(next_games_df):
+def create_prediction_data(next_games_df, logger):
     data_frames = []
+    successfull = []
     failed, skipped, skipped_at_beginning = 0, 0, 0
-    for _, game_row in next_games_df.iterrows():
+    lineup_handler = LineupHandler()
+    for idx, (_, game_row) in enumerate(next_games_df.iterrows()):
         home_team = game_row.home_team
         away_team = game_row.away_team
         game_date = game_row.game_date
         # TODO what if no s11 is foud, shouldnt be possible
-        h_s11 = get_lineup_data(home_team)
-        a_s11 = get_lineup_data(away_team)
+        success_h, h_s11 = lineup_handler.get_lineup(home_team)
+        success_a, a_s11 = lineup_handler.get_lineup(away_team)
+        if not (success_h and success_a):
+            continue
         data = {"home": {'starter': {"xg_for": 0., "xt_all": 0., "xt_only_pos": 0., "xd_press": 0., "xd_normal": 0., "xk": 0., "gi": 0., "xg_against": 0., "xt_against_all": 0., "xt_against_only_pos": 0.},
                         'subs': {"xg_for": 0., "xt_all": 0., "xt_only_pos": 0., "xd_press": 0., "xd_normal": 0., "xk": 0., "gi": 0., "xg_against": 0., "xt_against_all": 0., "xt_against_only_pos": 0.}},
                 "away": {'starter': {"xg_for": 0., "xt_all": 0., "xt_only_pos": 0., "xd_press": 0., "xd_normal": 0., "xk": 0., "gi": 0., "xg_against": 0., "xt_against_all": 0., "xt_against_only_pos": 0.},
@@ -88,7 +87,7 @@ def create_prediction_data(next_games_df):
                             "ha_form_home_against": set(), "ha_form_away_for": set(),  "ha_form_away_against": set(), "elo_home": set(), "elo_away": set()}}
         starter_home_empty, starter_away_empty = 0, 0
         for player_id, is_home in zip(np.concatenate([h_s11, a_s11]), np.concatenate([[True for _ in range(11)],[False for _ in range(11)]])):
-            proto_player = Player().parse(open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.3/{str(player_id)}.pb", "rb").read())
+            proto_player = Player().parse(open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.31/{str(player_id)}.pb", "rb").read())
             player_df = pd.DataFrame(proto_player.expected_game_impact)
             player_df.drop_duplicates(inplace=True)
             player_df = player_df.sort_values("game_date").reset_index(drop=True)
@@ -132,7 +131,6 @@ def create_prediction_data(next_games_df):
                 data["general"]["ha_form_home_against"].add(last_game_df["team_form_home_away_against"].values[0])
 
             else:
-                print(last_game_df)
                 data["general"]["table_pos_away"].add(last_game_df["opp_position"].values[0])
                 data["general"]["ha_table_pos_away"].add(last_game_df["opp_position_home_away"].values[0])
                 data["general"]["form_away_for"].add(last_game_df["opp_form_for"].values[0])
@@ -212,8 +210,9 @@ def create_prediction_data(next_games_df):
             "away_sub_xt_only_pos_against": [data["away"]["subs"]["xt_against_only_pos"]]
             })
         data_frames.append(df)
+        successfull.append(next_games_df["game_id"].values[0])
 
-    return pd.concat(data_frames)
+    return successfull, pd.concat(data_frames)
 
 def sendMail(subject, text):
 
@@ -242,19 +241,27 @@ def calc_odds():
     time_now = datetime.now()
     next_hour = time_now + timedelta(hours=1)
     next_hour = next_hour.strftime('%Y-%m-%d %H:%M:%S')
+    next_hour = "2023-02-01 21:15:00"
     schedule_handler = ScheduleHandler()
     next_games = schedule_handler.get_schedule("n")
     next_games_df = pd.DataFrame(next_games.games)
+    if next_games_df.empty:
+        logger.info("Next games file is empty. Abort")
+        return 
     next_games_df = next_games_df[next_games_df["game_date"] <= next_hour]
     logger.info(f"Found {next_games_df.shape[0]} games in the next hour")
     if next_games_df.empty:
         return
-    p_data = create_prediction_data(next_games_df)
+    succ, p_data = create_prediction_data(next_games_df, logger)
 
     ppm = Poisson_Prediction_Model()
     quotes = ppm.predict(p_data)
     eval_handler = EvalHandler()
-    for idx, game in next_games_df.reset_index().iterrows():
+    next_games_df = next_games_df.reset_index()
+    next_games_df = next_games_df[next_games_df["game_id"].isin(succ)]
+    print(np.array(quotes).shape)
+    print(np.array(p_data).shape)
+    for idx, (_, game) in enumerate(next_games_df.iterrows()):
         h_bet = False
         d_bet = False
         a_bet = False
@@ -281,7 +288,7 @@ def calc_odds():
             telegram_s += f"Bet on {game.away_team}\n"
             a_bet = True
 
-        eval_handler.add_bet(game.game_id, h_bet, d_bet, a_bet, bo[3:])
+        eval_handler.add_bet(int(game.game_id), h_bet, d_bet, a_bet, bo[3:])
         if telegram_s != "":
             telegram_s += f"{game.home_team}:{game.away_team}\n"
             telegram_s += f"Model: {round(quotes[idx][0]*100)}-{round(quotes[idx][1]*100)}-{round(quotes[idx][2]*100)}\n"
@@ -296,8 +303,8 @@ def calc_odds():
                 schedule_handler.remove_game_by_game(ng, "n")
                 schedule_handler.add_game_by_game(ng, "p")
 
-    schedule_handler.write_schedule("n")
-    schedule_handler.write_schedule("p")
+    # schedule_handler.write_schedule("n")
+    # schedule_handler.write_schedule("p")
     eval_handler.write_bets()
 
 if __name__ == "__main__":
