@@ -258,6 +258,7 @@ def calc_odds():
     quotes = ppm.predict(p_data)
     eval_handler = EvalHandler()
     next_games_df = next_games_df.reset_index()
+    next_games_df_with_failed = next_games_df.copy(deep=True)
     next_games_df = next_games_df[next_games_df["game_id"].isin(succ)]
     for idx, (_, game) in enumerate(next_games_df.iterrows()):
         h_bet = False
@@ -295,7 +296,7 @@ def calc_odds():
             logger.info(telegram_s)
             # sendMail(subject, telegram_s)
 
-    for idx, game in next_games_df.reset_index().iterrows():
+    for idx, game in next_games_df_with_failed.reset_index().iterrows():
         for ng in next_games.games:
             if ng.game_id == game.game_id:
                 schedule_handler.remove_game_by_game(ng, "n")
