@@ -241,7 +241,7 @@ def calc_odds():
     time_now = datetime.now()
     next_hour = time_now + timedelta(hours=1)
     next_hour = next_hour.strftime('%Y-%m-%d %H:%M:%S')
-    next_hour = "2023-02-01 21:15:00"
+    # next_hour = "2023-02-02 20:15:00"
     schedule_handler = ScheduleHandler()
     next_games = schedule_handler.get_schedule("n")
     next_games_df = pd.DataFrame(next_games.games)
@@ -259,8 +259,6 @@ def calc_odds():
     eval_handler = EvalHandler()
     next_games_df = next_games_df.reset_index()
     next_games_df = next_games_df[next_games_df["game_id"].isin(succ)]
-    print(np.array(quotes).shape)
-    print(np.array(p_data).shape)
     for idx, (_, game) in enumerate(next_games_df.iterrows()):
         h_bet = False
         d_bet = False
@@ -303,8 +301,8 @@ def calc_odds():
                 schedule_handler.remove_game_by_game(ng, "n")
                 schedule_handler.add_game_by_game(ng, "p")
 
-    # schedule_handler.write_schedule("n")
-    # schedule_handler.write_schedule("p")
+    schedule_handler.write_schedule("n")
+    schedule_handler.write_schedule("p")
     eval_handler.write_bets()
 
 if __name__ == "__main__":

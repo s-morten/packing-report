@@ -250,7 +250,9 @@ class ScheduleHandler:
 
     def remove_game_by_game(self, game, next_or_past):
         schedule = self.next_games if next_or_past == "n" else self.past_games
+        print(len(schedule.games))
         schedule.games.remove(game)
+        print(len(schedule.games))
 
     def get_schedule(self, next_or_past):
         schedule = self.next_games if next_or_past == "n" else self.past_games
