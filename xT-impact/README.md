@@ -8,6 +8,6 @@ data_aquisation: Scrape and inspect the data, aswell as creating training and te
 
 get_2_know_soccerdata: Calculate xT/xG using a for this purposes modified fork of the soccerdata library.  
 
-**Not HP relevant**, proto_files: Protobuf is used as a database. The calculated values for players are stored in protobuf files, as well as tables and schedules for the running season. The .proto files and the created .py files are home in this folder.
+**Nicht HP relevant**, proto_files: Protobuf is used as a database. The calculated values for players are stored in protobuf files, as well as tables and schedules for the running season. The .proto files and the created .py files are home in this folder.
 
-**Not HP relevant**, automation: Scripts to execute the the data gathering and game result prediction automatically. 
+**Nicht HP relevant**, automation: Scripts to execute the the data gathering and game result prediction automatically. 
