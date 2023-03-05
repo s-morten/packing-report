@@ -9,6 +9,7 @@ import json
 eval_handler = EvalHandler()
 eval = eval_handler.get_eval()
 
+
 def sendMail(subject, text):
 
     senderEmail = "mortenstehr@hotmail.de"
@@ -17,19 +18,22 @@ def sendMail(subject, text):
     msg["From"] = senderEmail
     msg["To"] = empfangsEmail
     msg["Subject"] = subject
-    sender_pass = json.load(open("/home/morten/Develop/packing-report/xT-impact/automation/mail-secret.json", "r"))["password"]
+    sender_pass = json.load(
+        open(
+            "/home/morten/Develop/packing-report/xT-impact/automation/mail-secret.json",
+            "r",
+        )
+    )["password"]
     emailText = text
     msg.attach(MIMEText(emailText, "plain"))
 
     server = smtplib.SMTP("smtp.office365.com", 587)  # Die Server Daten
     server.starttls()
-    server.login(
-        senderEmail,
-        sender_pass
-    )  # Das Passwort
+    server.login(senderEmail, sender_pass)  # Das Passwort
     text = msg.as_string()
     server.sendmail(senderEmail, empfangsEmail, text)
     server.quit()
+
 
 # create mail string
 text = ""

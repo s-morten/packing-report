@@ -110,7 +110,9 @@ class Poisson_Prediction_Model:
         return orig_size, features, form, elo
 
     def get_trace(self):
-        trace = az.from_netcdf("/home/morten/Develop/packing-report/xT-impact/models/traces/independent_trace.nc").load()
+        trace = az.from_netcdf(
+            "/home/morten/Develop/packing-report/xT-impact/models/traces/independent_trace.nc"
+        ).load()
         return trace
 
     def predict(self, prediction_data) -> List[List[float]]:

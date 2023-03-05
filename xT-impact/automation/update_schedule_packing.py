@@ -11,7 +11,7 @@ from pathlib import Path
 def update_schedule(league_list):
     logger = init_logging()
     all_schedules = []
-    #for league in league_list:
+    # for league in league_list:
     ws = sd.WhoScored(
         leagues=league_list,
         seasons=[22],
@@ -25,7 +25,9 @@ def update_schedule(league_list):
 
     for idx, league in enumerate(league_list):
         all_schedules.append(schedule.loc[league, :])
-        all_schedules[idx]["league_name"] = [league for _ in range(all_schedules[idx].shape[0])]
+        all_schedules[idx]["league_name"] = [
+            league for _ in range(all_schedules[idx].shape[0])
+        ]
 
     df_schedule = pd.concat(all_schedules)
     df_schedule.columns = df_schedule.columns.to_flat_index()
@@ -35,14 +37,14 @@ def update_schedule(league_list):
     future_games_schedule = df_schedule.loc[df_schedule["date"] > dt_string]
     schedule_handler = ScheduleHandler()
     for idx, schedule_line in future_games_schedule.iterrows():
-        schedule_handler.add_game(schedule_line, "n")        
+        schedule_handler.add_game(schedule_line, "n")
     schedule_handler.write_schedule("n")
 
     ######
     if DEBUG:
         past_games_schedule = df_schedule.loc[df_schedule["date"] < dt_string]
         for idx, schedule_line in past_games_schedule.iterrows():
-            schedule_handler.add_game(schedule_line, "p")        
+            schedule_handler.add_game(schedule_line, "p")
         schedule_handler.write_schedule("p")
     ######
 

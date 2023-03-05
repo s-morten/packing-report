@@ -2,7 +2,7 @@ import logging
 import socceraction.xthreat as xthreat
 
 # gloabl vars
-DEBUG = False
+DEBUG = True
 LEAGUE_LIST = [
     "GER-Bundesliga",
     "GER-Bundesliga2",
