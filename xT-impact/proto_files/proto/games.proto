@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-message game{
+message schedule_game{
     float game_id = 1;
     string game_date = 2;
     string home_team = 3;
@@ -8,6 +8,6 @@ message game{
     string league = 5;
 }
 
-message game_list{
-    repeated game games = 1;
+message schedule{
+    repeated schedule_game games = 1;
 }

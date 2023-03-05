@@ -8,7 +8,7 @@ import betterproto
 
 
 @dataclass
-class Team(betterproto.Message):
+class TableTeam(betterproto.Message):
     team_id: float = betterproto.float_field(1)
     team_name: str = betterproto.string_field(2)
     num_games: int = betterproto.int32_field(3)
@@ -24,11 +24,11 @@ class Team(betterproto.Message):
 
 
 @dataclass
-class Table(betterproto.Message):
-    team: List["Team"] = betterproto.message_field(1)
+class TableCompetition(betterproto.Message):
+    table_teams: List["TableTeam"] = betterproto.message_field(1)
     competition: str = betterproto.string_field(2)
 
 
 @dataclass
 class TableList(betterproto.Message):
-    tables: List["Table"] = betterproto.message_field(1)
+    tables: List["TableCompetition"] = betterproto.message_field(1)

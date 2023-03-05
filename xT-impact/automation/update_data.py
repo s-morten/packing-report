@@ -4,11 +4,11 @@ import soccerdata as sd
 from datetime import datetime
 import os
 import sys
+from pathlib import Path
 
 sys.path.append("/home/morten/Develop/packing-report/xT-impact/")
-from proto_files.games import GameList, Game
-from proto_files.player import Player
-from proto_files.player import Game as PlayerGame
+from proto_files.python.games import Schedule, ScheduleGame
+from proto_files.python.player import Player, Game
 
 from pathlib import PosixPath
 import pandas as pd
@@ -16,11 +16,12 @@ from global_packing import init_logging, get_xT_modell, LEAGUE_LIST
 import socceraction.spadl as spadl
 import socceraction.xthreat as xthreat
 import numpy as np
-from handlers_packing import LineupHandler, TableHandler
+from handlers_packing import LineupHandler, TableHandler, EvalHandler
 
 keeper_actions_save = ["keeper_save"]
 # keeper_actions_other = ["keeper_claim", "keeper_punch"] #, "keeper_pick_up"
 defensive_actions = ["tackle", "interception", "clearance"]  # "keeper_save"
+
 
 def add_lineup(df_players):
     linuep_handler = LineupHandler()
@@ -43,8 +44,12 @@ def update_table_entries(
     home_team_id, home_team, away_team_id, away_team, home_goals, away_goals, league
 ):
     table_handler = TableHandler()
-    table_handler.update_table(league, home_team_id, home_team, True, home_goals, away_goals)
-    table_handler.update_table(league, away_team_id, away_team, False, away_goals, home_goals)
+    table_handler.update_table(
+        league, home_team_id, home_team, True, home_goals, away_goals
+    )
+    table_handler.update_table(
+        league, away_team_id, away_team, False, away_goals, home_goals
+    )
     table_handler.write_table()
 
 
@@ -54,12 +59,11 @@ def get_table_info(team, opp, league, home):
 
 
 def calc_game_score(df_teams, df_players, df_events):
-    df_actions = (
-        spadl.opta.convert_to_actions(df_events, df_teams["team_id"].values[0])
-        .merge(spadl.actiontypes_df())
-        .merge(df_players[["player_name", "player_id"]])
-    )
+    df_actions = spadl.opta.convert_to_actions(df_events, df_teams["team_id"].values[0])
     df_actions_ltr = spadl.play_left_to_right(df_actions, df_teams["team_id"].values[0])
+    df_actions_ltr = df_actions_ltr.merge(spadl.actiontypes_df()).merge(
+        df_players[["player_name", "player_id"]]
+    )
     df_shot_actions = pd.concat(
         [
             df_actions_ltr[df_actions_ltr["type_id"] == 11],
@@ -90,13 +94,34 @@ def calc_game_score(df_teams, df_players, df_events):
     ].shape[0]
     return home_goals, away_goals
 
+
+def update_eval_(game_entry, ws, live, eval_handler):
+    game_id = int(game_entry.game_id)
+    bet = eval_handler.get_bet(game_id)
+    loader = ws.read_events(
+        match_id=int(game_id), force_cache=True, output_fmt="loader", live=live
+    )
+    df_players = loader.players(game_id=game_id)
+    df_teams = loader.teams(game_id=game_id)
+    df_events = loader.events(game_id=game_id)
+    df_events.dropna(subset=["player_id"], inplace=True)
+    home_score, away_score = calc_game_score(df_teams, df_players, df_events)
+    result = 0 if home_score > away_score else 1 if home_score == away_score else 2
+    if bet is not None:
+        eval_handler.update_eval(
+            result,
+            [bet.bet_home, bet.bet_draw, bet.bet_away],
+            [bet.home_odd, bet.draw_odd, bet.away_odd],
+        )
+        eval_handler.remove_bet(game_id)
+
+
 def update_proto(xTModell, game_entry, ws, live, ce):
     league = game_entry.league
     game_id = int(game_entry.game_id)
     loader = ws.read_events(
         match_id=int(game_id), force_cache=True, output_fmt="loader", live=live
     )
-    df_teams = loader.teams(game_id=game_id)
     df_players = loader.players(game_id=game_id)
     df_teams = loader.teams(game_id=game_id)
     add_lineup(df_players.merge(df_teams))
@@ -114,19 +139,18 @@ def update_proto(xTModell, game_entry, ws, live, ce):
     )
     ce_df = ce.read_by_date(game_entry["game_date"][:10])
     # defensive actions
-    df_actions = (
-        spadl.opta.convert_to_actions(df_events, df_teams.team_id.values[0])
-        .merge(spadl.actiontypes_df())
-        .merge(df_players[["player_name", "player_id"]])
+    df_actions = spadl.opta.convert_to_actions(df_events, df_teams.team_id.values[0])
+    df_actions_ltr = spadl.play_left_to_right(df_actions, df_teams.team_id.values[0])
+    df_actions_rtl = spadl.play_left_to_right(df_actions, df_teams.team_id.values[1])
+
+    df_actions_ltr_d = df_actions_ltr.merge(spadl.actiontypes_df()).merge(
+        df_players[["player_name", "player_id"]]
     )
-    df_actions_ltr = spadl.play_left_to_right(
-        df_actions, df_teams.team_id.values[0]
+    df_actions_rtl = df_actions_rtl.merge(spadl.actiontypes_df()).merge(
+        df_players[["player_name", "player_id"]]
     )
-    df_actions_rtl = spadl.play_left_to_right(
-        df_actions, df_teams.team_id.values[0]
-    )
-    df_all_defense_pressing = df_actions_ltr[
-        df_actions_ltr["type_name"].isin(defensive_actions)
+    df_all_defense_pressing = df_actions_ltr_d[
+        df_actions_ltr_d["type_name"].isin(defensive_actions)
     ]
     df_all_defense_pressing = df_all_defense_pressing[
         df_all_defense_pressing["result_id"] == 1
@@ -197,9 +221,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
             "team": [
                 x["team_id"]
                 if (x["result_id"] == 1)
-                else df_teams[df_teams["team_id"] != x["team_id"]][
-                    "team_id"
-                ].values[0]
+                else df_teams[df_teams["team_id"] != x["team_id"]]["team_id"].values[0]
                 for _, x in df_all_goals.iterrows()
             ],
         }
@@ -363,7 +385,9 @@ def update_proto(xTModell, game_entry, ws, live, ce):
             # only handle player if he played
             continue
         # search dir for existing proto file:
-        if str(player_id) + ".pb" not in os.listdir("/home/morten/Develop/packing-report/xT-impact/data/data_0.3/"):
+        if str(player_id) + ".pb" not in os.listdir(
+            "/home/morten/Develop/packing-report/xT-impact/data/data_0.31/"
+        ):
             # create new proto obj
             proto_player = Player()
             proto_player.player_id = player_id
@@ -372,7 +396,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
             pd.DataFrame(
                 {"player_name": [people_dict[player_id]["name"]], "id": [player_id]}
             ).to_csv(
-                "/home/morten/Develop/packing-report/xT-impact/data/data_0.3/player_db.csv",
+                "/home/morten/Develop/packing-report/xT-impact/data/data_0.31/player_db.csv",
                 mode="a",
                 header=False,
                 index=False,
@@ -380,10 +404,13 @@ def update_proto(xTModell, game_entry, ws, live, ce):
             )
         else:
             proto_player = Player().parse(
-                open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.3/{str(player_id)}.pb", "rb").read()
+                open(
+                    f"/home/morten/Develop/packing-report/xT-impact/data/data_0.31/{str(player_id)}.pb",
+                    "rb",
+                ).read()
             )
         # create game
-        player_game = PlayerGame()
+        player_game = Game()
         player_game.game_id = game_id
         player_game.game_date = people_dict[player_id]["game_date"]
         player_game.xg = people_dict[player_id]["xG"]
@@ -394,9 +421,7 @@ def update_proto(xTModell, game_entry, ws, live, ce):
         player_game.xk_save = people_dict[player_id]["xK_save"]
         player_game.xg_against = people_dict[player_id]["xG_against"]
         player_game.xt_against_all = people_dict[player_id]["xT_against_all"]
-        player_game.xt_against_only_pos = people_dict[player_id][
-            "xT_against_only_pos"
-        ]
+        player_game.xt_against_only_pos = people_dict[player_id]["xT_against_only_pos"]
         player_game.gi = people_dict[player_id]["gI"]
         player_game.starter = people_dict[player_id]["is_starter"]
         player_game.team = people_dict[player_id]["team_id"]
@@ -407,12 +432,8 @@ def update_proto(xTModell, game_entry, ws, live, ce):
         player_game.league_elo = people_dict[player_id]["league_elo"]
         player_game.top_league_elo = people_dict[player_id]["top_league_elo"]
 
-        player_game.team_pos = people_dict[player_id]["table_info"][
-            "team_table_pos"
-        ]
-        player_game.opp_position = people_dict[player_id]["table_info"][
-            "opp_table_pos"
-        ]
+        player_game.team_pos = people_dict[player_id]["table_info"]["team_table_pos"]
+        player_game.opp_position = people_dict[player_id]["table_info"]["opp_table_pos"]
         player_game.team_pos_home_away = people_dict[player_id]["table_info"][
             "team_home_away_table_pos"
         ]
@@ -425,35 +446,41 @@ def update_proto(xTModell, game_entry, ws, live, ce):
         player_game.team_form_against = people_dict[player_id]["table_info"][
             "team_form_against"
         ]
-        player_game.opp_form_for = people_dict[player_id]["table_info"][
-            "opp_form_for"
-        ]
+        player_game.opp_form_for = people_dict[player_id]["table_info"]["opp_form_for"]
         player_game.opp_form_against = people_dict[player_id]["table_info"][
             "opp_form_against"
         ]
         player_game.team_form_home_away_for = people_dict[player_id]["table_info"][
             "team_home_away_form_for"
         ]
-        player_game.team_form_home_away_against = people_dict[player_id][
-            "table_info"
-        ]["team_home_away_form_against"]
+        player_game.team_form_home_away_against = people_dict[player_id]["table_info"][
+            "team_home_away_form_against"
+        ]
         player_game.opp_form_home_away_for = people_dict[player_id]["table_info"][
             "opp_home_away_form_for"
         ]
-        player_game.opp_form_home_away_against = people_dict[player_id][
-            "table_info"
-        ]["opp_home_away_form_against"]
+        player_game.opp_form_home_away_against = people_dict[player_id]["table_info"][
+            "opp_home_away_form_against"
+        ]
 
         proto_player.expected_game_impact.append(player_game)
-        with open(f"/home/morten/Develop/packing-report/xT-impact/data/data_0.3/{str(player_id)}.pb", "wb") as f:
+        with open(
+            f"/home/morten/Develop/packing-report/xT-impact/data/data_0.31/{str(player_id)}.pb",
+            "wb",
+        ) as f:
             f.write(bytes(proto_player))
 
 
 def load_data(xTModell):
-    game_id = 0 
+    game_id = 0
     logger = init_logging()
     # load past_games.pb
-    past_games = GameList().parse(open(f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb", "rb").read())
+    past_games = Schedule().parse(
+        open(
+            f"/home/morten/Develop/packing-report/xT-impact/automation/database/past_games1.pb",
+            "rb",
+        ).read()
+    )
     logger.info("Loaded past games data")
     # scrape game data
     df_games = pd.DataFrame(past_games.games)
@@ -469,21 +496,28 @@ def load_data(xTModell):
         no_cache=False,
         no_store=False,
         data_dir=PosixPath("/home/morten/Develop/Open-Data/soccerdata"),
-        path_to_browser="/usr/bin/chromium",
+        path_to_browser=Path("/usr/bin/chromium"),
         headless=False,
     )
+    eval_handler = EvalHandler()
     for _, game_entry in df_games.iterrows():
         try:
             update_proto(xTModell, game_entry, ws, False, ce)
+            update_eval_(game_entry, ws, False, eval_handler)
         except TypeError:
             logger.error(f"Failed to retrieve game with id {game_id}")
             try:
                 update_proto(xTModell, game_entry, ws, True, ce)
+                update_eval_(game_entry, ws, True, eval_handler)
                 logger.error(f"Got it anyway")
             except TypeError:
                 logger.error(f"Couldnt get it anyway")
     # remove game from past_games (Just remove file?)
-    os.remove("/home/morten/Develop/packing-report/xT-impact/automation/database/past_games.pb")
+    os.remove(
+        "/home/morten/Develop/packing-report/xT-impact/automation/database/past_games1.pb"
+    )
+    eval_handler.write_eval()
+    eval_handler.write_bets()
 
 
 if __name__ == "__main__":
