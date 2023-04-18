@@ -26,8 +26,10 @@ def draw_field(ax, mat, color="black"):
 
     # outline and middle line
     ax.plot([0, 0], [0, STATSBOMB_HEIGHT], color=color)
-    ax.plot([0, STATSBOMB_WIDTH], [STATSBOMB_HEIGHT, STATSBOMB_HEIGHT], color=color)
-    ax.plot([STATSBOMB_WIDTH, STATSBOMB_WIDTH], [STATSBOMB_HEIGHT, 0], color=color)
+    ax.plot([0, STATSBOMB_WIDTH], [
+            STATSBOMB_HEIGHT, STATSBOMB_HEIGHT], color=color)
+    ax.plot([STATSBOMB_WIDTH, STATSBOMB_WIDTH],
+            [STATSBOMB_HEIGHT, 0], color=color)
     ax.plot([STATSBOMB_WIDTH, 0], [0, 0], color=color)
     ax.plot(
         [STATSBOMB_WIDTH / 2, STATSBOMB_WIDTH / 2], [0, STATSBOMB_HEIGHT], color=color
@@ -89,7 +91,8 @@ def draw_field(ax, mat, color="black"):
         theta2=230,
         color=color,
     )
-    leftPenSpot = plt.Circle((24 - 2.2, STATSBOMB_HEIGHT / 2), 0.1, color=color)
+    leftPenSpot = plt.Circle(
+        (24 - 2.2, STATSBOMB_HEIGHT / 2), 0.1, color=color)
 
     ax.add_patch(leftArc)
     ax.add_patch(leftPenSpot)
@@ -108,7 +111,8 @@ def draw_xT_xG_plot(all_goals_slots, xT_home_slots, xT_away_slots):
     Returns:
         fig, ax: fig and axes of the created plot
     """
-    im = plt.imread("/home/morten/Develop/Live-Win-Prob/media/soccer-ball_26bd.png")
+    im = plt.imread(
+        "/home/morten/Develop/Live-Win-Prob/media/soccer-ball_26bd.png")
     fig, axes = plt.subplots(2, 1, sharex=True, figsize=(15, 10))
 
     for team_idx, x in enumerate(all_goals_slots):
