@@ -1,10 +1,10 @@
+import pickle
+import numpy as np
+from utils.lwp_utils import timestamp_to_time, get_mat_pos, get_rolling_avg
 from kloppy import statsbomb
 import sys
 
 sys.path.append("/home/morten/Develop/Live-Win-Prob")
-from utils.lwp_utils import timestamp_to_time, get_mat_pos, get_rolling_avg
-import numpy as np
-import pickle
 
 
 def get_timeslot_length(match_id):
@@ -269,9 +269,11 @@ def get_cards_per_timeframe(match_id):
                         == "Yellow Card"
                     ):
                         if event.team.ground.value == "home":
-                            timeslots_yellow_home[idx + (50 * half_idx)].append(event)
+                            timeslots_yellow_home[idx +
+                                                  (50 * half_idx)].append(event)
                         elif event.team.ground.value == "away":
-                            timeslots_yellow_away[idx + (50 * half_idx)].append(event)
+                            timeslots_yellow_away[idx +
+                                                  (50 * half_idx)].append(event)
                         else:
                             print("Oh no!")
                     elif (
@@ -280,9 +282,11 @@ def get_cards_per_timeframe(match_id):
                         == "Second Yellow"
                     ):
                         if event.team.ground.value == "home":
-                            timeslots_red_home[idx + (50 * half_idx)].append(event)
+                            timeslots_red_home[idx +
+                                               (50 * half_idx)].append(event)
                         elif event.team.ground.value == "away":
-                            timeslots_red_away[idx + (50 * half_idx)].append(event)
+                            timeslots_red_away[idx +
+                                               (50 * half_idx)].append(event)
                         else:
                             print("Oh no!")
                 elif "bad_behaviour" in event.raw_event:
@@ -291,9 +295,11 @@ def get_cards_per_timeframe(match_id):
                         == "Yellow Card"
                     ):
                         if event.team.ground.value == "home":
-                            timeslots_yellow_home[idx + (50 * half_idx)].append(event)
+                            timeslots_yellow_home[idx +
+                                                  (50 * half_idx)].append(event)
                         elif event.team.ground.value == "away":
-                            timeslots_yellow_away[idx + (50 * half_idx)].append(event)
+                            timeslots_yellow_away[idx +
+                                                  (50 * half_idx)].append(event)
                         else:
                             print("Oh no!")
                     elif (
@@ -302,9 +308,11 @@ def get_cards_per_timeframe(match_id):
                         == "Second Yellow"
                     ):
                         if event.team.ground.value == "home":
-                            timeslots_red_home[idx + (50 * half_idx)].append(event)
+                            timeslots_red_home[idx +
+                                               (50 * half_idx)].append(event)
                         elif event.team.ground.value == "away":
-                            timeslots_red_away[idx + (50 * half_idx)].append(event)
+                            timeslots_red_away[idx +
+                                               (50 * half_idx)].append(event)
                         else:
                             print("Oh no!")
 
@@ -468,9 +476,11 @@ def calc_gso_per_slot(match_id, xG_modell, threshold=0.15):
                 xG = xG_modell[z][w]
                 if xG >= threshold:
                     if event.team.ground.value == "home":
-                        timeslots_home_pass[idx + (half_idx * 50)].append(event)
+                        timeslots_home_pass[idx +
+                                            (half_idx * 50)].append(event)
                     elif event.team.ground.value == "away":
-                        timeslots_away_pass[idx + (half_idx * 50)].append(event)
+                        timeslots_away_pass[idx +
+                                            (half_idx * 50)].append(event)
                     else:
                         print("Oh no!")
     # carries to dangerous positions
@@ -488,9 +498,11 @@ def calc_gso_per_slot(match_id, xG_modell, threshold=0.15):
                 xG = xG_modell[z][w]
                 if xG >= threshold:
                     if event.team.ground.value == "home":
-                        timeslots_home_carry[idx + (half_idx * 50)].append(event)
+                        timeslots_home_carry[idx +
+                                             (half_idx * 50)].append(event)
                     elif event.team.ground.value == "away":
-                        timeslots_away_carry[idx + (half_idx * 50)].append(event)
+                        timeslots_away_carry[idx +
+                                             (half_idx * 50)].append(event)
                     else:
                         print("Oh no!")
 
@@ -560,15 +572,19 @@ def calc_duel_strength_slots(match_id):
                 if event.team.ground.value == "home":
                     timeslots_all_takeon[idx + (half_idx * 50)].append(event)
                     if won:
-                        timeslots_home_takeon[idx + (half_idx * 50)].append(event)
+                        timeslots_home_takeon[idx +
+                                              (half_idx * 50)].append(event)
                     else:
-                        timeslots_away_takeon[idx + (half_idx * 50)].append(event)
+                        timeslots_away_takeon[idx +
+                                              (half_idx * 50)].append(event)
                 elif event.team.ground.value == "away":
                     timeslots_all_takeon[idx + (half_idx * 50)].append(event)
                     if won:
-                        timeslots_away_takeon[idx + (half_idx * 50)].append(event)
+                        timeslots_away_takeon[idx +
+                                              (half_idx * 50)].append(event)
                     else:
-                        timeslots_home_takeon[idx + (half_idx * 50)].append(event)
+                        timeslots_home_takeon[idx +
+                                              (half_idx * 50)].append(event)
                 else:
                     print("Oh no!")
 

@@ -2,5 +2,4 @@ data/
 models/
 training_data/
 *.csv
-automation/mail-secret.json
 automation/database/
