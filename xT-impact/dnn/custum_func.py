@@ -66,6 +66,8 @@ class ControlledDropoutLayer(Layer):
             self.step=0
         # Apply dropout to the inputs
         return inputs * K.constant(dropout_conf)
+    
+hidden_layer_size = 64
 
 def dropout_conf_1():
     dropout_confs_1 = []
@@ -86,7 +88,7 @@ def dropout_conf_1():
     dropout_confs_2 = []
     # add all ones for dropout 1 layer
     for _ in range(127):
-        dropout_confs_2.append(list(np.ones(16)))
+        dropout_confs_2.append(list(np.ones(hidden_layer_size)))
     return dropout_confs_1, dropout_confs_2
 
 def dropout_conf_2():
@@ -118,30 +120,30 @@ def dropout_conf_2():
     dropout_confs_2 = []
     # add all ones for dropout 1 layer
     for _ in range(30):
-        dropout_confs_2.append(list(np.ones(16)))
+        dropout_confs_2.append(list(np.ones(hidden_layer_size)))
     return dropout_confs_1, dropout_confs_2
 
 def dropout_conf_3():
     dropout_confs_1 = []
     # add all ones for dropout 2
-    for _ in range(32):
+    for _ in range(hidden_layer_size * 2):
         dropout_confs_1.append(list(np.ones(14)))
     dropout_confs_2 = []
     # add all ones for dropout 1 layer
     # input pairs
     do_set = set()
     for i in [1]:
-        for x in itertools.permutations(np.arange(16), i):
-            dropout = np.ones(16)
+        for x in itertools.permutations(np.arange(hidden_layer_size), i):
+            dropout = np.ones(hidden_layer_size)
             for z in x:
                 dropout[(z)] = 0
-            drop_rate = len(x) / 16
+            drop_rate = len(x) / hidden_layer_size
             dropout = dropout * (1 / (1 - drop_rate))
             do_set.add(tuple(dropout))
-            dropout = np.zeros(16)
+            dropout = np.zeros(hidden_layer_size)
             for z in x:
                 dropout[(z)] = 1
-            drop_rate = (16-len(x)) / 16
+            drop_rate = (hidden_layer_size-len(x)) / hidden_layer_size
             dropout = dropout * (1 / (1 - drop_rate))
             do_set.add(tuple(dropout))
     for s in do_set:
