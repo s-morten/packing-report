@@ -3,3 +3,4 @@ models/
 training_data/
 *.csv
 automation/database/
+dnn/models/
