@@ -67,9 +67,7 @@ class ControlledDropoutLayer(Layer):
         # Apply dropout to the inputs
         return inputs * K.constant(dropout_conf)
     
-hidden_layer_size = 80
-
-def dropout_conf_1(cnn = False):
+def dropout_conf_1(hidden_layer_size, cnn = False):
     dropout_confs_1 = []
     # input pairs
     do_set = set()
@@ -95,7 +93,7 @@ def dropout_conf_1(cnn = False):
         dropout_confs_1 = np.reshape(dropout_confs_1, (len(dropout_confs_1), 4, 4))
     return dropout_confs_1, dropout_confs_2
 
-def dropout_conf_2(cnn=False):
+def dropout_conf_2(hidden_layer_size, cnn=False):
     dropout_confs_1 = []
     do_set = set()
     for i in range(4):
@@ -130,7 +128,7 @@ def dropout_conf_2(cnn=False):
         dropout_confs_1 = np.reshape(dropout_confs_1, (len(dropout_confs_1), 4, 4))
     return dropout_confs_1, dropout_confs_2
 
-def dropout_conf_3(cnn=False):
+def dropout_conf_3(hidden_layer_size, cnn=False):
     dropout_confs_1 = []
     # add all ones for dropout 2
     for _ in range(hidden_layer_size * 2):
