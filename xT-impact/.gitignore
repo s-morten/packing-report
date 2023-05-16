@@ -4,3 +4,4 @@ training_data/
 *.csv
 automation/database/
 dnn/models/
+pymc/models/

@@ -67,6 +67,11 @@ class ControlledDropoutLayer(Layer):
         # Apply dropout to the inputs
         return inputs * K.constant(dropout_conf)
     
+    # def get_config(self):
+    #     config = super().get_config()
+    #     config.update({"dropout_list": self.dropout_list})
+    #     return config
+    
 def dropout_conf_1(hidden_layer_size, cnn = False):
     dropout_confs_1 = []
     # input pairs
