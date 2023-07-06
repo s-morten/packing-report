@@ -72,7 +72,9 @@ class ControlledDropoutLayer(Layer):
     #     config.update({"dropout_list": self.dropout_list})
     #     return config
     
-def dropout_conf_1(hidden_layer_size, cnn = False):
+def dropout_conf_1(hidden_layer_size, opt_hidden_layer_size = None, cnn = False):
+    if opt_hidden_layer_size == None:
+        opt_hidden_layer_size = hidden_layer_size
     dropout_confs_1 = []
     # input pairs
     do_set = set()
@@ -91,7 +93,7 @@ def dropout_conf_1(hidden_layer_size, cnn = False):
     dropout_confs_2 = []
     # add all ones for dropout 1 layer
     for _ in range(127):
-        dropout_confs_2.append(list(np.ones(hidden_layer_size)))
+        dropout_confs_2.append(list(np.ones(opt_hidden_layer_size)))
 
     if cnn:
         dropout_confs_1 = np.resize(dropout_confs_1, (len(dropout_confs_1), 16))
@@ -133,7 +135,9 @@ def dropout_conf_2(hidden_layer_size, cnn=False):
         dropout_confs_1 = np.reshape(dropout_confs_1, (len(dropout_confs_1), 4, 4))
     return dropout_confs_1, dropout_confs_2
 
-def dropout_conf_3(hidden_layer_size, cnn=False):
+def dropout_conf_3(hidden_layer_size, opt_hidden_layer_size = None, cnn = False):
+    if opt_hidden_layer_size == None:
+        opt_hidden_layer_size = hidden_layer_size
     dropout_confs_1 = []
     # add all ones for dropout 2
     for _ in range(hidden_layer_size * 2):
@@ -161,25 +165,4 @@ def dropout_conf_3(hidden_layer_size, cnn=False):
     if cnn:
         dropout_confs_1 = np.resize(dropout_confs_1, (len(dropout_confs_1), 16))
         dropout_confs_1 = np.reshape(dropout_confs_1, (len(dropout_confs_1), 4, 4))
-    return dropout_confs_1, dropout_confs_2
-
-def dropout_conf_4():
-    dropout_confs_1 = []
-    # input pairs
-    do_set = set()
-    for i in range(14):
-        for x in itertools.combinations(np.arange(14), i):
-            dropout = np.ones(14)
-            for z in x:
-                dropout[z] = 0
-            drop_rate = len(x) / 14
-            dropout = dropout * (1 / (1 - drop_rate))
-            do_set.add(tuple(dropout))
-
-    for s in do_set:
-        dropout_confs_1.append(list(s))
-    dropout_confs_2 = []
-    # add all ones for dropout 1 layer
-    for _ in range(len(dropout_confs_1)):
-        dropout_confs_2.append(list(np.ones(16)))
     return dropout_confs_1, dropout_confs_2
