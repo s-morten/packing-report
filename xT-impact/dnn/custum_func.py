@@ -1,4 +1,4 @@
-import  keras.backend as K
+import keras.backend as K
 from keras.layers import Layer
 import numpy as np
 import itertools
@@ -7,12 +7,13 @@ import itertools
 def my_loss(y_true, y_pred):
     diff = y_true - y_pred
     dist = (y_true[:, 0] - y_true[:, 1]) - (y_pred[:, 0] - y_pred[:, 1])
-    mse = (K.square(diff[:,0]) + K.square(diff[:,1]) + K.square(dist)) / 3
+    mse = (K.square(diff[:, 0]) + K.square(diff[:, 1]) + K.square(dist)) / 3
     return mse
 
+
 def my_acc(y_true, y_pred):
-    true_winner = y_true[:,0] - y_true[:,1]
-    pred_winner = K.round(y_pred[:,0] - y_pred[:,1])
+    true_winner = y_true[:, 0] - y_true[:, 1]
+    pred_winner = K.round(y_pred[:, 0] - y_pred[:, 1])
     true_winner = K.round(K.clip(true_winner, -1, 1))
     pred_winner = K.round(K.clip(pred_winner, -1, 1))
     equal_tensor = K.equal(true_winner, pred_winner)
@@ -21,6 +22,7 @@ def my_acc(y_true, y_pred):
     count_all = K.greater_equal(true_winner, const_minus_one)
     count_all = K.sum(K.cast(count_all, "int32"))
     return count_equal / count_all
+
 
 class ExponentialLayer(Layer):
     def __init__(self, num_outputs):
@@ -32,7 +34,8 @@ class ExponentialLayer(Layer):
 
     def call(self, inputs):
         return K.exp(inputs)
-  
+
+
 class PowLayer(Layer):
     def __init__(self, num_outputs, pow_degree):
         super(PowLayer, self).__init__()
@@ -45,16 +48,17 @@ class PowLayer(Layer):
     def call(self, inputs):
         return K.pow(inputs, self.pow_degree)
 
+
 class ControlledDropoutLayer(Layer):
     def __init__(self, dropout_list, **kwargs):
         """
-        dropout_list: A list of dropout rates to apply at each training step. The length of the list should equal the 
+        dropout_list: A list of dropout rates to apply at each training step. The length of the list should equal the
                       number of training steps.
         """
         super(ControlledDropoutLayer, self).__init__(**kwargs)
         self.dropout_list = dropout_list
         self.step = 0
-        
+
     def build(self, input_shape):
         super(ControlledDropoutLayer, self).build(input_shape)
 
@@ -63,16 +67,17 @@ class ControlledDropoutLayer(Layer):
         dropout_conf = self.dropout_list[self.step]
         self.step += 1
         if self.step >= len(self.dropout_list):
-            self.step=0
+            self.step = 0
         # Apply dropout to the inputs
         return inputs * K.constant(dropout_conf)
-    
+
     # def get_config(self):
     #     config = super().get_config()
     #     config.update({"dropout_list": self.dropout_list})
     #     return config
-    
-def dropout_conf_1(hidden_layer_size, opt_hidden_layer_size = None, cnn = False):
+
+
+def dropout_conf_1(hidden_layer_size, opt_hidden_layer_size=None, cnn=False):
     if opt_hidden_layer_size == None:
         opt_hidden_layer_size = hidden_layer_size
     dropout_confs_1 = []
@@ -82,8 +87,8 @@ def dropout_conf_1(hidden_layer_size, opt_hidden_layer_size = None, cnn = False)
         for x in itertools.permutations(np.arange(7), i):
             dropout = np.ones(14)
             for z in x:
-                dropout[(z*2)] = 0
-                dropout[(z*2)+1] = 0
+                dropout[(z * 2)] = 0
+                dropout[(z * 2) + 1] = 0
             drop_rate = len(x) / 7
             dropout = dropout * (1 / (1 - drop_rate))
             do_set.add(tuple(dropout))
@@ -100,6 +105,7 @@ def dropout_conf_1(hidden_layer_size, opt_hidden_layer_size = None, cnn = False)
         dropout_confs_1 = np.reshape(dropout_confs_1, (len(dropout_confs_1), 4, 4))
     return dropout_confs_1, dropout_confs_2
 
+
 def dropout_conf_2(hidden_layer_size, cnn=False):
     dropout_confs_1 = []
     do_set = set()
@@ -108,7 +114,7 @@ def dropout_conf_2(hidden_layer_size, cnn=False):
             # all ones, except important
             dropout = np.ones(14)
             for z in x:
-                dropout[(z + 8)] = 0 # 8 other features before
+                dropout[(z + 8)] = 0  # 8 other features before
             drop_rate = len(x) / 14
             dropout = dropout * (1 / (1 - drop_rate))
             do_set.add(tuple(dropout))
@@ -119,7 +125,7 @@ def dropout_conf_2(hidden_layer_size, cnn=False):
             dropout[10] = 1
             dropout[11] = 1
             for z in x:
-                dropout[(z + 8)] = 0 # 8 other features before
+                dropout[(z + 8)] = 0  # 8 other features before
             drop_rate = (10 + len(x)) / 14
             dropout = dropout * (1 / (1 - drop_rate))
             do_set.add(tuple(dropout))
@@ -135,7 +141,8 @@ def dropout_conf_2(hidden_layer_size, cnn=False):
         dropout_confs_1 = np.reshape(dropout_confs_1, (len(dropout_confs_1), 4, 4))
     return dropout_confs_1, dropout_confs_2
 
-def dropout_conf_3(hidden_layer_size, opt_hidden_layer_size = None, cnn = False):
+
+def dropout_conf_3(hidden_layer_size, opt_hidden_layer_size=None, cnn=False):
     if opt_hidden_layer_size == None:
         opt_hidden_layer_size = hidden_layer_size
     dropout_confs_1 = []
@@ -157,7 +164,7 @@ def dropout_conf_3(hidden_layer_size, opt_hidden_layer_size = None, cnn = False)
             dropout = np.zeros(hidden_layer_size)
             for z in x:
                 dropout[(z)] = 1
-            drop_rate = (hidden_layer_size-len(x)) / hidden_layer_size
+            drop_rate = (hidden_layer_size - len(x)) / hidden_layer_size
             dropout = dropout * (1 / (1 - drop_rate))
             do_set.add(tuple(dropout))
     for s in do_set:
