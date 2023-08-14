@@ -5,7 +5,9 @@ from dash import html
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, html
+import webbrowser
 
+html_script = '<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="mortenstehR" data-description="Support me on Buy me a coffee!" data-message="" data-color="#40DCA5" data-position="Right" data-x_margin="18" data-y_margin="18"></script>'
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SLATE], use_pages=True)
 app.layout = html.Div([
     html.Div([
@@ -18,7 +20,20 @@ app.layout = html.Div([
             html.Div(
                 dcc.Link(
                     f"Test", href="/test"
-            ))
+            )),
+            # Button to open the "Buy Me a Coffee" widget in a new window
+            html.A([
+                html.Img(
+                    src=app.get_asset_url('Ma.png'),
+                    style={
+                        'height' : '20%',
+                        'width' : '20%',
+                        'float' : 'left',
+                        'position' : 'relative',
+                        'padding-top' : 0,
+                        'padding-right' : 0
+                    })
+            ], href="https://www.buymeacoffee.com/mortenstehR")
         ],
             id="offcanvas",
             title="Title",

@@ -6,7 +6,7 @@ import pandas as pd
 dash.register_page(__name__)
 
 def draw_table():
-    df_example_1 = pd.read_csv("/home/morten/Develop/packing-report/website/tables.csv", sep=",")
+    df_example_1 = pd.read_csv("/home/morten/Develop/packing-report/webpage/tables.csv", sep=",")
     ncols = 10
     nrows = df_example_1.shape[0]
     positions = [0.25, 1, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5]
