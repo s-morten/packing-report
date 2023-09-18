@@ -7,12 +7,13 @@ from player import Player
 
 
 class GameTimeline:
-    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime) -> None:
+    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, database_handler) -> None:
         # get necessary dataframes
         self.events = ws.read_events(match_id=[game_id])
         self.loader = ws.read_events(match_id=[game_id], output_fmt='loader')
         self.loader_players_df = self.loader.players(game_id)
         self.df_teams = self.loader.teams(game_id=game_id)
+        self.dbh = database_handler
 
         self.game_date = game_date
         self.game_id = game_id
@@ -36,7 +37,7 @@ class GameTimeline:
             general_info_dict[player]["team_name"] = self.df_teams[self.df_teams["team_id"] == general_info_dict[player]["team_id"]]["team_name"].values[0]
             general_info_dict[player]["player_name"] = player_df.player_name.values[0]
             general_info_dict[player]["starter"] = player_df.is_starter.values[0]
-
+            general_info_dict[player]["kit_number"] = player_df.jersey_number.values[0]
         self.general_info_dict = general_info_dict
 
     def _create_player_goal_minute_mapping(self):
@@ -151,10 +152,11 @@ class GameTimeline:
         player_general_infos = []
         for player in self.player_goal_minute_mapping:
             # create timeline entry
-            proto_player = Player(int(player), 
+            proto_player = Player(self.dbh, int(player), 
                                   self.general_info_dict[player]["player_name"],
                                   self.general_info_dict[player]["team_id"],
                                   self.general_info_dict[player]["team_name"],
+                                  self.general_info_dict[player]["kit_number"],
                                   self.game_date)
             player_elo = proto_player.get_elo(self.game_date)
 

@@ -7,12 +7,14 @@ from datetime import datetime
 from unidecode import unidecode
 import numpy as np
 
+from gde_utils import to_season
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from game_timeline import GameTimeline
 
 class Player():
-    def __init__(self, player_id, player_name, team_id, team_name, game_date : datetime, proto_file_path = "/home/morten/Develop/packing-report/Goal-Difference-Elo-GDE/proto_db"):
+    def __init__(self, dbh, player_id, player_name, team_id, team_name, kit_number, game_date : datetime, proto_file_path = "/home/morten/Develop/packing-report/Goal-Difference-Elo-GDE/proto_db"):
         # check if data exists, true -> open, false -> create
         self.player_id = player_id
         self.proto_file_path = proto_file_path
@@ -22,26 +24,13 @@ class Player():
             self.player_proto = PlayerProto()
             self.player_proto.player_id = player_id
             self.player_proto.player_name = player_name
-            year = int(game_date.year)
-            self.player_proto.born = self._get_birthday(player_name, team_name, year)
+            season = to_season(game_date)
+            self.player_proto.born = self._get_birthday(dbh, team_name, kit_number, season)
             self._write_player_proto(self.proto_file_path, self.player_id)
 
-    def _get_birthday(self, player_name, team_name, year, only_surname=False, player_database="/home/morten/Develop/packing-report/Goal-Difference-Elo-GDE/player_birthday_db.csv"):
-        player_births = pd.read_csv(player_database, sep=";")
-        found, found_name, birthday = self._find_player(player_name, team_name, year, player_births, only_surname)
-        if found:
-            return datetime.strptime(birthday, "%Y-%m-%d")
-        found, found_name, birthday = self._find_player(player_name, team_name, year+1, player_births, only_surname)
-        if found:
-            return datetime.strptime(birthday, "%Y-%m-%d")
-        found, found_name, birthday = self._find_player(player_name, team_name, year-1, player_births, only_surname)
-        if found:
-            return datetime.strptime(birthday, "%Y-%m-%d")
-        
-        if not only_surname:
-            return self._get_birthday(player_name, team_name, year, True)
-        
-        print(f"Age not found for {player_name}")
+    def _get_birthday(self, dbh, team_name, kit_number, year):
+        print(year)
+        player_birthday = dbh.get_player_age(team_name, kit_number, year)
         return datetime.strptime(datetime.now().strftime('%Y-%m-%d'), "%Y-%m-%d")
     
     def _find_player(self, player_name, team_name, year, player_births, only_surname=False):
