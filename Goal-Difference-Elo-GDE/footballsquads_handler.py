@@ -10,11 +10,12 @@ import os
 import json
 
 from collections import defaultdict
+import gde_io
 
 
 class Footballsquads_handler:
-    def __init__(self, cache_location) -> None:
-        self.SKIP_LINKS = [
+    def __init__(self, cache_location:str, db_handler) -> None:
+        self.FORBIDDEN_URLS = [
             "index.html",
             "forums",
             "search.htm",
@@ -23,26 +24,28 @@ class Footballsquads_handler:
             "tou.htm",
             "squads.htm",
             "national.htm",
-            "mailto:info@footballsquads.com",
-            "../../pripol.htm",
-            "../../tou.htm",
+            "mailto:info@footballsquads.com", 
+            "features.htm",
+            "credits.htm",
+            "links.htm"
         ]
         # URL to scrape
         self.url_archive = "http://www.footballsquads.co.uk/archive.htm"
         self.cache_location = cache_location
+        self.db_handler = db_handler
     # How to test?
     def fetch_all_links_on_page(self, url: str) -> list[str]:
         link_list = []
         response = requests.get(url)
         soup = BeautifulSoup(response.content, "html.parser")
         links = soup.find_all("a")
+        
         for link in links:
             href = link.get("href")
             if href:
-                if href in self.SKIP_LINKS:
-                    continue
                 link_list.append(href)
-        return link_list
+        return self.remove_unwanted_urls(link_list)
+    
     # How to test?
     def scrape_kit_number_table(self, url: str) -> bytes:
         response = requests.get(url)
@@ -52,7 +55,7 @@ class Footballsquads_handler:
             print("Failed to fetch the page. Status code:", response.status_code)
             raise ValueError(f"Failed scraping {url}")
 
-    def extract_numbers_from_html_table(self, html_table: str) -> defaultdict[int:list]:
+    def extract_numbers_from_html_table(self, html_table: bytes) -> defaultdict[int:list]:
         kit_numbers = defaultdict(list)
         soup = BeautifulSoup(html_table, "html.parser")
         table = soup.find("div", {"id": "main"})
@@ -86,134 +89,99 @@ class Footballsquads_handler:
         if (row is None) or len(row) < 2:
             return False
         return (row[0].isdigit() and bool(row[1]))
-
+    
+    def remove_unwanted_urls(self, url_list: list[str]) -> list[str]:
+        allowed_urls = url_list.copy()
+        for url in url_list:
+            for forbidden_fruit in self.FORBIDDEN_URLS:
+                if forbidden_fruit in url:
+                    allowed_urls.remove(url)
+        return allowed_urls
+              
     def scrape_archive(self):
         # get top level leagues/seasons
-        season_links = self.get_links(self.url_archive)
-
+        season_links = self.fetch_all_links_on_page(self.url_archive)
         # get clubs
         for league_season in season_links:
-            teams = self.get_links(f"http://www.footballsquads.co.uk/{league_season}")
-            teams = teams[7:]
-            for team in teams:
-                league_season_url_split = league_season.split("/")
-                scrape_url = f"http://www.footballsquads.co.uk/{league_season_url_split[0]}/{league_season_url_split[1]}/{team}"
-                team_name = team.split("/")[1].split(".")[0]
-                file_path = f"{league_season_url_split[0]}-{league_season_url_split[1]}-{league_season_url_split[2].split('.')[0]}-{team_name}.pckl"
-                if file_path not in os.listdir(self.cache_location):
-                    print("Scraping ", scrape_url)
+            teams = self.fetch_all_links_on_page(f"http://www.footballsquads.co.uk/{league_season}")
+            league_str = league_season.split("/")[2].split(".")[0]
+            season_str = league_season.split("/")[1]
+            country_str = league_season.split("/")[0]
+            for team_url in teams:
+                scrape_url = f"http://www.footballsquads.co.uk/{country_str}/{season_str}/{team_url}"
+                team_name = team_url.split("/")[1].split(".")[0]
+                file_path = f"{season_str}_{country_str}_{league_str}_{team_name}.pckl"
+                if not gde_io.file_in_directory(file_path, self.cache_location):
+                    print(f"Fetching {scrape_url}")
+                    kit_number_table_bytes = self.scrape_kit_number_table(scrape_url)
+                    kit_number_table = self.extract_numbers_from_html_table(kit_number_table_bytes)
                 else:
                     print("Data found in cache, skip")
                     continue
-                data = self.get_table(scrape_url)
-                if not data:
-                    print("None Data found!")
-                    continue
-                with open(self.cache_location + file_path, "wb") as handle:
-                    pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                if not kit_number_table:
+                    raise ValueError("No kit number table found!")
+                gde_io.table_to_file(kit_number_table, 
+                                     self.cache_location + "/" + file_path)
                 sleep(1)
 
-    def get_infos_from_filename(self, file_name):
-        file_name_split = file_name.split("-")
-        team_name = file_name_split[4].split(".")[0]
-        league = file_name_split[3]
-        season = file_name_split[1] + "/" + file_name_split[2]
-        replaced_team_name = False
-        replaced_league = False
-        name_substitutes = json.load(
-            open("/home/morten/soccerdata/config/teamname_replacements.json")
-        )
-        for replace in name_substitutes:
-            for name in name_substitutes[replace]:
-                if team_name == name:
-                    team_name = replace
-                    replaced_team_name = True
-        name_substitutes = json.load(
-            open("/home/morten/soccerdata/config/league_replacements.json")
-        )
-        for replace in name_substitutes:
-            for name in name_substitutes[replace]:
-                if league == name:
-                    league = replace
-                    replaced_league = True
-        if replaced_team_name and not replaced_league:
-            print(f"WARNING missing name replacement for team {team_name}")
-        if replaced_team_name and replaced_league:
-            return True, team_name, league, season
-        return False, None, None, None
 
-    def cache_to_db(self, db_path, leagues):
-        # create db connection
-        db_connection = sqlite3.connect(db_path)
-        # get all files already written to db:
-        sql = """ SELECT processed from processed_footballsquads """
-        cur = db_connection.cursor()
-        cur.execute(sql)
-        rows = cur.fetchall()
-        already_processed_files = [i[0] for i in rows]
-        # get all files in cache:
-        cache_file_list = os.listdir(self.cache_location)
+
+    def cache_to_db(self, leagues: list[str] | None=None):
+
+        # get already processed files
+        already_processed_files = self.db_handler.get_processed_age_files()
+        cache_file_list = gde_io.directory_files(self.cache_location)
+        # remove already processed files
         cache_file_list_removed = [
             i for i in cache_file_list if i not in already_processed_files
         ]
         # get infos like team, league and season.
         for cache_file in cache_file_list_removed:
-            success, team_name, league, season = self.get_infos_from_filename(
+            scraped_infos = self.scrape_infos_from_filename(
                 cache_file
             )
-            if league not in leagues:
+            if (scraped_infos is None):
                 continue
-            file = open(self.cache_location + cache_file, "rb")
-            table_object = pickle.load(file)
-            file.close()
-            index = 0
-            for idx, row in enumerate(table_object):
-                if "Note:" in row[0]:
-                    index = idx
-                    only_active_players = table_object[:index]
-                    break
-                if "Players no longer at this club" in row[0]:
-                    index = idx
-                    only_active_players = table_object[:index]
-                    break
-            # if ['Players no longer at this club'] in table_object:
-            #     index = table_object.index(['Players no longer at this club'])
-            #     only_active_players = table_object[:index]
-            if index == 0:
-                only_active_players = table_object
-            complete_player_df = pd.DataFrame(
-                columns=[
-                    "Number",
-                    "Name",
-                    "Nat",
-                    "Pos",
-                    "Height",
-                    "Weight",
-                    "Date of Birth",
-                    "Birth Place",
-                    "Previous Club",
-                ]
-            )
-            active_player_df = pd.DataFrame(
-                only_active_players[1:], columns=only_active_players[0]
-            )
-            for col in active_player_df.columns:
-                complete_player_df[col] = active_player_df[col]
-            complete_player_df = complete_player_df[complete_player_df.Name != ""]
-            complete_player_df["Number"] = (
-                complete_player_df["Number"]
-                .replace("", -1)
-                .replace(np.nan, -1)
-                .astype(int)
-            )
-            complete_player_df["Height"] = complete_player_df["Height"].replace("-", "")
-            complete_player_df["Weight"] = complete_player_df["Weight"].replace("-", "")
-            if success:
-                complete_player_df.apply(
-                    lambda x: self.player_to_sql(
-                        x, team_name, league, season, db_connection
-                    ),
-                    axis=1,
-                )
-                # write file update to processed files.
-                self.update_processed_table([cache_file], db_connection)
+            replaced_team_name = scraped_infos[0]
+            replaced_league = scraped_infos[1]
+            scraped_season = scraped_infos[2]
+
+
+            if (leagues is not None) and (replaced_league not in leagues):
+                continue
+
+            age_table = gde_io.table_from_file(self.cache_location + cache_file)
+            for kit_number in age_table:
+                player_information = age_table[kit_number]
+                if len(player_information) == 7:
+                    # no nationality because of old data
+                    player_information.insert(1, "")
+                self.db_handler.playerage_player_to_sql([kit_number, *player_information, replaced_team_name, replaced_league, scraped_season])
+            self.db_handler.update_processed_table(cache_file)
+
+
+    def scrape_infos_from_filename(self, file_name):
+        file_name_split = file_name.split("_")
+        team_name = file_name_split[3].split(".")[0]
+        league = file_name_split[2]
+        season = file_name_split[0].replace("-", "/")
+        replaced_league = replace_from_config(league, "league")
+        replaced_team_name = replace_from_config(team_name, "teamname")
+        
+        if (replaced_team_name is None) and (replaced_league is not None):
+            print(f"WARNING missing name replacement for team {team_name}")
+        if (replaced_team_name is not None) and (replaced_league is not None):
+            return replaced_team_name, replaced_league, season
+        return None
+    
+def replace_from_config(initial_name: str, what: str):
+    if what not in ["league", "teamname"]:
+        raise ValueError("Only replacement options are league and teamname")
+    name_substitutes = json.load(
+        open(f"/home/morten/soccerdata/config/{what}_replacements.json")
+    )
+    for replacement in name_substitutes:
+        for to_replace in name_substitutes[replacement]:
+            if initial_name == to_replace:
+                return replacement
+    return None

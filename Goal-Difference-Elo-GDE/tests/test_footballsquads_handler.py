@@ -18,6 +18,12 @@ def test_validate_row_data():
     assert fh.validate_row_data(None) == False
     assert fh.validate_row_data(["1", "Maier"]) == True
 
+def test_scrape_kit_number_table():
+    fh = Footballsquads_handler("./../.cache_footballsquads")
+    url_list = ["./arsenal.htm", "./../index.html", "./../werder.html", "squads.htm/werder_again"]
+    assert len(fh.remove_unwanted_urls(url_list)) == 2
+    assert fh.remove_unwanted_urls(url_list) == ["./arsenal.htm", "./../werder.html"]
+
 def test_integration():
     fh = Footballsquads_handler("./../.cache_footballsquads")
     table_html = fh.scrape_kit_number_table("http://www.footballsquads.co.uk/ger/2020-2021/bundes/monchen.htm")

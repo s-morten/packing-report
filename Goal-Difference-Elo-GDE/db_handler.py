@@ -14,19 +14,27 @@ class DB_handler:
         print(team_name, kit_number, year)
         return dob
     
-    def player_to_sql(self, line, team, league, season, db_connection):
+    def get_processed_age_files(self):
+        # get all files already written to db:
+        sql = """ SELECT processed from processed_footballsquads """
+        cur = self.db_connection.cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        already_processed_files = [i[0] for i in rows]
+        return already_processed_files
+
+    def playerage_player_to_sql(self, data: list):
         sql = ''' INSERT INTO birthday_footballsquads(kit_number,name,nationality,position,height,weight,
-                  date_of_birth,place_of_birth,previous_club,team,league,season)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?,?) '''
-        cur = db_connection.cursor()
-        values = [*line.values, team, league, season]
-        cur.execute(sql, values)
-        db_connection.commit()
-        return line
-    
-    def update_processed_table(self, processed_file, db_connection):
+                    date_of_birth,place_of_birth,previous_club,team,league,season)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?) '''
+        cur = self.db_connection.cursor()
+        print(data)
+        cur.execute(sql, data)
+        self.db_connection.commit()
+
+    def update_processed_table(self, processed_file: str):
         sql = ''' Insert into processed_footballsquads(processed)
-                  VALUES(?)'''
-        cur = db_connection.cursor()
-        cur.execute(sql, processed_file)
-        db_connection.commit()
+                    VALUES(?)'''
+        cur = self.db_connection.cursor()
+        cur.execute(sql, [processed_file])
+        self.db_connection.commit()
