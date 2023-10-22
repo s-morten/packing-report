@@ -10,10 +10,10 @@ import os
 import json
 
 from collections import defaultdict
-import gde_io
+import filesystem_io.filesystem_io as filesystem_io
 
 
-class Footballsquads_handler:
+class Footballsquads_scraper:
     def __init__(self, cache_location:str, db_handler) -> None:
         self.FORBIDDEN_URLS = [
             "index.html",
@@ -111,7 +111,7 @@ class Footballsquads_handler:
                 scrape_url = f"http://www.footballsquads.co.uk/{country_str}/{season_str}/{team_url}"
                 team_name = team_url.split("/")[1].split(".")[0]
                 file_path = f"{season_str}_{country_str}_{league_str}_{team_name}.pckl"
-                if not gde_io.file_in_directory(file_path, self.cache_location):
+                if not filesystem_io.file_in_directory(file_path, self.cache_location):
                     print(f"Fetching {scrape_url}")
                     kit_number_table_bytes = self.scrape_kit_number_table(scrape_url)
                     kit_number_table = self.extract_numbers_from_html_table(kit_number_table_bytes)
@@ -120,7 +120,7 @@ class Footballsquads_handler:
                     continue
                 if not kit_number_table:
                     raise ValueError("No kit number table found!")
-                gde_io.table_to_file(kit_number_table, 
+                filesystem_io.footballsquads_table_to_file(kit_number_table, 
                                      self.cache_location + "/" + file_path)
                 sleep(1)
 
@@ -130,7 +130,7 @@ class Footballsquads_handler:
 
         # get already processed files
         already_processed_files = self.db_handler.get_processed_age_files()
-        cache_file_list = gde_io.directory_files(self.cache_location)
+        cache_file_list = filesystem_io.directory_files(self.cache_location)
         # remove already processed files
         cache_file_list_removed = [
             i for i in cache_file_list if i not in already_processed_files
@@ -150,7 +150,7 @@ class Footballsquads_handler:
             if (leagues is not None) and (replaced_league not in leagues):
                 continue
 
-            age_table = gde_io.table_from_file(self.cache_location + cache_file)
+            age_table = filesystem_io.footballsquads_table_from_file(self.cache_location + cache_file)
             for kit_number in age_table:
                 player_information = age_table[kit_number]
                 if len(player_information) == 7:

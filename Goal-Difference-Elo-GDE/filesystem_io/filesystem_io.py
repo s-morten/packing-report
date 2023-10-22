@@ -13,11 +13,11 @@ def directory_files(directory: str) -> list[str]:
     else:
         raise ValueError("Directory does not exist")
     
-def table_to_file(table_data, file_location):  
+def footballsquads_table_to_file(table_data, file_location):  
     with open(file_location, "wb") as f:
         pickle.dump(table_data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-def table_from_file(file_location):
+def footballsquads_table_from_file(file_location):
     with open(file_location, "rb") as f:
         table_object = pickle.load(f)
     return table_object
