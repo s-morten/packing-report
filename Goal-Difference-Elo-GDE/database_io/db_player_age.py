@@ -1,16 +1,15 @@
+import pandas as pd
+
 from .db_handler import DB_handler
 class DB_player_age(DB_handler):
     
     def get_player_age(self, team_name, kit_number, year):
         sql = f"SELECT date_of_birth FROM birthday_footballsquads WHERE team='{team_name}' AND season='{year}' AND kit_number={kit_number}"
-        cur = self.db_connection.cursor()
-        cur.execute(sql)
-        dob = cur.fetchall()
-        print(len(dob))
-        print(dob)
-        print(team_name, kit_number, year)
-        return dob
-    
+        birthday = pd.read_sql(sql, self.db_connection)
+        if not birthday.empty:
+            return birthday["date_of_birth"].values[0]
+        else:
+            raise ValueError
     def get_processed_player_age_files(self):
         # get all files already written to db:
         sql = """ SELECT processed from processed_footballsquads """
@@ -25,7 +24,6 @@ class DB_player_age(DB_handler):
                     date_of_birth,place_of_birth,previous_club,team,league,season)
                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?) '''
         cur = self.db_connection.cursor()
-        print(data)
         cur.execute(sql, data)
         self.db_connection.commit()
 

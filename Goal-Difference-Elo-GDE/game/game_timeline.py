@@ -2,18 +2,20 @@ import numpy as np
 import pandas as pd
 from  datetime import datetime
 import soccerdata as sd
-
-from player import Player
-
+from gde_utils.date_utils import to_season
+from gde_utils.football_data_utils import get_score
+from database_io import DB_player, DB_player_age
+import metrics.elo as elo
 
 class GameTimeline:
-    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, database_handler) -> None:
+    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, db_player: DB_player, db_player_age: DB_player_age) -> None:
         # get necessary dataframes
         self.events = ws.read_events(match_id=[game_id])
         self.loader = ws.read_events(match_id=[game_id], output_fmt='loader')
         self.loader_players_df = self.loader.players(game_id)
         self.df_teams = self.loader.teams(game_id=game_id)
-        self.dbh = database_handler
+        self.db_player = db_player
+        self.db_player_age = db_player_age
 
         self.game_date = game_date
         self.game_id = game_id
@@ -92,11 +94,11 @@ class GameTimeline:
                 players_dict[player[0]]["off"] = max(player[3], players_dict[player[0]]["off"])
         
         # get goals and minutes
-        event_dataframe = self.events[self.events["type"] == "Goal"]
+        event_dataframe = get_score(self.events, self.df_teams)
         # goal dict {key minute: value team}
         goal_dict = dict(
             zip(event_dataframe["expanded_minute"].values,
-            event_dataframe["team_id"].values)
+            event_dataframe["goal_team_id"].values)
         )
 
         # end of game, either the last minute or a red card -> game no longer representative
@@ -127,12 +129,13 @@ class GameTimeline:
         # player_goal_minute_mapping = {team_id, goals for, goals against, minutes, on, off}
         player_goal_minute_mapping = {}
         for player in players_dict:
+            player_on = players_dict[player]["on"]
             player_off = players_dict[player]["off"]
             player_team_id = players_dict[player]["team_id"]
             player_goals_for = 0
             player_goals_against = 0
             for goal in goal_dict:
-                if goal < player_off:
+                if (goal > player_on) and (goal < player_off):
                     if goal_dict[goal] == player_team_id:
                         player_goals_for += 1
                     else:
@@ -152,14 +155,7 @@ class GameTimeline:
         player_general_infos = []
         for player in self.player_goal_minute_mapping:
             # create timeline entry
-            proto_player = Player(self.dbh, int(player), 
-                                  self.general_info_dict[player]["player_name"],
-                                  self.general_info_dict[player]["team_id"],
-                                  self.general_info_dict[player]["team_name"],
-                                  self.general_info_dict[player]["kit_number"],
-                                  self.game_date)
-            player_elo = proto_player.get_elo(self.game_date)
-
+            player_elo = self.db_player.get_elo(int(player), self.game_date)
             game_timeline = np.empty(
                 self.end_of_game + 1
             )  # +1 for index of last minute
@@ -171,7 +167,7 @@ class GameTimeline:
             game_general_info[2] = (
                 self.player_goal_minute_mapping[player]["goals_for"] - self.player_goal_minute_mapping[player]["goals_against"]
             )
-            game_timeline[self.player_goal_minute_mapping[player]["on"]:self.player_goal_minute_mapping[player]["off"]] = player_elo
+            game_timeline[self.player_goal_minute_mapping[player]["on"]:self.player_goal_minute_mapping[player]["off"] + 1] = player_elo
             player_timelines.append(game_timeline)
             player_general_infos.append(game_general_info)
         
@@ -195,3 +191,33 @@ class GameTimeline:
                 game_timeline_dict[team][minute] = average_elo
 
         self.game_timeline_dict = game_timeline_dict
+
+    def handle(self):
+        for player_id in self.general_info_dict:
+            player_name = self.general_info_dict[player_id]["player_name"]
+            team_id = self.general_info_dict[player_id]["team_id"]
+            team_name = self.general_info_dict[player_id]["team_name"]
+            opposition_team_id = self.df_teams[self.df_teams["team_id"] != team_id].team_id.values[0]
+            minutes = self.player_goal_minute_mapping[int(player_id)]["minutes"]
+            starter = self.general_info_dict[int(player_id)]["starter"]
+            player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
+            player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
+            year = to_season(self.game_date)
+            if not self.db_player.player_exists(player_id): 
+                # get age
+                birthday = self.db_player_age.get_player_age(team_name, self.general_info_dict[int(player_id)]["kit_number"], year)
+                # insert to db
+                self.db_player.insert_player(int(player_id), player_name, birthday)
+
+            # update elo, elo calc
+            p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]
+            p_team_elo = np.mean([self.game_timeline_dict[team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+            opp_elo = np.mean([self.game_timeline_dict[opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+            p_elo = self.db_player.get_elo(int(player_id), self.game_date)
+            updated_elo = elo.calc_elo_update(p_mov, p_elo, p_team_elo, opp_elo, minutes)
+            # add updated elo
+            self.db_player.insert_elo(int(player_id), int(self.game_id), self.game_date, updated_elo)
+            # add new game
+
+            result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
+            self.db_player.insert_game(self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id)

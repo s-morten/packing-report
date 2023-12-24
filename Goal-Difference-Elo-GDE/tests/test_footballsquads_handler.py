@@ -3,7 +3,7 @@ import sys
 from collections import defaultdict
 
 sys.path.append("../")
-from footballsquads_scraper import Footballsquads_scraper
+from scraper.footballsquads_scraper import Footballsquads_scraper
 
 def test_extract_numbers_from_html_table():
     fh = Footballsquads_scraper("./../.cache_footballsquads")

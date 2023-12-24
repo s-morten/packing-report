@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime
 
-from player import Player
+from _deprecated.player import Player
 
 
 class GameTimeline:

@@ -7,11 +7,11 @@ from datetime import datetime
 from unidecode import unidecode
 import numpy as np
 
-from gde_utils import to_season
+from gde_utils.date_utils import to_season
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from game_timeline import GameTimeline
+    from game.game_timeline import GameTimeline
 
 class Player():
     def __init__(self, dbh, player_id, player_name, team_id, team_name, kit_number, game_date : datetime, proto_file_path = "/home/morten/Develop/packing-report/Goal-Difference-Elo-GDE/proto_db"):
