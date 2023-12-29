@@ -21,6 +21,10 @@ app.layout = html.Div([
                 dcc.Link(
                     f"Test", href="/test"
             )),
+            html.Div(
+                dcc.Link(
+                    f"GDE", href="/gde"
+            )),
             # Button to open the "Buy Me a Coffee" widget in a new window
             html.A([
                 html.Img(
