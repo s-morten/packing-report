@@ -6,7 +6,6 @@ COEF = 0.0038207
 
 # mov, player elo, team elo, opp elo, minutes -> updated elo
 def calc_elo_update(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, k=35, c=400):
-    print(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, end=" ")
     # calc average p elo 0.5 * p_elo + 0.5 * p_team_elo
     p_rating = 0.5 * p_elo + 0.5 * p_team_elo
     # calc expected value of goals based on minutes
@@ -26,5 +25,4 @@ def calc_elo_update(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, k=35
     # elo calc
     expected_game_outcome = p_rating / (p_rating + opp_rating)
     updated_score = p_elo + k * (game_result - expected_game_outcome)
-    print("-> ", updated_score)
     return updated_score

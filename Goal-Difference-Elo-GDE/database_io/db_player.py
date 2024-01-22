@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime
 from .db_handler import DB_handler
+from scraper.club_elo_scraper import ClubEloScraper
 
 class DB_player(DB_handler):
     def insert_player(self, id: int, name: str, birthday: datetime):
@@ -35,7 +36,7 @@ class DB_player(DB_handler):
                             game_date, int(team_id)])
         self.db_connection.commit()
 
-    def get_elo(self, id: int, date: datetime) -> float:
+    def get_elo(self, id: int, date: datetime, league: str) -> float:
         """ Extracts the Elo per player from the database
             Returns default value if player does not exists
         """
@@ -47,7 +48,7 @@ class DB_player(DB_handler):
                 """
         elo_result = pd.read_sql(query, self.db_connection)
         if elo_result.empty:
-            return 1000 # TODO get from elo 
+            return ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(date, format="%Y-%m-%d"), league)
         return elo_result["elo_value"].values[0]
         
     def player_exists(self, id: int) -> bool:

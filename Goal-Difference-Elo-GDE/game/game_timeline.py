@@ -8,7 +8,7 @@ from database_io import DB_player, DB_player_age
 import metrics.elo as elo
 
 class GameTimeline:
-    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, db_player: DB_player, db_player_age: DB_player_age) -> None:
+    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, league: str,  db_player: DB_player, db_player_age: DB_player_age) -> None:
         # get necessary dataframes
         self.events = ws.read_events(match_id=[game_id])
         self.loader = ws.read_events(match_id=[game_id], output_fmt='loader')
@@ -19,6 +19,7 @@ class GameTimeline:
 
         self.game_date = game_date
         self.game_id = game_id
+        self.game_league = league
 
         # create game timeline dict
         self._create_player_goal_minute_mapping()
@@ -155,7 +156,7 @@ class GameTimeline:
         player_general_infos = []
         for player in self.player_goal_minute_mapping:
             # create timeline entry
-            player_elo = self.db_player.get_elo(int(player), self.game_date)
+            player_elo = self.db_player.get_elo(int(player), self.game_date, self.game_league)
             game_timeline = np.empty(
                 self.end_of_game + 1
             )  # +1 for index of last minute
@@ -213,7 +214,7 @@ class GameTimeline:
             p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]
             p_team_elo = np.mean([self.game_timeline_dict[team_id][str(minute)] for minute in range(player_on, player_off + 1)])
             opp_elo = np.mean([self.game_timeline_dict[opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
-            p_elo = self.db_player.get_elo(int(player_id), self.game_date)
+            p_elo = self.db_player.get_elo(int(player_id), self.game_date, self.game_league)
             updated_elo = elo.calc_elo_update(p_mov, p_elo, p_team_elo, opp_elo, minutes)
             # add updated elo
             self.db_player.insert_elo(int(player_id), int(self.game_id), self.game_date, updated_elo)

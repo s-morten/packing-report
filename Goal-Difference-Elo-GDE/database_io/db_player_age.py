@@ -9,7 +9,8 @@ class DB_player_age(DB_handler):
         if not birthday.empty:
             return birthday["date_of_birth"].values[0]
         else:
-            raise ValueError
+            return ("07-05-98")
+            # raise ValueError
     def get_processed_player_age_files(self):
         # get all files already written to db:
         sql = """ SELECT processed from processed_footballsquads """
