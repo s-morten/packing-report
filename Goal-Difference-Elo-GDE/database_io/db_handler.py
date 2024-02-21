@@ -1,6 +1,7 @@
-import sqlite3
-
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 class DB_handler:
     def __init__(self, db_path):
-        self.db_connection = sqlite3.connect(db_path)
+        engine = create_engine(f'sqlite:///{db_path}', echo=True)
+        self.session = Session(engine)
 
