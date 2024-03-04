@@ -221,4 +221,4 @@ class GameTimeline:
             # add new game
 
             result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
-            self.db_player.insert_game(self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, expected_game_result, roundend_expected_game_result)
+            self.db_player.insert_game(self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, expected_game_result, roundend_expected_game_result, self.game_league)
