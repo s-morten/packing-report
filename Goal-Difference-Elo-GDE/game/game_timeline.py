@@ -204,9 +204,10 @@ class GameTimeline:
             player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
             player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
             year = to_season(self.game_date)
-            if not self.db_player.player_exists(player_id): 
+            if not self.db_player.player_exists(int(player_id)): 
                 # get age
-                birthday = self.db_player_age.get_player_age(team_name, self.general_info_dict[int(player_id)]["kit_number"], year)
+                # birthday = self.db_player_age.get_player_age(team_name, self.general_info_dict[int(player_id)]["kit_number"], year)
+                birthday = "07-05-98"
                 # insert to db
                 self.db_player.insert_player(int(player_id), player_name, birthday)
 

@@ -27,46 +27,47 @@ def layout(app):
                 dbc.Col(),
                 dbc.Col(dmc.DatePicker(
                             id="date-picker",
-                            label="Start Date",
-                            description="You can also provide a description",
+                            label="Point in time",
+                            #description="You can also provide a description",
                             minDate=date(2020, 8, 5),
                             value=datetime.now().date(),
-                            style={"width": 200},
+                            #style={"width": 200},
                         )), # league
                 dbc.Col(dmc.NumberInput(
-                            label="Your weight in kg",
-                            description="From 0 to infinity, in steps of 5",
-                            value=5,
+                            label="Max Player Age",
+                            #description="From 0 to infinity, in steps of 5",
+                            value=50,
                             min=0,
-                            step=5,
-                            style={"width": 250},
+                            step=1,
+                            #style={"width": 250},
                         )), # teams
-                dbc.Col(        dmc.MultiSelect(
-            label="Select frameworks",
-            placeholder="Select all you like!",
-            id="framework-multi-select",
-            value=["ng", "vue"],
-            data=[
-                {"value": "react", "label": "React"},
-                {"value": "ng", "label": "Angular"},
-                {"value": "svelte", "label": "Svelte"},
-                {"value": "vue", "label": "Vue"},
-            ],
-            style={"width": 400, "marginBottom": 10},
-        )), # minutes
-                dbc.Col(        dmc.MultiSelect(
-            label="Select frameworks",
-            placeholder="Select all you like!",
-            id="framework-multi-select",
-            value=["ng", "vue"],
-            data=[
-                {"value": "react", "label": "React"},
-                {"value": "ng", "label": "Angular"},
-                {"value": "svelte", "label": "Svelte"},
-                {"value": "vue", "label": "Vue"},
-            ],
-            style={"width": 400, "marginBottom": 10},
-        )), # last update
+                dbc.Col(        
+                    dmc.MultiSelect(
+                        label="League",
+                        placeholder="*",
+                        id="league-select",
+                        value=["GER-Bundesliga"],
+                        # TODO get by query
+                        data=[
+                            {"value": "GER-Bundesliga", "label": "Bundesliga"},
+                            {"value": "GER-Bundesliga2", "label": "2. Bundesliga"},
+                        ],
+                        #style={"width": 400, "marginBottom": 10},
+                    )), # minutes
+                dbc.Col(        
+                    dmc.MultiSelect(
+                        label="Select frameworks",
+                        placeholder="Select all you like!",
+                        id="framework-multi-select",
+                        value=["ng", "vue"],
+                        data=[
+                            {"value": "react", "label": "React"},
+                            {"value": "ng", "label": "Angular"},
+                            {"value": "svelte", "label": "Svelte"},
+                            {"value": "vue", "label": "Vue"},
+                        ],
+                        #style={"width": 400, "marginBottom": 10},
+                    )), # last update
                 dbc.Col(dbc.Button("Commit", id="commit-button", outline=True, color="dark", size="sm"), align="center")
             ],
             justify="around"
@@ -92,7 +93,39 @@ def layout(app):
         fluid=True
     )
 
-def create_query(entries_per_page, prev_page_clicks, next_page_clicks):
+class Elo(declarative_base()):
+    __tablename__ = "elo"
+
+    player_id = Column(Integer, primary_key=True)
+    game_id = Column(Integer, primary_key=True)
+    game_date = Column(String)
+    elo_value = Column(Float)
+
+class Player(declarative_base()):
+    __tablename__ = "player"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    birthday = Column(String)
+
+class Games(declarative_base()):
+    __tablename__ = "games"
+
+    game_id = Column(Integer, primary_key=True)
+    player_id = Column(Integer, primary_key=True)
+    minutes = Column(Integer)
+    starter = Column(Integer)
+    opposition_team_id = Column(Integer)
+    result = Column(String)
+    elo = Column(Float)
+    opposition_elo = Column(Float)
+    game_date = Column(String)
+    team_id = Column(Integer)
+    expected_game_result = Column(Float)
+    roundend_expected_game_result = Column(Float)
+    league = Column(String)
+
+def create_query(entries_per_page, prev_page_clicks, next_page_clicks, league_select):
     # Subquery to get the latest game_date for each player
     dist_elo = (
         session.query(
@@ -108,7 +141,8 @@ def create_query(entries_per_page, prev_page_clicks, next_page_clicks):
         session.query(
             dist_elo.c.player_id,
             Elo.game_date,
-            Elo.elo_value
+            Elo.elo_value, 
+            Elo.game_id
         )
         .join(Elo, (
             Elo.player_id == dist_elo.c.player_id
@@ -127,9 +161,13 @@ def create_query(entries_per_page, prev_page_clicks, next_page_clicks):
             joined_elo.c.elo_value,
             Player.id,
             Player.name,
-            Player.birthday
+            Player.birthday, 
+            Games.league, 
+            Games.team_id
         )
         .join(Player, joined_elo.c.player_id == Player.id)
+        .join(Games, (Games.game_id == joined_elo.c.game_id) & (Games.player_id == joined_elo.c.player_id))
+        .filter(Games.league.in_(league_select))
         .order_by(joined_elo.c.elo_value.desc())
         .limit(entries_per_page)
         .offset(max(0, (prev_page_clicks - 2) * entries_per_page) if prev_page_clicks > 0
@@ -147,10 +185,11 @@ def register_callbacks(app):
             Input('entries-per-page', 'value'),
             Input('prev-page-button', 'n_clicks'),
             Input('next-page-button', 'n_clicks'),
+            Input('league-select', 'value'),
         ]
     )
-    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks):
-        result = create_query(entries_per_page, prev_page_clicks, next_page_clicks)
+    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select):
+        result = create_query(entries_per_page, prev_page_clicks, next_page_clicks, league_select)
         elo_df = pd.read_sql(result.statement, engine)
         elo_df = elo_df[["Rk", "id", "name", "birthday", "game_date", "elo_value"]]
         elo_df = elo_df.rename(columns={"id": "ID", "name": "Name", "birthday": "Birthday", "game_date": "Last updated", "elo_value": "GDE"})

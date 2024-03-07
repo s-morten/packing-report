@@ -39,7 +39,9 @@ class DB_player(DB_handler):
         league = Column(String)
 
     def insert_player(self, id: int, name: str, birthday: datetime):
-        player = self.Player(name=name, id=id, birthday=datetime.strptime(birthday, "%d-%m-%y").strftime("%Y-%m-%d"))
+        birthday = datetime.strptime(birthday, "%d-%m-%y").strftime("%Y-%m-%d")
+        player = self.Player(name=str(name), id=int(id), birthday=birthday)
+        # print(player)
         self.session.add(player)
         self.session.commit()
 
@@ -84,7 +86,7 @@ class DB_player(DB_handler):
         
     def player_exists(self, id: int) -> bool:
         query_result = self.session.query(self.Player).filter(self.Player.id == id).first()
-        return (not query_result)
+        return not (query_result is None)
 
     def average_elo_by_league(self, league: str) -> float:
         pre_select = self.session.query(

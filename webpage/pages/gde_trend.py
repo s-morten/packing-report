@@ -6,7 +6,7 @@ import sqlite3
 import matplotlib.pyplot as plt
 # from app import colors, app
 import pandas as pd
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Float, DateTime, func, and_
+from sqlalchemy import create_engine, Column, Integer, String, MetaData, Float, DateTime, func, and_, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 import dash_bootstrap_components as dbc
@@ -59,6 +59,12 @@ def create_query(player_id):
 
     return result
 
+def top_100_all_time():
+    subquery = session.query(func.max(Elo.elo_value).label("max_elo")).group_by(Elo.player_id).subquery()
+    # Query to retrieve the 100th highest elo_value from the max elo values
+    hundredth_highest_elo = session.query(subquery.c.max_elo).order_by(desc(subquery.c.max_elo)).limit(1).offset(99).scalar()
+    return hundredth_highest_elo
+
 def register_callbacks(app):
     @app.callback(
         Output('elo_trend', 'figure'),
@@ -73,6 +79,7 @@ def register_callbacks(app):
                                                                               "result", "game_elo", "opposition_elo", "game_date", 
                                                                               "team_id", "expected_game_result", "roundend_expected_game_result"
                                                                             ], color_discrete_sequence=[colors["middle"]])
+        fig.add_hline(y=top_100_all_time(), line_width=2, line_dash="dash", line_color=colors["dark"])
         fig.update_layout(
             plot_bgcolor=colors["background"],  # Set the background color
             xaxis=dict(gridcolor=colors["dark"], tickfont=dict(color=colors["dark"])),
@@ -92,7 +99,7 @@ def register_callbacks(app):
         fig.update_yaxes(
             title_font=dict(color=colors["dark"])
         )
-
+        # TODO image not showing
         fig.update_layout(
             images=[dict(
                 source="/home/morten/Develop/packing-report/webpage/assets/simple_logo.jpg",
