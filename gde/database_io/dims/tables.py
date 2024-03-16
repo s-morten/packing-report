@@ -25,3 +25,8 @@ class Games(declarative_base()):
     expected_game_result = Column(Float)
     roundend_expected_game_result = Column(Float)
     league = Column(String)
+
+class Processed_Footballsquads(declarative_base()):
+    __tablename__ = "processed_footballsquads"
+
+    processed = Column(String, primary_key=True)
