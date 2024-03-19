@@ -11,10 +11,10 @@ import json
 
 from collections import defaultdict
 import filesystem_io.filesystem_io as filesystem_io
-
+from gde.database_io.db_handler import DB_handler
 
 class Footballsquads_scraper:
-    def __init__(self, cache_location:str, db_handler) -> None:
+    def __init__(self, cache_location:str, db_handler: DB_handler) -> None:
         self.FORBIDDEN_URLS = [
             "index.html",
             "forums",
@@ -129,7 +129,7 @@ class Footballsquads_scraper:
     def cache_to_db(self, leagues: list[str] | None=None):
 
         # get already processed files
-        already_processed_files = self.db_handler.get_processed_age_files()
+        already_processed_files = self.db_handler.player_age.get_processed_player_age_files()
         cache_file_list = filesystem_io.directory_files(self.cache_location)
         # remove already processed files
         cache_file_list_removed = [
@@ -149,15 +149,14 @@ class Footballsquads_scraper:
 
             if (leagues is not None) and (replaced_league not in leagues):
                 continue
-
             age_table = filesystem_io.footballsquads_table_from_file(self.cache_location + cache_file)
             for kit_number in age_table:
                 player_information = age_table[kit_number]
                 if len(player_information) == 7:
                     # no nationality because of old data
                     player_information.insert(1, "")
-                self.db_handler.playerage_player_to_sql([kit_number, *player_information, replaced_team_name, replaced_league, scraped_season])
-            self.db_handler.update_processed_table(cache_file)
+                self.db_handler.player_age.player_age_to_sql([kit_number, *player_information, replaced_team_name, replaced_league, scraped_season])
+            self.db_handler.player_age.update_processed_player_age(cache_file)
 
 
     def scrape_infos_from_filename(self, file_name):
@@ -169,11 +168,12 @@ class Footballsquads_scraper:
         replaced_team_name = replace_from_config(team_name, "teamname")
         
         if (replaced_team_name is None) and (replaced_league is not None):
+            return None
+        if (replaced_team_name is None) and (replaced_league is not None):
             print(f"WARNING missing name replacement for team {team_name}")
+            return None
         if (replaced_team_name is not None) and (replaced_league is not None):
-            return replaced_team_name, replaced_league, season
-        return None
-    
+            return replaced_team_name, replaced_league, season    
 def replace_from_config(initial_name: str, what: str):
     if what not in ["league", "teamname"]:
         raise ValueError("Only replacement options are league and teamname")

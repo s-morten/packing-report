@@ -1,8 +1,8 @@
-from gde.database_io.db_handler import DB_handler
+from gde.database_io.db_handler_abs import DB_handler_abs
 from gde.database_io.faks import Birthday_Footballsquads
 from gde.database_io.dims import Processed_Footballsquads
 
-class DB_player_age(DB_handler):
+class DB_player_age(DB_handler_abs):
     
     def get_player_age(self, team_name, kit_number, year):
         player = self.session.query(Birthday_Footballsquads.date_of_birth).filter(
@@ -25,17 +25,17 @@ class DB_player_age(DB_handler):
 
     def player_age_to_sql(self, data: list):
         player = Birthday_Footballsquads(kit_number = data[0],
-                                            name = data[1],
-                                            nationality = data[2],
-                                            position = data[3],
-                                            height = data[4],
-                                            weight = data[5],
-                                            date_of_birth = data[6],
-                                            place_of_birth = data[7],
-                                            previous_club = data[8],
-                                            team = data[9],
-                                            league = data[10],
-                                            season = data[11])
+                                        name = data[1],
+                                        nationality = data[2],
+                                        position = data[3],
+                                        height = data[4],
+                                        weight = data[5],
+                                        date_of_birth = data[6],
+                                        place_of_birth = data[7],
+                                        previous_club = data[8],
+                                        team = data[9],
+                                        league = data[10],
+                                        season = data[11])
         self.session.add(player)
         self.session.commit()
 

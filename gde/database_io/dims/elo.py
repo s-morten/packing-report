@@ -1,11 +1,11 @@
 from datetime import datetime
 from scraper.club_elo_scraper import ClubEloScraper
-from gde.database_io.db_handler import DB_handler
+from gde.database_io.db_handler_abs import DB_handler_abs
 import pandas as pd
 from gde.database_io.dims import Elo, Games
 from sqlalchemy import func
 
-class DB_elo(DB_handler):
+class DB_elo(DB_handler_abs):
 
     def insert_elo(self, id: int, game_id: int, date: datetime, elo: float):
         elo = Elo(player_id=id, game_id=game_id, game_date=date.strftime("%Y-%m-%d"), elo_value=elo)

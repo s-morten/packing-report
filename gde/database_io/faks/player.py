@@ -1,13 +1,10 @@
-from gde.database_io.db_handler import DB_handler
+from gde.database_io.db_handler_abs import DB_handler_abs
 from datetime import datetime
 from sqlalchemy import func
 from gde.database_io.dims import Games
 from gde.database_io.faks import Player
 
-class DB_player():
-    def __init__(self, session):
-        self.session = session
-
+class DB_player(DB_handler_abs):
     def insert_player(self, id: int, name: str, birthday: datetime):
         birthday = datetime.strptime(birthday, "%d-%m-%y").strftime("%Y-%m-%d")
         player = Player(name=str(name), id=int(id), birthday=birthday)

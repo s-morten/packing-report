@@ -1,12 +1,12 @@
 import pandas as pd
 from datetime import datetime
-from gde.database_io.db_handler import DB_handler
+from gde.database_io.db_handler import DB_handler_abs
 from gde.database_io.dims import Games
 
 from sqlalchemy import func
 
 
-class DB_games(DB_handler):
+class DB_games(DB_handler_abs):
     def insert_game(self, game_id: int, player_id: int, minutes: int, starter: bool, 
                     opposition_team_id: int, result: str, elo: float, opposition_elo: float, 
                     game_date: datetime, team_id: int, expected_game_result: float, 

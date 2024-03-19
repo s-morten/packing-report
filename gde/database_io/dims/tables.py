@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Float, DateTime, func
+from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 
 class Elo(declarative_base()):
