@@ -197,6 +197,8 @@ class GameTimeline:
             player_name = self.general_info_dict[player_id]["player_name"]
             team_id = self.general_info_dict[player_id]["team_id"]
             team_name = self.general_info_dict[player_id]["team_name"]
+            if not self.db_handler.team.team_exists(int(team_id)):  
+                self.db_handler.team.insert_team(int(team_id), team_name)
             opposition_team_id = self.df_teams[self.df_teams["team_id"] != team_id].team_id.values[0]
             minutes = self.player_goal_minute_mapping[int(player_id)]["minutes"]
             starter = self.general_info_dict[int(player_id)]["starter"]

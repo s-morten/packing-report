@@ -1,5 +1,5 @@
 from datetime import datetime
-from scraper.club_elo_scraper import ClubEloScraper
+from gde.scraper.club_elo_scraper import ClubEloScraper
 from gde.database_io.db_handler_abs import DB_handler_abs
 import pandas as pd
 from gde.database_io.dims import Elo, Games
