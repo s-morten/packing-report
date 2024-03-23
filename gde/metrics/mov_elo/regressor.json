@@ -1,1 +1,1 @@
-{"intercept": 0.008244001923021538, "coefficient_elo_diff": 0.0033018467356396805, "coefficient_min": 0.0009872308265998998, "version": 11}
+{"intercept": 0.008244001923021538, "coefficient_elo_diff1": 0.0033018467356396805, "coefficient_elo_diff2": -0.000033018467356396805, "coefficient_elo_diff3": 0.000003301846735639, "coefficient_min": 0.0009872308265998998, "version": 0}

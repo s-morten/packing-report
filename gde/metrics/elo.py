@@ -1,14 +1,14 @@
 import numpy as np
 import json
-from database_io import DB_player
+from database_io.db_handler import DB_handler
 from metrics.mov_elo.regressor import MOV_Regressor
 
 def read_parameters():
-    parameters = json.load(open("metrics/mov_elo/regressor.json", "r"))
-    return parameters["intercept"], parameters["coefficient_elo_diff"], parameters["coefficient_min"], parameters["version"]
+    parameters = json.load(open("gde/metrics/mov_elo/regressor.json", "r"))
+    return parameters["intercept"], parameters["coefficient_elo_diff1"], parameters["coefficient_elo_diff2"], parameters["coefficient_elo_diff3"], parameters["coefficient_min"], parameters["version"]
 
 def retrain_regressor(version):
-    number_games = DB_player("GDE.db").get_number_of_games()    
+    number_games = DB_handler("GDE.db").games.get_number_of_games()    
     if int(number_games / 300) > version:
         # update paramaters
         reg = MOV_Regressor(version)
@@ -18,15 +18,19 @@ def retrain_regressor(version):
 
 # mov, player elo, team elo, opp elo, minutes -> updated elo
 def calc_elo_update(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, k=35, c=400):
-    intercept, coef, min_coef, version = read_parameters()
+    intercept, coef1, coef2, coef3, min_coef, version = read_parameters()
     if retrain_regressor(version):
-        intercept, coef, min_coef, version = read_parameters()
+        intercept, coef1, coef2, coef3, min_coef, version = read_parameters()
         
     # calc average p elo 0.5 * p_elo + 0.5 * p_team_elo
     p_rating = 0.5 * p_elo + 0.5 * p_team_elo
     # calc expected value of goals based on minutes
     rating_diff = p_rating - opp_elo
-    regressed_game_outcome = (intercept + coef * rating_diff + min_coef * minutes) 
+    regressed_game_outcome = (intercept + 
+                              coef1 * rating_diff + 
+                              coef2 * rating_diff**2 + 
+                              coef3 * rating_diff**3 + 
+                              min_coef * minutes) 
     # player won/draw/lost based of expected value
     rounded_game_outcome = np.rint(regressed_game_outcome)
     if margin_of_victory > rounded_game_outcome: 
