@@ -23,3 +23,9 @@ class Birthday_Footballsquads(declarative_base()):
     team = Column(String, primary_key=True)
     league = Column(String)
     season = Column(String, primary_key=True)
+
+class Team(declarative_base()):
+    __tablename__ = "teams"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
