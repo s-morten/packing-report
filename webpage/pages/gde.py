@@ -14,12 +14,6 @@ from page_assets.styling import colors
 import dash_mantine_components as dmc
 from datetime import datetime, date
 
-
-engine = create_engine('sqlite:////home/morten/Develop/packing-report/Goal-Difference-Elo-GDE/GDE.db', echo=True)
-session = Session(engine)
-# Create a base class for declarative class definitions
-
-
 def layout(app):
     return dbc.Container([
         dbc.Row(                                        # Select Columns
@@ -51,6 +45,7 @@ def layout(app):
                         data=[
                             {"value": "GER-Bundesliga", "label": "Bundesliga"},
                             {"value": "GER-Bundesliga2", "label": "2. Bundesliga"},
+                            {"value": "ENG-Premier League", "label": "Prem"},
                         ],
                         #style={"width": 400, "marginBottom": 10},
                     )), # minutes
@@ -93,91 +88,8 @@ def layout(app):
         fluid=True
     )
 
-class Elo(declarative_base()):
-    __tablename__ = "elo"
 
-    player_id = Column(Integer, primary_key=True)
-    game_id = Column(Integer, primary_key=True)
-    game_date = Column(String)
-    elo_value = Column(Float)
-
-class Player(declarative_base()):
-    __tablename__ = "player"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    birthday = Column(String)
-
-class Games(declarative_base()):
-    __tablename__ = "games"
-
-    game_id = Column(Integer, primary_key=True)
-    player_id = Column(Integer, primary_key=True)
-    minutes = Column(Integer)
-    starter = Column(Integer)
-    opposition_team_id = Column(Integer)
-    result = Column(String)
-    elo = Column(Float)
-    opposition_elo = Column(Float)
-    game_date = Column(String)
-    team_id = Column(Integer)
-    expected_game_result = Column(Float)
-    roundend_expected_game_result = Column(Float)
-    league = Column(String)
-
-def create_query(entries_per_page, prev_page_clicks, next_page_clicks, league_select):
-    # Subquery to get the latest game_date for each player
-    dist_elo = (
-        session.query(
-            Elo.player_id,
-            func.max(Elo.game_date).label("game_date")
-        )
-        .group_by(Elo.player_id)
-        .subquery()
-    )
-
-    # Subquery to join dist_elo with elo table
-    joined_elo = (
-        session.query(
-            dist_elo.c.player_id,
-            Elo.game_date,
-            Elo.elo_value, 
-            Elo.game_id
-        )
-        .join(Elo, (
-            Elo.player_id == dist_elo.c.player_id
-        ) & (
-            dist_elo.c.game_date == Elo.game_date
-        ))
-        .subquery()
-    )
-
-    # Main query with ROW_NUMBER() and joining player table
-    result = (
-        session.query(
-            func.row_number().over(order_by=joined_elo.c.elo_value.desc()).label("Rk"),
-            joined_elo.c.player_id,
-            joined_elo.c.game_date,
-            joined_elo.c.elo_value,
-            Player.id,
-            Player.name,
-            Player.birthday, 
-            Games.league, 
-            Games.team_id
-        )
-        .join(Player, joined_elo.c.player_id == Player.id)
-        .join(Games, (Games.game_id == joined_elo.c.game_id) & (Games.player_id == joined_elo.c.player_id))
-        .filter(Games.league.in_(league_select))
-        .order_by(joined_elo.c.elo_value.desc())
-        .limit(entries_per_page)
-        .offset(max(0, (prev_page_clicks - 2) * entries_per_page) if prev_page_clicks > 0
-                else (next_page_clicks - 1) * entries_per_page if next_page_clicks > 0
-                else 0)
-    )
-
-    return result
-
-def register_callbacks(app):
+def register_callbacks(app, dbh):
     @app.callback(
         Output('elo_table', 'figure'),
         [
@@ -189,16 +101,14 @@ def register_callbacks(app):
         ]
     )
     def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select):
-        result = create_query(entries_per_page, prev_page_clicks, next_page_clicks, league_select)
-        elo_df = pd.read_sql(result.statement, engine)
-        elo_df = elo_df[["Rk", "id", "name", "birthday", "game_date", "elo_value"]]
-        elo_df = elo_df.rename(columns={"id": "ID", "name": "Name", "birthday": "Birthday", "game_date": "Last updated", "elo_value": "GDE"})
+        result = dbh.webpage.get_table_data(entries_per_page, prev_page_clicks, next_page_clicks, league_select)
+        result_df = pd.DataFrame(result, columns=['Rank', 'Id', 'Last Updated', 'Elo', 'Id', 'Name', 'Birth Date', 'League', 'Club ID'])
         fig = go.Figure(data=[go.Table(
-            header=dict(values=elo_df.columns,
+            header=dict(values=result_df.columns,
                         line_color=colors["dark"],
                         fill_color=colors["middle"],
                         align='center'),
-            cells=dict(values=elo_df.values.T,
+            cells=dict(values=result_df.T.values,
                     line_color=colors["dark"],
                     fill_color=colors["background"],
                     align='center'))

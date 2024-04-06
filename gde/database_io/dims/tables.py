@@ -8,6 +8,7 @@ class Elo(declarative_base()):
     game_id = Column(Integer, primary_key=True)
     game_date = Column(String)
     elo_value = Column(Float)
+    version = Column(Float)
 
 class Games(declarative_base()):
     __tablename__ = "games"
@@ -25,6 +26,7 @@ class Games(declarative_base()):
     expected_game_result = Column(Float)
     roundend_expected_game_result = Column(Float)
     league = Column(String)
+    version = Column(Float)
 
 class Processed_Footballsquads(declarative_base()):
     __tablename__ = "processed_footballsquads"

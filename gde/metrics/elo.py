@@ -7,19 +7,19 @@ def read_parameters():
     parameters = json.load(open("gde/metrics/mov_elo/regressor.json", "r"))
     return parameters["intercept"], parameters["coefficient_elo_diff1"], parameters["coefficient_elo_diff2"], parameters["coefficient_elo_diff3"], parameters["coefficient_min"], parameters["version"]
 
-def retrain_regressor(version):
-    number_games = DB_handler("GDE.db").games.get_number_of_games()    
+def retrain_regressor(version, dbh):
+    number_games = dbh.games.get_number_of_games()    
     if int(number_games / 300) > version:
         # update paramaters
         reg = MOV_Regressor(version)
-        reg.update_regressor()
+        reg.update_regressor(dbh)
         return True
     return False
 
 # mov, player elo, team elo, opp elo, minutes -> updated elo
-def calc_elo_update(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, k=35, c=400):
+def calc_elo_update(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, dbh, k=35, c=400):
     intercept, coef1, coef2, coef3, min_coef, version = read_parameters()
-    if retrain_regressor(version):
+    if retrain_regressor(version, dbh):
         intercept, coef1, coef2, coef3, min_coef, version = read_parameters()
         
     # calc average p elo 0.5 * p_elo + 0.5 * p_team_elo

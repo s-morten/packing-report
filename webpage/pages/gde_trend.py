@@ -10,7 +10,6 @@ from sqlalchemy import create_engine, Column, Integer, String, MetaData, Float, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 import dash_bootstrap_components as dbc
-from pages.gde import Elo, Player, Games
 import plotly.express as px
 from page_assets.styling import colors
 

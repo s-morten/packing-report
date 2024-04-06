@@ -1,3 +1,7 @@
+# TODO: fix this monstrosity
+import sys
+sys.path.append("/home/morten/Develop/packing-report/")
+print(sys.path)
 # file app.py
 import dash
 from dash import dcc
@@ -8,6 +12,9 @@ from dash import Input, Output, State, html
 import webbrowser
 from pages import gde, gde_trend
 import page_assets.side_components as custum_side_comp
+from gde.database_io.db_handler import DB_handler
+
+dbh = DB_handler("/home/morten/Develop/packing-report/gde/GDE.db")
 
 #html_script = '<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="mortenstehR" data-description="Support me on Buy me a coffee!" data-message="" data-color="#40DCA5" data-position="Right" data-x_margin="18" data-y_margin="18"></script>'
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX], 
@@ -31,7 +38,7 @@ def display_page(pathname):
     else:
         return html.Div()
 
-gde.register_callbacks(app)
+gde.register_callbacks(app, dbh)
 custum_side_comp.register_callbacks(app)
 gde_trend.register_callbacks(app)
 

@@ -8,10 +8,9 @@ class MOV_Regressor:
     def __init__(self, version):
         self.version = version + 1
 
-    def update_regressor(self):
+    def update_regressor(self, dbh):
         # get data
-        db = DB_handler("GDE.db")
-        df = db.games.get_all_games()
+        df = dbh.games.get_all_games()
         df["elo_diff"] = df["elo"] - df["opposition_elo"]
         df["diff"] = df["result"].apply(lambda x: int(x.split("-")[0]) - int(x.split("-")[1]))
         df["minutes"] = np.where(df["elo_diff"] < 0, df["minutes"] * -1, df["minutes"])
