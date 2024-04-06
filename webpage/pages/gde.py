@@ -23,8 +23,8 @@ def layout(app):
                             id="date-picker",
                             label="Point in time",
                             #description="You can also provide a description",
-                            minDate=date(2020, 8, 5),
-                            value=datetime.now().date(),
+                            minDate=date(2016, 8, 5),
+                            value=date(2022, 5, 1),
                             #style={"width": 200},
                         )), # league
                 dbc.Col(dmc.NumberInput(
@@ -98,11 +98,12 @@ def register_callbacks(app, dbh):
             Input('prev-page-button', 'n_clicks'),
             Input('next-page-button', 'n_clicks'),
             Input('league-select', 'value'),
+            Input('date-picker', 'value')
         ]
     )
-    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select):
-        result = dbh.webpage.get_table_data(entries_per_page, prev_page_clicks, next_page_clicks, league_select)
-        result_df = pd.DataFrame(result, columns=['Rank', 'Id', 'Last Updated', 'Elo', 'Id', 'Name', 'Birth Date', 'League', 'Club ID'])
+    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select):
+        result = dbh.webpage.get_table_data(entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select)
+        result_df = pd.DataFrame(result, columns=['Rank', 'Id', 'Last Updated', 'Elo', 'Name', 'Birth Date', 'League', 'Club'])
         fig = go.Figure(data=[go.Table(
             header=dict(values=result_df.columns,
                         line_color=colors["dark"],

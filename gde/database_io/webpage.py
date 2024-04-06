@@ -1,11 +1,11 @@
 from gde.database_io.db_handler_abs import DB_handler_abs
-from gde.database_io.faks import Player
+from gde.database_io.faks import Player, Team
 from gde.database_io.dims import Elo, Games
 from sqlalchemy import func
 
 
 class DB_webpage(DB_handler_abs):
-    def get_table_data(self, entries_per_page, prev_page_clicks, next_page_clicks, league_select):
+    def get_table_data(self, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select):
         # Subquery to get the latest game_date for each player
         dist_elo = (
             self.session.query(
@@ -39,15 +39,16 @@ class DB_webpage(DB_handler_abs):
                 joined_elo.c.player_id,
                 joined_elo.c.game_date,
                 joined_elo.c.elo_value,
-                Player.id,
                 Player.name,
                 Player.birthday, 
                 Games.league, 
-                Games.team_id
+                Team.name
+                #Games.team_id
             )
             .join(Player, joined_elo.c.player_id == Player.id)
             .join(Games, (Games.game_id == joined_elo.c.game_id) & (Games.player_id == joined_elo.c.player_id))
-            .filter(Games.league.in_(league_select))
+            .join(Team, Team.id == Games.team_id)
+            .filter(Games.league.in_(league_select), Games.game_date > date_select)
             .order_by(joined_elo.c.elo_value.desc())
             .limit(entries_per_page)
             .offset(max(0, (prev_page_clicks - 2) * entries_per_page) if prev_page_clicks > 0
