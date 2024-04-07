@@ -23,12 +23,12 @@ class DB_elo(DB_handler_abs):
                                               Elo.game_date < date).order_by(
                                                   Elo.game_date.desc()).first()
 
-        if not query_result and self.get_player_count_per_league(league) < 50:
+        if not query_result and self.get_player_count_per_league(league, version) < 50:
             league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(date, format="%Y-%m-%d"), league)
             start_elo = league_elo if starter else league_elo * 0.8
             return start_elo
         elif not query_result:
-            a = self.average_elo_by_league(league)
+            a = self.average_elo_by_league(league, version)
             return a
         elo, _ = query_result
         return elo
@@ -43,3 +43,13 @@ class DB_elo(DB_handler_abs):
         average_elo = self.session.query(func.avg(Elo.elo_value)).join(
             pre_select, (pre_select.c.player_id == Elo.player_id) & (pre_select.c.max_gd == Elo.game_date)).scalar()
         return average_elo
+    
+    def get_player_count_per_league(self, league: str, version: float) -> int:
+        pre_select = self.session.query(
+            Games.player_id,
+            func.max(Games.game_date).label('max_gd')
+        ).filter(Games.league == league, Games.version == version).group_by(Games.player_id).subquery()
+
+        # Main query to count the number of rows in the pre_select subquery
+        count_result = self.session.query(func.count()).select_from(pre_select).scalar()
+        return count_result

@@ -218,7 +218,7 @@ class GameTimeline:
             p_team_elo = np.mean([self.game_timeline_dict[team_id][str(minute)] for minute in range(player_on, player_off + 1)])
             opp_elo = np.mean([self.game_timeline_dict[opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
             p_elo = self.db_handler.elo.get_elo(int(player_id), self.game_date, self.game_league, starter, self.version)
-            updated_elo, expected_game_result, roundend_expected_game_result = elo.calc_elo_update(p_mov, p_elo, p_team_elo, opp_elo, minutes, self.db_handler)
+            updated_elo, expected_game_result, roundend_expected_game_result = elo.calc_elo_update(p_mov, p_elo, p_team_elo, opp_elo, minutes, self.db_handler, self.version)
             # add updated elo
             self.db_handler.elo.insert_elo(int(player_id), int(self.game_id), self.game_date, updated_elo, self.version)
             # add new game

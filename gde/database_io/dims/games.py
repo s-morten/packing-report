@@ -27,12 +27,3 @@ class DB_games(DB_handler_abs):
         query_result = self.session.query(Games.game_id.distinct()).filter(Games.version == version).count()
         return query_result
     
-    def get_player_count_per_league(self, league: str, version: float) -> int:
-        pre_select = self.session.query(
-            Games.player_id,
-            func.max(Games.game_date).label('max_gd')
-        ).filter(Games.league == league, Games.version == version).group_by(Games.player_id).subquery()
-
-        # Main query to count the number of rows in the pre_select subquery
-        count_result = self.session.query(func.count()).select_from(pre_select).scalar()
-        return count_result

@@ -6,17 +6,21 @@ class DB_player_age(DB_handler_abs):
     
     def get_player_age(self, team_name, kit_number, year):
         player = self.session.query(Birthday_Footballsquads.date_of_birth).filter(
-            Birthday_Footballsquads.team == team_name,
-            Birthday_Footballsquads.season == year,
-            Birthday_Footballsquads.kit_number == kit_number
-        ).first()
+            Birthday_Footballsquads.team == str(team_name),
+            Birthday_Footballsquads.season == str(year),
+            Birthday_Footballsquads.kit_number == int(kit_number)
+        )
+
+        pl_str = (str(player))
+        player = player.first()
 
         if player:
             date_of_birth = player[0]
             return date_of_birth
         else:
             print("No player found with the given criteria.")
-            return ("07-05-98")
+            return None
+            
 
     def get_processed_player_age_files(self):
         # get all files already written to db:
