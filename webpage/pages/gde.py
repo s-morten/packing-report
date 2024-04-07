@@ -12,9 +12,10 @@ from sqlalchemy.orm import sessionmaker, Session
 import dash_bootstrap_components as dbc
 from page_assets.styling import colors
 import dash_mantine_components as dmc
+import numpy as np
 from datetime import datetime, date
 
-def layout(app):
+def layout(app, dbh):
     return dbc.Container([
         dbc.Row(                                        # Select Columns
             [
@@ -22,18 +23,14 @@ def layout(app):
                 dbc.Col(dmc.DatePicker(
                             id="date-picker",
                             label="Point in time",
-                            #description="You can also provide a description",
                             minDate=date(2016, 8, 5),
                             value=date(2022, 5, 1),
-                            #style={"width": 200},
                         )), # league
                 dbc.Col(dmc.NumberInput(
                             label="Max Player Age",
-                            #description="From 0 to infinity, in steps of 5",
                             value=50,
                             min=0,
                             step=1,
-                            #style={"width": 250},
                         )), # teams
                 dbc.Col(        
                     dmc.MultiSelect(
@@ -47,28 +44,18 @@ def layout(app):
                             {"value": "GER-Bundesliga2", "label": "2. Bundesliga"},
                             {"value": "ENG-Premier League", "label": "Prem"},
                         ],
-                        #style={"width": 400, "marginBottom": 10},
                     )), # minutes
                 dbc.Col(        
                     dmc.MultiSelect(
-                        label="Select frameworks",
-                        placeholder="Select all you like!",
-                        id="framework-multi-select",
-                        value=["ng", "vue"],
-                        data=[
-                            {"value": "react", "label": "React"},
-                            {"value": "ng", "label": "Angular"},
-                            {"value": "svelte", "label": "Svelte"},
-                            {"value": "vue", "label": "Vue"},
-                        ],
-                        #style={"width": 400, "marginBottom": 10},
-                    )), # last update
+                        label="Club",
+                        id="club-multi-select"
+                    )),
                 dbc.Col(dbc.Button("Commit", id="commit-button", outline=True, color="dark", size="sm"), align="center")
             ],
             justify="around"
         ),
         dbc.Row(dbc.Col(dcc.Graph(id='elo_table'))), # Table
-        dbc.Row(                                        # Left, right
+        dbc.Row(                                     # Left, right
             [   
                 dbc.Col(dbc.Button('<-', id='prev-page-button', outline=True, color="dark", n_clicks=0, size="sm"), width=1, align="end"),
                 dbc.Col(dbc.Select(
@@ -91,6 +78,17 @@ def layout(app):
 
 def register_callbacks(app, dbh):
     @app.callback(
+        Output('club-multi-select', 'data'),
+        [
+            Input('league-select', 'value'),
+            Input('date-picker', 'value')
+        ]
+    )
+    def get_club_select(league_select, date_select):
+        clubs = dbh.webpage.get_clubs(league_select, date_select)
+        return [{"value": club, "label": club} for club in clubs]
+
+    @app.callback(
         Output('elo_table', 'figure'),
         [
             Input('commit-button', 'n_clicks'),
@@ -98,11 +96,16 @@ def register_callbacks(app, dbh):
             Input('prev-page-button', 'n_clicks'),
             Input('next-page-button', 'n_clicks'),
             Input('league-select', 'value'),
-            Input('date-picker', 'value')
+            Input('date-picker', 'value'),
+            Input('club-multi-select', 'value')
         ]
     )
-    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select):
-        result = dbh.webpage.get_table_data(entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select)
+    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, club_select):
+        # print(np.array(club_select).flatten())
+        club_select = club_select if club_select else None
+        # print(np.array(club_select).flatten())
+        # print("---")
+        result = dbh.webpage.get_table_data(entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, np.array(club_select).flatten() if club_select is not None else None)
         result_df = pd.DataFrame(result, columns=['Rank', 'Id', 'Last Updated', 'Elo', 'Name', 'Birth Date', 'League', 'Club'])
         fig = go.Figure(data=[go.Table(
             header=dict(values=result_df.columns,

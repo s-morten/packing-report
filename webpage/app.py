@@ -32,7 +32,7 @@ app.layout = html.Div([
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/gde':
-        return gde.layout(app)
+        return gde.layout(app, dbh)
     elif pathname == '/gde_trend':
         return gde_trend.layout(app)
     else:

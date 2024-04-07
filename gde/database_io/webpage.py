@@ -2,10 +2,13 @@ from gde.database_io.db_handler_abs import DB_handler_abs
 from gde.database_io.faks import Player, Team
 from gde.database_io.dims import Elo, Games
 from sqlalchemy import func
+import numpy as np
+from time import sleep
 
 
 class DB_webpage(DB_handler_abs):
-    def get_table_data(self, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select):
+    def get_table_data(self, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, club_select):
+        print(club_select)
         # Subquery to get the latest game_date for each player
         dist_elo = (
             self.session.query(
@@ -49,6 +52,7 @@ class DB_webpage(DB_handler_abs):
             .join(Games, (Games.game_id == joined_elo.c.game_id) & (Games.player_id == joined_elo.c.player_id))
             .join(Team, Team.id == Games.team_id)
             .filter(Games.league.in_(league_select), Games.game_date > date_select)
+            .filter(Team.name.in_(club_select) if club_select is not None else True)
             .order_by(joined_elo.c.elo_value.desc())
             .limit(entries_per_page)
             .offset(max(0, (prev_page_clicks - 2) * entries_per_page) if prev_page_clicks > 0
@@ -56,3 +60,16 @@ class DB_webpage(DB_handler_abs):
                     else 0)
         ).all()
         return result
+    
+    def get_clubs(self, league, date):
+        # TODO very bad solution of fixing database problems with sqlalchemy multithreading 
+        # https://stackoverflow.com/questions/41279157/connection-problems-with-sqlalchemy-and-multiple-processes
+        sleep(1)
+        result = (
+            self.session.query(
+                Team.name
+            )
+            .join(Games, Team.id == Games.team_id)
+            .filter(Games.league.in_(league), Games.game_date > date)
+        ).distinct().all()
+        return np.array(result)
