@@ -209,9 +209,13 @@ class GameTimeline:
             if not self.db_handler.player.player_exists(int(player_id)): 
                 # get age
                 birthday = self.db_handler.player_age.get_player_age(team_name, self.general_info_dict[int(player_id)]["kit_number"], year)
-                
                 # insert to db
                 self.db_handler.player.insert_player(int(player_id), player_name, birthday)
+            # if player has no bday, look again
+            if self.db_handler.player.player_has_no_bday(int(player_id)):
+                birthday = self.db_handler.player_age.get_player_age(team_name, self.general_info_dict[int(player_id)]["kit_number"], year)
+                if birthday is not None:
+                    self.db_handler.player.update_player_bday(int(player_id), birthday)
 
             # update elo, elo calc
             p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]

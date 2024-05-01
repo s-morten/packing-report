@@ -11,7 +11,7 @@ def retrain_regressor(version, dbh, elo_version):
     number_games = dbh.games.get_number_of_games(elo_version)    
     if int(number_games / 300) > version:
         # update paramaters
-        reg = MOV_Regressor(version)
+        reg = MOV_Regressor(version, elo_version)
         reg.update_regressor(dbh)
         return True
     return False

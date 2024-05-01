@@ -1,7 +1,3 @@
-# TODO: fix this monstrosity
-import sys
-sys.path.append("/home/morten/Develop/packing-report/")
-print(sys.path)
 # file app.py
 import dash
 from dash import dcc
@@ -10,7 +6,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, html
 import webbrowser
-from pages import gde, gde_trend
+from pages import gde, gde_trend, gde_league
 import page_assets.side_components as custum_side_comp
 from gde.database_io.db_handler import DB_handler
 
@@ -35,12 +31,15 @@ def display_page(pathname):
         return gde.layout(app, dbh)
     elif pathname == '/gde_trend':
         return gde_trend.layout(app)
+    elif pathname == '/gde_team':
+        return gde_league.layout(app, dbh)
     else:
         return html.Div()
 
 gde.register_callbacks(app, dbh)
 custum_side_comp.register_callbacks(app)
 gde_trend.register_callbacks(app)
+gde_league.register_callbacks(app, dbh)
 
 if __name__ == '__main__':
     app.run_server(debug=True)

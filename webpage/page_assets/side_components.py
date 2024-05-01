@@ -37,6 +37,10 @@ def offcanvas_layout(app):
                             dcc.Link(
                                 f"GDE Trend", href="/gde_trend"
                         )),
+                        html.Div(
+                            dcc.Link(
+                                f"GDE Team", href="/gde_team"
+                        )),
                         # Button to open the "Buy Me a Coffee" widget in a new window
                         html.A([
                             html.Img(
@@ -49,6 +53,7 @@ def offcanvas_layout(app):
                                     'padding-top' : 0,
                                     'padding-right' : 0
                                 })
+                                # TODO real buymeacoffe
                         ], href="https://www.buymeacoffee.com/mortenstehR"),
                         html.Img(
                                 src=app.get_asset_url('simple_logo.jpg'),

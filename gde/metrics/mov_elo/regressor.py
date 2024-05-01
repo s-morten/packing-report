@@ -5,12 +5,13 @@ from database_io.db_handler import DB_handler
 import numpy as np
 
 class MOV_Regressor:
-    def __init__(self, version):
+    def __init__(self, version, elo_version):
         self.version = version + 1
+        self.elo_version = elo_version
 
-    def update_regressor(self, dbh):
+    def update_regressor(self, dbh: DB_handler):
         # get data
-        df = dbh.games.get_all_games()
+        df = dbh.games.get_all_games(self.elo_version)
         df["elo_diff"] = df["elo"] - df["opposition_elo"]
         df["diff"] = df["result"].apply(lambda x: int(x.split("-")[0]) - int(x.split("-")[1]))
         df["minutes"] = np.where(df["elo_diff"] < 0, df["minutes"] * -1, df["minutes"])

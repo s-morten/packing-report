@@ -10,15 +10,11 @@ class DB_player_age(DB_handler_abs):
             Birthday_Footballsquads.season == str(year),
             Birthday_Footballsquads.kit_number == int(kit_number)
         )
-
-        pl_str = (str(player))
         player = player.first()
-
         if player:
             date_of_birth = player[0]
             return date_of_birth
         else:
-            print("No player found with the given criteria.")
             return None
             
 

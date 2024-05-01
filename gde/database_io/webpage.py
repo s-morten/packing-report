@@ -73,3 +73,53 @@ class DB_webpage(DB_handler_abs):
             .filter(Games.league.in_(league), Games.game_date > date)
         ).distinct().all()
         return np.array(result)
+    
+    def get_team_table(self, min_date, max_date, league):
+        max_elo_date = (
+            self.session.query(
+                Elo.player_id,
+                func.max(Elo.game_date).label("found_date")
+            )
+            .filter(Elo.game_date >= min_date)
+            .filter(Elo.game_date <= max_date)
+            .group_by(Elo.player_id)
+            .subquery()
+        )
+
+        filterd_elo = (
+            self.session.query(
+                Elo.player_id,
+                Elo.elo_value, 
+                Elo.game_id
+            )
+            .join(max_elo_date, (
+                Elo.player_id == max_elo_date.c.player_id
+            ) & (
+                max_elo_date.c.found_date == Elo.game_date
+            )).subquery()
+        )
+
+        get_games = (
+            self.session.query(
+                Games.team_id,
+                func.avg(filterd_elo.c.elo_value).label("strength")
+            )
+            .join(filterd_elo, 
+                  (Games.player_id == filterd_elo.c.player_id) 
+                  & (filterd_elo.c.game_id == Games.game_id))
+            .group_by(Games.team_id)
+            .subquery()
+        )
+
+        result = (
+            self.session.query(
+                Team.name, 
+                get_games.c.strength    
+            )
+            .join(get_games, Team.id == get_games.c.team_id)
+            .order_by(get_games.c.strength.desc())
+            # .all()      
+        )
+        print(result)
+
+        return result

@@ -152,9 +152,9 @@ class Footballsquads_scraper:
             age_table = filesystem_io.footballsquads_table_from_file(self.cache_location + cache_file)
             for kit_number in age_table:
                 player_information = age_table[kit_number]
-                if len(player_information) == 7:
-                    # no nationality because of old data
-                    player_information.insert(1, "")
+                if len(player_information) < 8:
+                    # errorenous data, skip
+                    continue
                 self.db_handler.player_age.player_age_to_sql([kit_number, *player_information, replaced_team_name, replaced_league, scraped_season])
             self.db_handler.player_age.update_processed_player_age(cache_file)
 
@@ -174,6 +174,7 @@ class Footballsquads_scraper:
             return None
         if (replaced_team_name is not None) and (replaced_league is not None):
             return replaced_team_name, replaced_league, season    
+            
 def replace_from_config(initial_name: str, what: str):
     if what not in ["league", "teamname"]:
         raise ValueError("Only replacement options are league and teamname")
