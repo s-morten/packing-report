@@ -1,6 +1,0 @@
-[whoscored]
-leagues = ["GER-Bundesliga2", "GER-Bundesliga", "ENG-Premier League"]
-seasons = [16, 17, 18, 19, 20, 21, 22]
-
-[training]
-version = 0.09

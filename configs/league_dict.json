@@ -1,0 +1,26 @@
+{
+  "GER-Bundesliga2": {
+    "WhoScored": "Germany - 2. Bundesliga",
+    "ClubElo": "GER_2"
+  },  
+  "GER-Bundesliga": {
+    "WhoScored": "Germany - Bundesliga",
+    "ClubElo": "GER_1"
+  },
+  "ENG-Premier League": {
+    "WhoScored": "England - Premier League",
+    "ClubElo": "ENG_1"
+  },
+  "ESP-La Liga": {
+    "WhoScored": "Spain - LaLiga",
+    "ClubElo": "ESP_1"
+  },
+  "FRA-Ligue 1": {
+    "WhoScored": "France - Ligue 1",
+    "ClubElo": "FRA_1"
+  },
+  "ITA-Serie A": {
+    "WhoScored": "Italy - Serie A",
+    "ClubElo": "ITA_1"
+  }
+}
