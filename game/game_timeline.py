@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 from  datetime import datetime
 import soccerdata as sd
-from gde_utils.date_utils import to_season
-from gde_utils.football_data_utils import get_score
-from gde.database_io.db_handler import DB_handler
+from utils.date_utils import to_season
+from utils.football_data_utils import get_score
+from database_io.db_handler import DB_handler
 import metrics.elo as elo
 
 class GameTimeline:
@@ -208,6 +208,12 @@ class GameTimeline:
             player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
             player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
             year = to_season(self.game_date)
+            if not self.db_handler.squads.entry_exists(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id)):
+                if self.db_handler.squads.player_exists(int(player_id)):
+                    self.db_handler.squads.update_player(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id), self.game_date)
+                else:
+                    self.db_handler.squads.insert_player(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id), self.game_date)
+
             if not self.db_handler.player.player_exists(int(player_id)): 
                 # get age
                 birthday = self.db_handler.player_age.get_player_age(team_name, self.general_info_dict[int(player_id)]["kit_number"], year)

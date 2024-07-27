@@ -8,7 +8,7 @@ from dash import Input, Output, State, html
 import webbrowser
 from pages import gde, gde_trend, gde_league
 import page_assets.side_components as custum_side_comp
-from gde.database_io.db_handler import DB_handler
+from database_io.db_handler import DB_handler
 
 dbh = DB_handler("/home/morten/Develop/packing-report/gde/GDE.db")
 

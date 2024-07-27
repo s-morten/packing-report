@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
-from gde.database_io.db_handler_abs import DB_handler_abs
-from gde.database_io.dims import Games
+from database_io.db_handler_abs import DB_handler_abs
+from database_io.dims import Games
 
 from sqlalchemy import func
 

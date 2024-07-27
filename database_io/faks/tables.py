@@ -7,6 +7,7 @@ class Player(declarative_base()):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     birthday = Column(String)
+    fapi_id = Column(Integer)
 
 class Birthday_Footballsquads(declarative_base()):
     __tablename__ = "birthday_footballsquads"
@@ -29,3 +30,21 @@ class Team(declarative_base()):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+
+class Squads(declarative_base()):
+    __tablename__ = "squads"
+
+    squad_id = Column(Integer, primary_key=True)
+    player_id = Column(Integer)
+    kit_number = Column(Integer)
+    valid_from = Column(String)
+    valid_to = Column(String)
+    team_id = Column(Integer)
+
+class Schedule(declarative_base()):
+    __tablename__ = "schedule"
+
+    schedule_id = Column(Integer, primary_key=True)
+    date_time = Column(String)
+    home = Column(String)
+    away = Column(String)

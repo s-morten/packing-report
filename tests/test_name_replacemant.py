@@ -6,7 +6,7 @@ import numpy as np
 import toml
 import sys
 print(sys.path)
-import gde.filesystem_io.filesystem_io as filesystem_io
+import filesystem_io.filesystem_io as filesystem_io
 
 
 def test_team_name_replacement_ws():

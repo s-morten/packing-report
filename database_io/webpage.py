@@ -1,6 +1,6 @@
-from gde.database_io.db_handler_abs import DB_handler_abs
-from gde.database_io.faks import Player, Team
-from gde.database_io.dims import Elo, Games
+from database_io.db_handler_abs import DB_handler_abs
+from database_io.faks import Player, Team
+from database_io.dims import Elo, Games
 from sqlalchemy import func
 import numpy as np
 from time import sleep

@@ -11,7 +11,7 @@ import json
 
 from collections import defaultdict
 import filesystem_io.filesystem_io as filesystem_io
-from gde.database_io.db_handler import DB_handler
+from database_io.db_handler import DB_handler
 
 class Footballsquads_scraper:
     def __init__(self, cache_location:str, db_handler: DB_handler) -> None:

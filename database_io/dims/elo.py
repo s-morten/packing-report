@@ -1,8 +1,8 @@
 from datetime import datetime
-from gde.scraper.club_elo_scraper import ClubEloScraper
-from gde.database_io.db_handler_abs import DB_handler_abs
+from scraper.club_elo_scraper import ClubEloScraper
+from database_io.db_handler_abs import DB_handler_abs
 import pandas as pd
-from gde.database_io.dims import Elo, Games
+from database_io.dims import Elo, Games
 from sqlalchemy import func
 
 class DB_elo(DB_handler_abs):

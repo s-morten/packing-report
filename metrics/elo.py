@@ -4,7 +4,7 @@ from database_io.db_handler import DB_handler
 from metrics.mov_elo.regressor import MOV_Regressor
 
 def read_parameters():
-    parameters = json.load(open("gde/metrics/mov_elo/regressor.json", "r"))
+    parameters = json.load(open("metrics/mov_elo/regressor.json", "r"))
     return parameters["intercept"], parameters["coefficient_elo_diff1"], parameters["coefficient_elo_diff2"], parameters["coefficient_elo_diff3"], parameters["coefficient_min"], parameters["version"]
 
 def retrain_regressor(version, dbh, elo_version):

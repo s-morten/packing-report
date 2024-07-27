@@ -1,11 +1,11 @@
-from gde.database_io.db_handler_abs import DB_handler_abs
+from database_io.db_handler_abs import DB_handler_abs
 from datetime import datetime
-from gde.database_io.faks import Player
+from database_io.faks import Player
 
 class DB_player(DB_handler_abs):
     def insert_player(self, id: int, name: str, birthday: datetime):
         birthday = datetime.strptime(birthday, "%d-%m-%y").strftime("%Y-%m-%d") if birthday else None
-        player = Player(name=str(name), id=int(id), birthday=birthday)
+        player = Player(name=str(name), id=int(id), birthday=birthday, fapi_id=None)
         self.session.add(player)
         self.session.commit()
 
@@ -21,4 +21,9 @@ class DB_player(DB_handler_abs):
         birthday = datetime.strptime(birthday, "%d-%m-%y").strftime("%Y-%m-%d") if birthday else None
         player = self.session.query(Player).filter(Player.id == id).first()
         player.birthday = birthday
+        self.session.commit()
+
+    def update_player_fapi_id(self, id: int, fapi_id: int):
+        player = self.session.query(Player).filter(Player.id == id).first()
+        player.fapi_id = fapi_id
         self.session.commit()
