@@ -2,7 +2,8 @@ from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 
 class Elo(declarative_base()):
-    __tablename__ = "elo"
+    __tablename__ = "gde"
+    __table_args__ = {'schema': 'METRICS'}
 
     player_id = Column(Integer, primary_key=True)
     game_id = Column(Integer, primary_key=True)
@@ -12,6 +13,7 @@ class Elo(declarative_base()):
 
 class Games(declarative_base()):
     __tablename__ = "games"
+    __table_args__ = {'schema': 'BASIS'}
 
     game_id = Column(Integer, primary_key=True)
     player_id = Column(Integer, primary_key=True)
@@ -30,6 +32,7 @@ class Games(declarative_base()):
     home = Column(Integer)
 
 class Processed_Footballsquads(declarative_base()):
-    __tablename__ = "processed_footballsquads"
+    __tablename__ = "footballsquads_processed"
+    __table_args__ = {'schema': 'SCRAPING'}
 
     processed = Column(String, primary_key=True)

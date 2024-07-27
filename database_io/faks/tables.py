@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Float, DateTime, func
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
 class Player(declarative_base()):
     __tablename__ = "player"
+    __table_args__ = {'schema': 'BASIS'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -10,7 +11,8 @@ class Player(declarative_base()):
     fapi_id = Column(Integer)
 
 class Birthday_Footballsquads(declarative_base()):
-    __tablename__ = "birthday_footballsquads"
+    __tablename__ = "footballsquads_birthday"
+    __table_args__ = {'schema': 'SCRAPING'}
 
     kit_number = Column(Integer, primary_key=True)
     name = Column(String, primary_key=True)
@@ -27,12 +29,14 @@ class Birthday_Footballsquads(declarative_base()):
 
 class Team(declarative_base()):
     __tablename__ = "teams"
+    __table_args__ = {'schema': 'BASIS'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
 class Squads(declarative_base()):
     __tablename__ = "squads"
+    __table_args__ = {'schema': 'BASIS'}
 
     squad_id = Column(Integer, primary_key=True)
     player_id = Column(Integer)
@@ -43,6 +47,7 @@ class Squads(declarative_base()):
 
 class Schedule(declarative_base()):
     __tablename__ = "schedule"
+    __table_args__ = {'schema': 'SCRAPING'}
 
     schedule_id = Column(Integer, primary_key=True)
     date_time = Column(String)

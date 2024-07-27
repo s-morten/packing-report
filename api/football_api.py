@@ -21,7 +21,7 @@ class FApi_Handler:
         return json.loads(data.decode("utf-8"))
     
     def get_formation(self, game_id):
-        self.conn.request("GET", f"/fixtures/lineups?fixture={game_id}", headers=headers)
+        self.conn.request("GET", f"/fixtures/lineups?fixture={game_id}", headers=self.headers)
 
         res = self.conn.getresponse()
         data = res.read()
