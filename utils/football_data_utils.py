@@ -18,10 +18,3 @@ def get_score(events_df: pd.DataFrame, df_teams: pd.DataFrame):
     goals.loc[goals["own_goal"], "goal_team_id"] = get_opposition_team(goals["team_id"], df_teams)[goals["own_goal"]]
     goals.reset_index(inplace=True)
     return goals[["expanded_minute", "goal_team_id"]]
-
-def replace_name(club_name, name_substitutes):
-    for replace in name_substitutes:
-        for name in name_substitutes[replace]:
-            if name == club_name:
-                return replace
-    raise ValueError(f"Could not find replacement for {club_name}")

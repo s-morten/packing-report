@@ -1,14 +1,18 @@
 from datetime import datetime
 from scraper.club_elo_scraper import ClubEloScraper
-from database_io.db_handler_abs import DB_handler_abs
+# from database_io.db_handler_abs import DB_handler_abs
 import pandas as pd
 from database_io.dims import Elo, Games
 from sqlalchemy import func
 
-class DB_elo(DB_handler_abs):
+class DB_elo():
+    def __init__(self, connection_item):
+        self.connection = connection_item.connection
+        self.session = connection_item.session
+        self.engine = connection_item.engine
 
     def insert_elo(self, id: int, game_id: int, date: datetime, elo: float, version: float):
-        elo = Elo(player_id=id, game_id=game_id, game_date=date.strftime("%Y-%m-%d"), elo_value=elo, version=version)
+        elo = Elo(player_id=id, game_id=game_id, game_date=date, elo_value=elo, version=version)
         self.session.add(elo)
         self.session.commit()
 
@@ -53,3 +57,12 @@ class DB_elo(DB_handler_abs):
         # Main query to count the number of rows in the pre_select subquery
         count_result = self.session.query(func.count()).select_from(pre_select).scalar()
         return count_result
+    
+    def extract_latest_elo(self, player_id: int, version: float) -> float:
+        query_result = self.session.query(Elo.elo_value).filter(
+                                              Elo.player_id == player_id,
+                                              Elo.version == version).order_by(
+                                                  Elo.game_date.desc()).first()
+        if not query_result:
+            return None
+        return query_result

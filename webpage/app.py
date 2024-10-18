@@ -10,7 +10,7 @@ from pages import gde, gde_trend, gde_league
 import page_assets.side_components as custum_side_comp
 from database_io.db_handler import DB_handler
 
-dbh = DB_handler("/home/morten/Develop/packing-report/gde/GDE.db")
+dbh = DB_handler()
 
 #html_script = '<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="mortenstehR" data-description="Support me on Buy me a coffee!" data-message="" data-color="#40DCA5" data-position="Right" data-x_margin="18" data-y_margin="18"></script>'
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX], 

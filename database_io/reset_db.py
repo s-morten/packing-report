@@ -1,7 +1,7 @@
 from database_io.db_handler import DB_handler
 from database_io.dims import Elo, Games
 from database_io.faks import Player, Squads
-db = DB_handler("/home/morten/Develop/packing-report/GDE.db")
+db = DB_handler()
 
 db.elo.session.query(Elo).delete()
 db.elo.session.commit()

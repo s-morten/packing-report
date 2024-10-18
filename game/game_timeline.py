@@ -31,11 +31,18 @@ class GameTimeline:
         self._create_timeline_df()
         self._create_timeline_dict()
 
+        # TODO load all players from database, to reduce requests, all Database get/exists calls
+
     def _create_general_info_dict(self):
         # {player_id: team_id, team_name, player_name, starter}
         general_info_dict = {}
-        for player in self.player_goal_minute_mapping:
+        players = list(self.player_goal_minute_mapping)
+        for player in players:
             player_df = self.loader_players_df[self.loader_players_df["player_id"] == player]
+            if player_df.shape[0] == 0: # sometimes whoscored messes up and player does not exist, shouldnt happen to often
+                del self.player_goal_minute_mapping[player]
+                print("player not found")
+                continue
             general_info_dict[player] = {}
             general_info_dict[player]["team_id"] = player_df.team_id.values[0]
             general_info_dict[player]["team_name"] = self.df_teams[self.df_teams["team_id"] == general_info_dict[player]["team_id"]]["team_name"].values[0]
@@ -238,3 +245,5 @@ class GameTimeline:
             result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
             self.db_handler.games.insert_game(self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, 
                                               expected_game_result, roundend_expected_game_result, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"])
+
+        # TODO add to database in one go, not one by one to improve performance

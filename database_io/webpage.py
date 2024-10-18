@@ -1,4 +1,4 @@
-from database_io.db_handler_abs import DB_handler_abs
+# from database_io.db_handler_abs import DB_handler_abs
 from database_io.faks import Player, Team
 from database_io.dims import Elo, Games
 from sqlalchemy import func
@@ -6,7 +6,11 @@ import numpy as np
 from time import sleep
 
 
-class DB_webpage(DB_handler_abs):
+class DB_webpage():
+    def __init__(self, connection_item):
+        self.connection = connection_item.connection
+        self.session = connection_item.session
+        self.engine = connection_item.engine
     def get_table_data(self, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, club_select):
         print(club_select)
         # Subquery to get the latest game_date for each player

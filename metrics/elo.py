@@ -7,7 +7,7 @@ def read_parameters():
     parameters = json.load(open("metrics/mov_elo/regressor.json", "r"))
     return parameters["intercept"], parameters["coefficient_elo_diff1"], parameters["coefficient_elo_diff2"], parameters["coefficient_elo_diff3"], parameters["coefficient_min"], parameters["version"]
 
-def retrain_regressor(version, dbh, elo_version):
+def retrain_regressor(version, dbh: DB_handler, elo_version):
     number_games = dbh.games.get_number_of_games(elo_version)    
     if int(number_games / 300) > version:
         # update paramaters
@@ -17,7 +17,9 @@ def retrain_regressor(version, dbh, elo_version):
     return False
 
 # mov, player elo, team elo, opp elo, minutes -> updated elo
-def calc_elo_update(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, dbh, elo_version, k=35, c=400):
+def calc_elo_update(margin_of_victory, p_elo, p_team_elo, opp_elo, minutes, dbh: DB_handler, elo_version, k=35, c=400):
+    p_elo = float(p_elo)
+    p_team_elo = float(p_team_elo)
     intercept, coef1, coef2, coef3, min_coef, version = read_parameters()
     if retrain_regressor(version, dbh, elo_version):
         intercept, coef1, coef2, coef3, min_coef, version = read_parameters()

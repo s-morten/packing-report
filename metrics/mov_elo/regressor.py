@@ -31,7 +31,7 @@ class MOV_Regressor:
             "version": self.version
                         }
         
-        json.dump(reg_parameters, open("gde/metrics/mov_elo/regressor.json", "w"))
+        json.dump(reg_parameters, open("metrics/mov_elo/regressor.json", "w"))
 
         # log changes
         print("Updated regressor parameters: ", reg_parameters)
