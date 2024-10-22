@@ -118,12 +118,12 @@ _f_custom_league_dict = PosixPath("/home/morten/soccerdata/config/") / "league_d
 if _f_custom_league_dict.is_file():
     with _f_custom_league_dict.open(encoding="utf8") as json_file:
         LEAGUE_DICT = {**LEAGUE_DICT, **json.load(json_file)}
-    print("Custom league dict loaded from %s.", _f_custom_league_dict)
-else:
-    print(
-        "No custom league dict found. You can configure additional leagues in %s.",
-        _f_custom_league_dict,
-    )
+#     print("Custom league dict loaded from %s.", _f_custom_league_dict)
+# else:
+#     print(
+#         "No custom league dict found. You can configure additional leagues in %s.",
+#         _f_custom_league_dict,
+#     )
 
 class SeasonCode(Enum):
     """How to interpret season codes.
@@ -304,15 +304,15 @@ if os.path.isfile(_f_custom_teamnname_replacements):
         for team, to_replace_list in json.load(json_file).items():
             for to_replace in to_replace_list:
                 TEAMNAME_REPLACEMENTS[to_replace] = team
-    print(
-        "Custom team name replacements loaded from %s.",
-        _f_custom_teamnname_replacements,
-    )
-else:
-    print(
-        "No custom team name replacements found. You can configure these in %s.",
-        _f_custom_teamnname_replacements,
-    )
+#     print(
+#         "Custom team name replacements loaded from %s.",
+#         _f_custom_teamnname_replacements,
+#     )
+# else:
+#     print(
+#         "No custom team name replacements found. You can configure these in %s.",
+#         _f_custom_teamnname_replacements,
+#     )
 
 def standardize_colnames(df: pd.DataFrame, cols: Optional[list[str]] = None) -> pd.DataFrame:
     """Convert DataFrame column names to snake case."""
@@ -760,19 +760,19 @@ class WhoScored():
             # )
             if stage_name is not None:
                 calendar_filepath = self.data_dir / f"matches/{lkey}_{skey}_{stage_id}.html"
-                print(
-                    "Retrieving calendar for %s %s (%s)",
-                    lkey,
-                    skey,
-                    stage_name,
-                )
+                # print(
+                #     "Retrieving calendar for %s %s (%s)",
+                #     lkey,
+                #     skey,
+                #     stage_name,
+                # )
             else:
                 calendar_filepath = self.data_dir / f"matches/{lkey}_{skey}.html"
-                print(
-                    "Retrieving calendar for %s %s",
-                    lkey,
-                    skey,
-                )
+                # print(
+                #     "Retrieving calendar for %s %s",
+                #     lkey,
+                #     skey,
+                # )
             calendar = open(calendar_filepath, "r", encoding="utf-8")
             mask = json.load(calendar)["mask"]
 
@@ -782,23 +782,23 @@ class WhoScored():
                 filepath = self.data_dir / filemask_schedule.format(lkey, skey, stage_id, month)
                 # url = WHOSCORED_URL + f"/tournaments/{stage_id}/data/?d={year}{(int(month)+1):02d}"
 
-                if stage_name is not None:
-                    print(
-                        "[%s/%s] Retrieving fixtures for %s %s (%s)",
-                        i + 1,
-                        len(it),
-                        lkey,
-                        skey,
-                        stage_name,
-                    )
-                else:
-                    print(
-                        "[%s/%s] Retrieving fixtures for %s %s",
-                        i + 1,
-                        len(it),
-                        lkey,
-                        skey,
-                    )
+                # if stage_name is not None:
+                #     print(
+                #         "[%s/%s] Retrieving fixtures for %s %s (%s)",
+                #         i + 1,
+                #         len(it),
+                #         lkey,
+                #         skey,
+                #         stage_name,
+                #     )
+                # else:
+                #     print(
+                #         "[%s/%s] Retrieving fixtures for %s %s",
+                #         i + 1,
+                #         len(it),
+                #         lkey,
+                #         skey,
+                #     )
 
                 reader = open(filepath, "r", encoding="utf-8")
                 data = json.load(reader)
@@ -916,12 +916,12 @@ class WhoScored():
             # url = urlmask.format(game.game_id)
             filepath = "/home/morten/Develop/Open-Data/soccerdata/" / filemask.format(game["league"], game["season"], game["game_id"])
 
-            print(
-                "[%s/%s] Retrieving game with id=%s",
-                i + 1,
-                len(iterator),
-                game["game_id"],
-            )
+            # print(
+            #     "[%s/%s] Retrieving game with id=%s",
+            #     i + 1,
+            #     len(iterator),
+            #     game["game_id"],
+            # )
             reader = open(filepath, "r", encoding="utf-8")
 
             # extract missing players
@@ -1082,12 +1082,12 @@ class WhoScored():
         for i, (_, game) in enumerate(iterator.iterrows()):
             # url = urlmask.format(game["game_id"])
             # get league and season
-            print(
-                "[%s/%s] Retrieving game with id=%s",
-                i + 1,
-                len(iterator),
-                game["game_id"],
-            )
+            # print(
+            #     "[%s/%s] Retrieving game with id=%s",
+            #     i + 1,
+            #     len(iterator),
+            #     game["game_id"],
+            # )
             filepath = self.data_dir / filemask.format(
                 game["league"], game["season"], game["game_id"]
             )

@@ -16,6 +16,12 @@ class DB_elo():
         self.session.add(elo)
         self.session.commit()
 
+    def insert_batch_elo(self, batch: list[tuple[int, int, datetime, float, float]]):
+        elo_batch = [Elo(player_id=id, game_id=game_id, game_date=date, elo_value=elo, version=version) for id, game_id, date, elo, version in batch]
+        self.session.bulk_save_objects(elo_batch)
+        self.session.commit()
+    
+
     def get_elo(self, id: int, date: datetime, league: str, starter: bool, version: float) -> float:
         """ Extracts the Elo per player from the database
             Returns default value if player does not exists
@@ -66,3 +72,15 @@ class DB_elo():
         if not query_result:
             return None
         return query_result
+    
+from sqlalchemy import select
+
+def elo_query():
+    return select(
+        Elo.player_id,
+        Elo.elo_value,
+        func.rank().over(
+            partition_by=Elo.player_id,
+            order_by=Elo.game_date.desc()
+        ).label('RANK')
+    ).subquery()

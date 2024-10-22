@@ -32,3 +32,12 @@ class DB_games():
         query_result = self.session.query(Games.game_id.distinct()).filter(Games.version == version).count()
         return query_result
     
+    def insert_games_batch(self, games: list[list]):
+        converted_games = [Games(game_id=int(game[0]), player_id=int(game[1]), minutes=int(game[2]), starter=int(game[3]), opposition_team_id=int(game[4]),
+                            result=str(game[5]), elo=float(game[6]), opposition_elo=float(game[7]), game_date=game[8],
+                            team_id=int(game[9]), expected_game_result=float(game[10]), 
+                            roundend_expected_game_result=float(game[11]), league=str(game[12]), 
+                            version=float(game[13]), home=int(game[14])) for game in games]
+        self.session.bulk_save_objects(converted_games)
+        self.session.commit()
+    

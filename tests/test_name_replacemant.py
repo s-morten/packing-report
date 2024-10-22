@@ -5,7 +5,6 @@ import json
 import numpy as np
 import toml
 import sys
-print(sys.path)
 import filesystem_io.filesystem_io as filesystem_io
 
 
