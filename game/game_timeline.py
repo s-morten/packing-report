@@ -36,13 +36,26 @@ class GameTimeline:
         # TODO look into multiple player ids
         # TODO remove unlimited regressor file loading
 
-        self.player_info_df = self.db_handler.player.get_overall_info(list(map(int, self.general_info_dict.keys())))
+        self.player_info_df = self.db_handler.player.get_overall_info(list(map(int, self.general_info_dict.keys())), self.game_date)
         for team_id, team_name in self.df_teams[["team_id", "team_name"]].values:
             if not self.db_handler.team.team_exists(int(team_id)):  
                 self.db_handler.team.insert_team(int(team_id), team_name)
         
         self._handle_missing()
+        self._handle_squads()
         
+
+    def _handle_squads(self):
+        for player_id in self.general_info_dict.keys():
+            kit_number = self.general_info_dict[int(player_id)]["kit_number"]
+            team_id = self.general_info_dict[int(player_id)]["team_id"]
+            if not (self.player_info_df.loc[(self.player_info_df["id"] == player_id) & (self.player_info_df["kit_number"] == kit_number) & (self.player_info_df["team_id"] == team_id)]).empty:
+                row = self.player_info_df.loc[self.player_info_df["id"] == player_id]
+                if not row["kit_number"].isna().values[0]:
+                # if (self.player_info_df.loc[self.player_info_df["id"] == player_id, "kit_number"]):
+                    self.db_handler.squads.update_player(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id), self.game_date)
+                else:
+                    self.db_handler.squads.insert_player(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id), self.game_date)
 
     def _handle_missing(self):
         missing_df = self.player_info_df[~self.player_info_df["exists"]]
@@ -244,13 +257,6 @@ class GameTimeline:
             starter = self.general_info_dict[int(player_id)]["starter"]
             player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
             player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
-            
-            # squads
-            if not self.db_handler.squads.entry_exists(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id)):
-                if self.db_handler.squads.player_exists(int(player_id)):
-                    self.db_handler.squads.update_player(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id), self.game_date)
-                else:
-                    self.db_handler.squads.insert_player(int(player_id), self.general_info_dict[int(player_id)]["kit_number"], int(team_id), self.game_date)
 
             # update elo, elo calc
             p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]

@@ -5,6 +5,7 @@ from database_io.dims import Elo
 import pandas as pd
 from sqlalchemy import func, over, and_
 from database_io.dims.elo import elo_query
+from database_io.faks.squads import squads_query
 
 # class DB_player(DB_handler_abs):
 class DB_player():
@@ -42,27 +43,33 @@ class DB_player():
         return self.session.query(Player.id).filter(Player.fapi_id == fapi_id).first()
 
 
-    def get_overall_info(self, player_ids: list[int]) -> pd.DataFrame: # version: float, date: datetime
+    def get_overall_info(self, player_ids: list[int], game_date) -> pd.DataFrame: # version: float, date: datetime
         elo_subquery = elo_query()
+        squads_subquery = squads_query(game_date)
         # df -> player_id, exists, fapi_id, birthday, elo
         query_results = self.session.query(
             Player.id,
             Player.fapi_id,
             Player.birthday,
-            elo_subquery.c.elo_value
+            elo_subquery.c.elo_value,
+            squads_subquery.c.kit_number,
+            squads_subquery.c.team_id
         ).select_from(
             Player
         ).outerjoin(
             elo_subquery,
             Player.id == elo_subquery.c.player_id
+        ).outerjoin(
+            squads_subquery,
+            Player.id == squads_subquery.c.player_id
         ).filter(
             Player.id.in_(player_ids)
         ).filter(
             elo_subquery.c.RANK == 1
         ).all()
-        
+
         frame = pd.DataFrame(player_ids, columns=["id"])
-        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "elo"])
+        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "elo", "kit_number", "team_id"])
         # set a column for if the player exists
         frame["exists"] = frame["id"].isin(results["id"])
         frame = frame.merge(results, on="id", how="left")

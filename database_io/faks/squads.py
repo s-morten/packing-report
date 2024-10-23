@@ -49,3 +49,14 @@ class DB_squads():
         if wh_player_id is None:
             return None
         return wh_player_id[0]
+    
+from sqlalchemy import select, between
+
+def squads_query(game_date):
+    return select(
+        Squads.player_id,
+        Squads.kit_number,
+        Squads.team_id
+        ).filter(
+        between(game_date, Squads.valid_from, Squads.valid_to)
+    ).subquery()
