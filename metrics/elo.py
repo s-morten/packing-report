@@ -34,17 +34,7 @@ def calc_elo_update(margin_of_victory: int, home: int, p_elo: float, p_team_elo:
     updated_score = p_elo + k * (game_result - expected_game_outcome)
     return updated_score, regressed_game_outcome[0], regressed_game_outcome[1]
     
-# def calc_k(k, age, minutes, delta_from_exp):
-#     minute_quota = minutes / 90
-#     # if age <= 18:
-#     #     age_quota = 1.2
-#     # elif age <= 23:
-#     #     age_quota = 1
-#     # elif age <= 31:
-#     #     age_quota = 0.8
-#     # else: 
-#     #     age_quota = 1
-#     dfe_quota = 1.3 if (delta_from_exp == 2) else 1.6 if (delta_from_exp == 3) else 2 if (delta_from_exp >= 4) else 1
-#     age_quota = 1
-#     k = k * age_quota * minute_quota * dfe_quota
-#     return k
+def calc_k(k, minutes):
+    # TODO include age aspect
+    k = min(max(minutes / 3, 5), 20)
+    return k

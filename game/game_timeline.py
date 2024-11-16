@@ -288,7 +288,7 @@ class GameTimeline:
             # add new game
             result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
             games_batch.append([self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, 
-                                expected_game_result, roundend_expected_game_result, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"]])
+                                expected_game_result, roundend_expected_game_result, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"], self.end_of_game])
 
         # print(self.player_info_df)
         # TODO can remove list(set()) when double ids are taken care off

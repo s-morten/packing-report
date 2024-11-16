@@ -25,11 +25,12 @@ class Games(declarative_base()):
     opposition_elo = Column(Float)
     game_date = Column(Date)
     team_id = Column(Integer)
-    expected_game_result = Column(Float)
-    roundend_expected_game_result = Column(Float)
+    expected_game_result_lower = Column(Float)
+    expected_game_result_upper = Column(Float)
     league = Column(String)
     version = Column(Float, primary_key=True)
     home = Column(Integer)
+    game_minutes = Column(Integer)
 
 class Processed_Footballsquads(declarative_base()):
     __tablename__ = "FOOTBALLSQUADS_PROCESSED"
