@@ -23,9 +23,14 @@ class DB_games():
         self.session.add(game)
         self.session.commit()
 
-    def get_all_games(self, version: float):
-        query_result = self.session.query(Games.game_id, Games.minutes, Games.elo, Games.opposition_elo, Games.result).filter(Games.version == version).all()
-        df = pd.DataFrame(query_result, columns=['id', 'minutes', 'elo', 'opposition_elo', 'result'])
+    def get_all_games(self, version: float, last: int = -1):
+        if last == -1:
+            query_result = self.session.query(Games.game_id, Games.minutes, Games.elo, Games.opposition_elo, Games.result, Games.home).filter(Games.version == version).all()
+        else:
+            # order by date and return newest games
+            query_result = self.session.query(Games.game_id, Games.minutes, Games.elo, Games.opposition_elo, Games.result, Games.home).order_by(Games.game_date.desc()).limit(last).all()
+            # self.session.query(Games.game_id, Games.minutes, Games.elo, Games.opposition_elo, Games.result, Games.home).filter(Games.version == version).limit(last).all()
+        df = pd.DataFrame(query_result, columns=['id', 'minutes', 'elo', 'opposition_elo', 'result', 'home'])
         return df
 
     def get_number_of_games(self, version: float):

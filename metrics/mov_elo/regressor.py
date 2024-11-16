@@ -1,37 +1,18 @@
 
-from sklearn.linear_model import LinearRegression
-import json
-from database_io.db_handler import DB_handler
 import numpy as np
+import arviz as az
 
 class MOV_Regressor:
-    def __init__(self, version, elo_version):
-        self.version = version + 1
-        self.elo_version = elo_version
+    def __init__(self, path):
+        self.trace = az.from_netcdf(path)
 
-    def update_regressor(self, dbh: DB_handler):
-        # get data
-        df = dbh.games.get_all_games(self.elo_version)
-        df["elo_diff"] = df["elo"] - df["opposition_elo"]
-        df["diff"] = df["result"].apply(lambda x: int(x.split("-")[0]) - int(x.split("-")[1]))
-        df["minutes"] = np.where(df["elo_diff"] < 0, df["minutes"] * -1, df["minutes"])
+    def predict(self, home, elo_diff, minutes, elo_diff_faktor, goal_diff_faktor, minutes_faktor):
+        # preprocess data
+        elo_diff = elo_diff / elo_diff_faktor
+        minutes = minutes / minutes_faktor
 
-        # train model
-        lr = LinearRegression()
-        lr.fit(np.array([df["elo_diff"].values, df["elo_diff"].values**2, df["elo_diff"].values**3, 
-                         df["minutes"].values]).T, df["diff"].values.reshape(-1, 1))
-
-        # save coef and intercept
-        reg_parameters = {
-            "intercept": lr.intercept_[0],
-            "coefficient_elo_diff1": lr.coef_[0][0],
-            "coefficient_elo_diff2": lr.coef_[0][1],
-            "coefficient_elo_diff3": lr.coef_[0][2],
-            "coefficient_min": lr.coef_[0][3], 
-            "version": self.version
-                        }
+        pred = ((self.trace.posterior.home_advantage[0].values * home) + 
+               (self.trace.posterior.power_three[0].values * elo_diff) -
+               (self.trace.posterior.minutes_inf[0].values * minutes))
         
-        json.dump(reg_parameters, open("metrics/mov_elo/regressor.json", "w"))
-
-        # log changes
-        print("Updated regressor parameters: ", reg_parameters)
+        return np.sort(np.rint(np.percentile(pred, [20, 80]) * goal_diff_faktor))

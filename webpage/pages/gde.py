@@ -14,8 +14,9 @@ from page_assets.styling import colors
 import dash_mantine_components as dmc
 import numpy as np
 from datetime import datetime, date
+from database_io.db_handler import DB_handler
 
-def layout(app, dbh):
+def layout(app, dbh: DB_handler):
     return dbc.Container([
         dbc.Row(                                        # Select Columns
             [
@@ -76,17 +77,17 @@ def layout(app, dbh):
     )
 
 
-def register_callbacks(app, dbh):
-    @app.callback(
-        Output('club-multi-select', 'data'),
-        [
-            Input('league-select', 'value'),
-            Input('date-picker', 'value')
-        ]
-    )
-    def get_club_select(league_select, date_select):
-        clubs = dbh.webpage.get_clubs(league_select, date_select)
-        return [{"value": club, "label": club} for club in clubs]
+def register_callbacks(app, dbh: DB_handler):
+    # @app.callback(
+    #     Output('club-multi-select', 'data'),
+    #     [
+    #         Input('league-select', 'value'),
+    #         Input('date-picker', 'value')
+    #     ]
+    # )
+    # def get_club_select(league_select, date_select):
+    #     clubs = dbh.webpage.get_clubs(league_select, date_select)
+    #     return [{"value": club, "label": club} for club in clubs]
 
     @app.callback(
         Output('elo_table', 'figure'),
@@ -101,12 +102,7 @@ def register_callbacks(app, dbh):
         ]
     )
     def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, club_select):
-        # print(np.array(club_select).flatten())
-        club_select = club_select if club_select else None
-        # print(np.array(club_select).flatten())
-        # print("---")
-        result = dbh.webpage.get_table_data(entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, np.array(club_select).flatten() if club_select is not None else None)
-        result_df = pd.DataFrame(result, columns=['Rank', 'Id', 'Last Updated', 'Elo', 'Name', 'Birth Date', 'League', 'Club'])
+        result_df = dbh.webpage.get_table_data()
         fig = go.Figure(data=[go.Table(
             header=dict(values=result_df.columns,
                         line_color=colors["dark"],

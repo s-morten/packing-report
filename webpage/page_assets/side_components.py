@@ -7,25 +7,31 @@ import dash_bootstrap_components as dbc
 from page_assets.styling import colors
 
 
-def footer():
-    return dmc.Footer(
-            height=50,
-            fixed=True,
-            children=[dmc.Text("Company Logo")],
-            style={"backgroundColor": colors["dark"]},
-        )
+# def footer():
+#     return dmc.Footer(
+#             height=50,
+#             fixed=True,
+#             children=[dmc.Text("Company Logo")],
+#             style={"backgroundColor": colors["dark"]},
+#         )
 
 def header(app):
-    return dmc.Header(
-                height=50, children=[
-                    offcanvas_layout(app)
-                ],
-                style={"backgroundColor": colors["dark"]}
-            )
+    return dmc.Group(
+    [
+        dmc.Group(
+            [
+                offcanvas_layout(app)
+            ]
+        ),
+        dmc.Divider()
+    ],
+    # direction="column",
+    # align="center"
+)
 
 
 def offcanvas_layout(app):
-    return  html.Div([
+    return html.Div([
                 html.Div([
                     dbc.Button("Menu", id="open-offcanvas", n_clicks=0, style={"backgroundColor": colors["middle"]}),
                     dbc.Offcanvas([

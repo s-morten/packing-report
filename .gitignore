@@ -135,3 +135,5 @@ proto_db/
 .cache_footballsquads/
 *.db
 srv/
+*.csv
+*.nc

@@ -4,6 +4,22 @@ from database_io.dims import Elo, Games
 from sqlalchemy import func
 import numpy as np
 from time import sleep
+from sqlalchemy import Column, Integer, String, Date, Float
+from sqlalchemy.ext.declarative import declarative_base
+import pandas as pd
+
+class Latest_elo(declarative_base()):
+    __tablename__ = "METRIC_LATEST"
+    __table_args__ = {'schema': 'METRICS'}
+    
+    player_id = Column(Integer, primary_key=True)
+    elo_value = Column(Float)
+    game_date = Column(Date)
+    name = Column(String)
+    birthday = Column(Date)
+    league = Column(String)
+    team_name = Column(String)
+    
 
 
 class DB_webpage():
@@ -11,63 +27,16 @@ class DB_webpage():
         self.connection = connection_item.connection
         self.session = connection_item.session
         self.engine = connection_item.engine
-    def get_table_data(self, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, club_select):
-        print(club_select)
-        # Subquery to get the latest game_date for each player
-        dist_elo = (
-            self.session.query(
-                Elo.player_id,
-                func.max(Elo.game_date).label("game_date")
-            )
-            .filter(Elo.version == 0.2)
-            .group_by(Elo.player_id)
-            .subquery()
-        )
-
-        # Subquery to join dist_elo with elo table
-        joined_elo = (
-            self.session.query(
-                dist_elo.c.player_id,
-                Elo.game_date,
-                Elo.elo_value, 
-                Elo.game_id
-            )
-            .filter(Elo.version == 0.2)
-            .join(Elo, (
-                Elo.player_id == dist_elo.c.player_id
-            ) & (
-                dist_elo.c.game_date == Elo.game_date
-            ))
-            .subquery()
-        )
-
-        # Main query with ROW_NUMBER() and joining player table
-        result = (
-            self.session.query(
-                func.row_number().over(order_by=joined_elo.c.elo_value.desc()).label("Rk"),
-                joined_elo.c.player_id,
-                joined_elo.c.game_date,
-                joined_elo.c.elo_value,
-                Player.name,
-                Player.birthday, 
-                Games.league, 
-                Team.name
-                #Games.team_id
-            )
-            .join(Player, joined_elo.c.player_id == Player.id)
-            .join(Games, (Games.game_id == joined_elo.c.game_id) & (Games.player_id == joined_elo.c.player_id))
-            .join(Team, Team.id == Games.team_id)
-            .filter(Games.league.in_(league_select), Games.game_date > date_select)
-            .filter(Games.version == 0.2)
-            .filter(Team.name.in_(club_select) if club_select is not None else True)
-            .order_by(joined_elo.c.elo_value.desc())
-            .limit(entries_per_page)
-            .offset(max(0, (prev_page_clicks - 2) * entries_per_page) if prev_page_clicks > 0
-                    else (next_page_clicks - 1) * entries_per_page if next_page_clicks > 0
-                    else 0)
-        ).all()
-        return result
     
+    def get_table_data(self):
+        # TODO sort descending and return a rank
+        df = pd.DataFrame(self.session.query(Latest_elo.player_id, Latest_elo.game_date,
+                                             Latest_elo.elo_value, Latest_elo.name,
+                                             Latest_elo.birthday, Latest_elo.league, Latest_elo.team_name).order_by(Latest_elo.elo_value.desc()).all(),
+                          columns=['player_id', 'game_date', 'elo_value', 'name', 'birthday', 'league', 'team_name'])
+        df['rank'] = df['elo_value'].rank(method='min', ascending=False).astype(int)
+        return df
+
     def get_clubs(self, league, date):
         # TODO very bad solution of fixing database problems with sqlalchemy multithreading 
         # https://stackoverflow.com/questions/41279157/connection-problems-with-sqlalchemy-and-multiple-processes
@@ -129,4 +98,45 @@ class DB_webpage():
         )
         print(result)
 
+        return result
+
+
+    def trend(self, player_id):
+        sleep(2)
+        elo_game_subquery = (
+            self.session.query(
+                Elo,
+                Games.minutes,
+                Games.starter,
+                Games.opposition_team_id,
+                Games.result,
+                Games.elo.label('game_elo'),
+                Games.opposition_elo,
+                Games.team_id,
+                Games.expected_game_result,
+                Games.roundend_expected_game_result
+            )
+            .filter(Elo.player_id == player_id)
+            .join(Games, (Elo.game_id == Games.game_id) & (Elo.player_id == Games.player_id))
+            .subquery()
+            )
+
+            # Main query to join elo_game_subquery and Player table
+        result = (
+            self.session.query(
+                elo_game_subquery,
+                Player.name
+            )
+            .join(Player, elo_game_subquery.c.player_id == Player.id).all()
+        )
+
+        return result
+
+    def player_id_select(self):
+        result = (
+            self.session.query(
+                Player.id,
+                Player.name
+            ).all()
+        )
         return result
