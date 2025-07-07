@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String, Date, Float
 from sqlalchemy.ext.declarative import declarative_base
 
 class Player(declarative_base()):
@@ -54,3 +54,14 @@ class Schedule(declarative_base()):
     home = Column(String)
     away = Column(String)
     league = Column(Integer)
+
+class Prediction(declarative_base()):
+    __tablename__ = "PREDICTION"
+    __table_args__ = {'schema': 'METRICS'}
+
+    game_id = Column(Integer, primary_key=True)
+    home_elo = Column(Float)
+    away_elo = Column(Float)
+    prediction_low = Column(Float)
+    prediction_high = Column(Float)
+    result = Column(String)

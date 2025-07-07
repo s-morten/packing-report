@@ -1,15 +1,16 @@
-from sqlalchemy import Column, Integer, String, Float, Date
+from sqlalchemy import Column, Integer, String, Float, Date, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
-class Elo(declarative_base()):
+class Metric(declarative_base()):
     __tablename__ = "GDE"
     __table_args__ = {'schema': 'METRICS'}
 
     player_id = Column(Integer, primary_key=True)
     game_id = Column(Integer, primary_key=True)
     game_date = Column(Date)
-    elo_value = Column(Float)
+    metric_value = Column(Float)
     version = Column(Float, primary_key=True)
+    metric = Column(String, primary_key=True)
 
 class Games(declarative_base()):
     __tablename__ = "GAMES"
@@ -31,6 +32,7 @@ class Games(declarative_base()):
     version = Column(Float, primary_key=True)
     home = Column(Integer)
     game_minutes = Column(Integer)
+    valid = Column(Integer)
 
 class Processed_Footballsquads(declarative_base()):
     __tablename__ = "FOOTBALLSQUADS_PROCESSED"

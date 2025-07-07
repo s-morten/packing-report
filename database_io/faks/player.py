@@ -1,9 +1,9 @@
 #from database_io.db_handler_abs import DB_handler_abs
 from datetime import datetime
 from database_io.faks import Player
-from database_io.dims import Elo
+from database_io.dims import Metric, Games
 import pandas as pd
-from sqlalchemy import func, over, and_
+from sqlalchemy import func, over, and_, select
 from database_io.dims.elo import elo_query
 from database_io.faks.squads import squads_query
 
@@ -44,6 +44,10 @@ class DB_player():
 
 
     def get_overall_info(self, player_ids: list[int], game_date) -> pd.DataFrame: # version: float, date: datetime
+        games_sub = select(
+                        Games.player_id,
+                        func.count().label('entries')).group_by(Games.player_id).subquery()
+            
         elo_subquery = elo_query()
         squads_subquery = squads_query(game_date)
         # df -> player_id, exists, fapi_id, birthday, elo
@@ -53,7 +57,8 @@ class DB_player():
             Player.birthday,
             elo_subquery.c.elo_value,
             squads_subquery.c.kit_number,
-            squads_subquery.c.team_id
+            squads_subquery.c.team_id,
+            games_sub.c.entries
         ).select_from(
             Player
         ).outerjoin(
@@ -62,6 +67,9 @@ class DB_player():
         ).outerjoin(
             squads_subquery,
             Player.id == squads_subquery.c.player_id
+        ).outerjoin(
+            games_sub,
+            Player.id == games_sub.c.player_id
         ).filter(
             Player.id.in_(player_ids)
         ).filter(
@@ -69,7 +77,7 @@ class DB_player():
         ).all()
 
         frame = pd.DataFrame(player_ids, columns=["id"])
-        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "elo", "kit_number", "team_id"])
+        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "elo", "kit_number", "team_id", "entries"])
         # set a column for if the player exists
         frame["exists"] = frame["id"].isin(results["id"])
         frame = frame.merge(results, on="id", how="left")

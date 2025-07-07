@@ -1,9 +1,9 @@
 from database_io.db_handler import DB_handler
-from database_io.dims import Elo, Games
+from database_io.dims import Metric, Games
 from database_io.faks import Player, Squads
 db = DB_handler()
 
-db.elo.session.query(Elo).delete()
+db.elo.session.query(Metric).delete()
 db.elo.session.commit()
 db.player.session.query(Player).delete()
 db.player.session.commit()

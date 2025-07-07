@@ -5,21 +5,26 @@ import soccerdata as sd
 from utils.date_utils import to_season
 from utils.football_data_utils import get_score
 from database_io.db_handler import DB_handler
-import metrics.elo as elo
+#import metrics.elo as elo
 from collections import defaultdict
 from scraper.club_elo_scraper import ClubEloScraper
-from metrics.mov_elo.regressor import MOV_Regressor
+# from metrics.mov_elo.regressor import MOV_Regressor
+import metrics.pm as pm
 
 class GameTimeline:
-    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, league: str,  db_handler: DB_handler, version: float, home: str, mov_regressor: MOV_Regressor) -> None:
+    def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, league: str,  db_handler: DB_handler, version: float, home: str
+                 #, mov_regressor: MOV_Regressor
+                 ) -> None:
         # get necessary dataframes
         self.events = ws.read_events(match_id=[game_id])
         self.loader = ws.read_events(match_id=[game_id], output_fmt='loader')
         self.loader_players_df = self.loader.players(game_id)
         self.df_teams = self.loader.teams(game_id=game_id)
         self.db_handler = db_handler
-        self.mov_regressor = mov_regressor
+        # self.mov_regressor = mov_regressor
+        self.pm = pm.PM()
 
+        self.valid_for_training = None
         self.game_date = game_date
         self.game_id = game_id
         self.game_league = league
@@ -33,6 +38,15 @@ class GameTimeline:
         # create general info dict 
         self._create_general_info_dict()
 
+        self.player_info_df = self.db_handler.player.get_overall_info(list(map(int, self.general_info_dict.keys())), self.game_date)
+        for team_id, team_name in self.df_teams[["team_id", "team_name"]].values:
+            if not self.db_handler.team.team_exists(int(team_id)):  
+                self.db_handler.team.insert_team(int(team_id), team_name)
+        
+        self._valid_for_training()
+        self._handle_missing()
+        self._handle_squads()
+
         self._create_timeline_df()
 
         self._create_timeline_dict()
@@ -41,15 +55,17 @@ class GameTimeline:
         # TODO load all players from database, to reduce requests, all Database get/exists calls
         # TODO look into multiple player ids
         # TODO remove unlimited regressor file loading
+        
+    def _valid_for_training(self):
+        missing_df = self.player_info_df[~self.player_info_df["exists"]]
+        missing_quote = missing_df.shape[0] / self.player_info_df.shape[0]
+        not_enough_entries = self.player_info_df[self.player_info_df["entries"] < 10]
+        not_enough_entries_quote = not_enough_entries.shape[0] / self.player_info_df.shape[0]
 
-        self.player_info_df = self.db_handler.player.get_overall_info(list(map(int, self.general_info_dict.keys())), self.game_date)
-        for team_id, team_name in self.df_teams[["team_id", "team_name"]].values:
-            if not self.db_handler.team.team_exists(int(team_id)):  
-                self.db_handler.team.insert_team(int(team_id), team_name)
-        
-        self._handle_missing()
-        self._handle_squads()
-        
+        if missing_quote > 0.2 or not_enough_entries_quote > 0.2:
+            self.valid_for_training = 0
+        else:
+            self.valid_for_training = 1
 
     def _handle_squads(self):
         for player_id in self.general_info_dict.keys():
@@ -65,6 +81,7 @@ class GameTimeline:
 
     def _handle_missing(self):
         missing_df = self.player_info_df[~self.player_info_df["exists"]]
+        league_elo = None
         for player_id in missing_df[["id"]].values:
             # get age
             birthday = self.db_handler.player_age.get_player_age(self.general_info_dict[int(player_id)]["team_name"], 
@@ -74,15 +91,16 @@ class GameTimeline:
             self.db_handler.player.insert_player(int(player_id), 
                                                     self.general_info_dict[int(player_id)]["player_name"], 
                                                     birthday)
-            
-            if self.db_handler.elo.get_player_count_per_league(self.game_league, self.version) < 50:
-                # get Elo from Club Elo, because not enough players are 
-                league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)
-                start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.8
-                self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = start_elo
-            else:
-                self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = self.db_handler.elo.average_elo_by_league(self.game_league, self.version)
-            
+                        
+            # if self.db_handler.elo.get_player_count_per_league(self.game_league, self.version) < 50:
+            #     if league_elo is None:
+            #         # get Elo from Club Elo, because not enough players are 
+            #         league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)
+            #     start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.8
+            #     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = start_elo
+            # else:
+            #     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = self.db_handler.elo.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)
+            self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = 0    
         
         missing_bd_df = self.player_info_df.loc[self.player_info_df["birthday"].isna() & self.player_info_df["exists"]]
         for player_id in missing_bd_df[["id"]].values:
@@ -91,6 +109,7 @@ class GameTimeline:
                                                                  self.year)
             if birthday is not None:
                 self.db_handler.player.update_player_bday(int(player_id), birthday)
+
     def _create_general_info_dict(self):
         # {player_id: team_id, team_name, player_name, starter}
         general_info_dict = {}
@@ -173,6 +192,7 @@ class GameTimeline:
         red_card_df = self.events[(self.events["type"]== "Card") & (self.events["card_type"].isin(["SecondYellow", "Red"]))]
         game_end_df = self.events.loc[(self.events["type"] == "End")]
         end_of_game = game_end_df[(game_end_df["period"] == "SecondHalf")]["expanded_minute"].values[0]
+        self.official_end_of_game = end_of_game
         if not red_card_df.empty:
             red_card_game_end = min(red_card_df["expanded_minute"].values)
             end_of_game = min(end_of_game, red_card_game_end)
@@ -223,7 +243,8 @@ class GameTimeline:
         player_general_infos = []
         for player in self.player_goal_minute_mapping:
             # create timeline entry
-            player_elo = self.db_handler.elo.get_elo(int(player), self.game_date, self.game_league, self.general_info_dict[int(player)]["starter"], self.version)
+            #player_elo = self.db_handler.elo.get_elo(int(player), self.game_date, self.game_league, self.general_info_dict[int(player)]["starter"], self.version)
+            player_elo = self.player_info_df[self.player_info_df["id"] == player]["elo"].values[0]
             game_timeline = np.empty(
                 self.end_of_game + 1
             )  # +1 for index of last minute
@@ -280,18 +301,43 @@ class GameTimeline:
             opp_elo = np.mean([self.game_timeline_dict[opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
       
             # update elo
-            updated_elo, expected_game_result, roundend_expected_game_result = elo.calc_elo_update(p_mov, home, p_elo, p_team_elo, opp_elo, minutes, self.mov_regressor)
+            # updated_elo, expected_game_result, roundend_expected_game_result = elo.calc_elo_update(p_mov, home, p_elo, p_team_elo, opp_elo, self.end_of_game - minutes, minutes, self.mov_regressor)
+            expected_game_result = self.pm.predict(p_elo, minutes)
+            rounded_expected_game_result = -999
+            updated_elo = self.pm.update(p_elo, p_mov)
             self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_elo"] = updated_elo
             self.player_info_df.loc[self.player_info_df["id"] == player_id, "expected_game_result"] = expected_game_result
-            self.player_info_df.loc[self.player_info_df["id"] == player_id, "roundend_expected_game_result"] = roundend_expected_game_result
+            self.player_info_df.loc[self.player_info_df["id"] == player_id, "roundend_expected_game_result"] = rounded_expected_game_result
             
             # add new game
             result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
             games_batch.append([self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, 
-                                expected_game_result, roundend_expected_game_result, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"], self.end_of_game])
+                                expected_game_result, rounded_expected_game_result, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"], 
+                                self.end_of_game, self.valid_for_training])
 
-        # print(self.player_info_df)
         # TODO can remove list(set()) when double ids are taken care off
         elo_batch =  list(set([(int(p_id), int(self.game_id), self.game_date, updated_elo, self.version) for p_id, updated_elo in self.player_info_df[["id", "updated_elo"]].values]))
         self.db_handler.elo.insert_batch_elo(elo_batch)
         self.db_handler.games.insert_games_batch(games_batch)
+
+    def predict(self):
+        print(self.general_info_dict)
+        general_info_df = pd.DataFrame.from_dict(self.general_info_dict)
+        print(general_info_df)
+        home_ids = general_info_df.loc[general_info_df["starter"] == 1 & 
+                                              general_info_df["team_name"] == self.home_team_name, 
+                                              "player_id"]
+        home_elo = self.player_info_df.loc[self.player_info_df["id"].isin(home_ids), "elo"].mean()
+        away_ids = general_info_df.loc[general_info_df["starter"] == 1 & 
+                                               general_info_df["team_name"] != self.home_team_name, 
+                                              "player_id"]
+        away_elo = self.player_info_df.loc[self.player_info_df["id"].isin(away_ids), "elo"].mean()
+        # predict using model
+        # TODO using MOV regressor, just for eval right now, better model needed for prediction
+        prediction_low, prediction_high = self.mov_regressor.predict(1, home_elo - away_elo, 0, elo_diff_faktor=352, goal_diff_faktor=8, minutes_faktor=101)
+        # write to db
+        goals_df = get_score(self.events, self.df_teams)
+        home_goals = goals_df.loc[self.goals_df["team_id"] == self.df_teams["team_name" == self.home_team_name, "team_id"]].count()
+        away_goals = goals_df.loc[self.goals_df["team_id"] == self.df_teams["team_name" != self.home_team_name, "team_id"]].count()
+        self.db_handler.predictions(self.game_id, home_elo, away_elo, prediction_low, prediction_high, 
+              f"{home_goals}-{away_goals}")

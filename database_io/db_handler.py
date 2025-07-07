@@ -7,6 +7,7 @@ from database_io.webpage import DB_webpage
 from database_io.faks.squads import DB_squads
 from database_io.faks.schedule import DB_schedule
 from database_io.db_handler_abs import DB_handler_connection
+from database_io.faks.predictions import DB_predictions
 
 class DB_handler():
     def __init__(self):
@@ -19,3 +20,4 @@ class DB_handler():
         self.webpage = DB_webpage(connection)
         self.squads = DB_squads(connection)
         self.schedule = DB_schedule(connection)
+        self.predictions = DB_predictions(connection)

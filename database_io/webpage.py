@@ -1,6 +1,6 @@
 # from database_io.db_handler_abs import DB_handler_abs
 from database_io.faks import Player, Team
-from database_io.dims import Elo, Games
+from database_io.dims import Metric, Games
 from sqlalchemy import func
 import numpy as np
 from time import sleep
@@ -53,25 +53,25 @@ class DB_webpage():
     def get_team_table(self, min_date, max_date, league):
         max_elo_date = (
             self.session.query(
-                Elo.player_id,
-                func.max(Elo.game_date).label("found_date")
+                Metric.player_id,
+                func.max(Metric.game_date).label("found_date")
             )
-            .filter(Elo.game_date >= min_date)
-            .filter(Elo.game_date <= max_date)
-            .group_by(Elo.player_id)
+            .filter(Metric.game_date >= min_date)
+            .filter(Metric.game_date <= max_date)
+            .group_by(Metric.player_id)
             .subquery()
         )
 
         filterd_elo = (
             self.session.query(
-                Elo.player_id,
-                Elo.elo_value, 
-                Elo.game_id
+                Metric.player_id,
+                Metric.metric_value, 
+                Metric.game_id
             )
             .join(max_elo_date, (
-                Elo.player_id == max_elo_date.c.player_id
+                Metric.player_id == max_elo_date.c.player_id
             ) & (
-                max_elo_date.c.found_date == Elo.game_date
+                max_elo_date.c.found_date == Metric.game_date
             )).subquery()
         )
 
@@ -105,7 +105,7 @@ class DB_webpage():
         sleep(2)
         elo_game_subquery = (
             self.session.query(
-                Elo,
+                Metric,
                 Games.minutes,
                 Games.starter,
                 Games.opposition_team_id,
@@ -113,11 +113,11 @@ class DB_webpage():
                 Games.elo.label('game_elo'),
                 Games.opposition_elo,
                 Games.team_id,
-                Games.expected_game_result,
-                Games.roundend_expected_game_result
+                Games.expected_game_result_lower,
+                Games.expected_game_result_upper
             )
-            .filter(Elo.player_id == player_id)
-            .join(Games, (Elo.game_id == Games.game_id) & (Elo.player_id == Games.player_id))
+            .filter(Metric.player_id == player_id)
+            .join(Games, (Metric.game_id == Games.game_id) & (Metric.player_id == Games.player_id))
             .subquery()
             )
 

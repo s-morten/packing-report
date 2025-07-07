@@ -63,7 +63,8 @@ def register_callbacks(app, dbh: DB_handler):
         elo_trend = dbh.webpage.trend(player_id)
         fig = px.scatter(elo_trend, x="game_date", y="elo_value", hover_data=["minutes", "starter", "opposition_team_id", 
                                                                               "result", "game_elo", "opposition_elo", "game_date", 
-                                                                              "team_id", "expected_game_result", "roundend_expected_game_result"
+                                                                              "team_id", "expected_game_result_lower", 
+                                                                              "expected_game_result_upper"
                                                                             ], color_discrete_sequence=[colors["middle"]])
         # fig.add_hline(y=top_100_all_time(), line_width=2, line_dash="dash", line_color=colors["dark"])
         fig.update_layout(
