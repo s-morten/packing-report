@@ -27,14 +27,14 @@ for id in game_id_list:
         team_name = nr.replace_name(team["team"]["name"])
         for player in team["startXI"]:
             if wh_id := dbh.player.player_by_fapi_id(player) is not None:
-                elo = dbh.elo.extract_latest_elo(wh_id[0], elo_version)
+                elo = dbh.metric.extract_latest_elo(wh_id[0], elo_version)
                 start_xis["team_name"].append(elo)
             else:
                 wh_id = dbh.squads.match_players(time_now, player["player"]["number"], team_name)
                 if wh_id is None:
                     start_xis["team_name"].append(wh_id)
                 else:    
-                    elo = dbh.elo.extract_latest_elo(wh_id, elo_version)
+                    elo = dbh.metric.extract_latest_elo(wh_id, elo_version)
                     start_xis["team_name"].append(elo)
                     dbh.player.update_player_fapi_id(wh_id, player["player"]["id"])
     

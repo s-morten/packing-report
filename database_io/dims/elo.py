@@ -5,24 +5,24 @@ import pandas as pd
 from database_io.dims import Metric, Games
 from sqlalchemy import func, select
 
-class DB_elo():
+class DB_metric():
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session
         self.engine = connection_item.engine
 
-    def insert_elo(self, id: int, game_id: int, date: datetime, elo: float, version: float):
-        elo = Metric(player_id=id, game_id=game_id, game_date=date, elo_value=elo, version=version)
+    def insert_metric(self, id: int, game_id: int, date: datetime, elo: float, version: float, name: str):
+        elo = Metric(player_id=id, game_id=game_id, game_date=date, metric_value=elo, version=version, metric=name)
         self.session.add(elo)
         self.session.commit()
 
-    def insert_batch_elo(self, batch: list[tuple[int, int, datetime, float, float]]):
-        elo_batch = [Metric(player_id=id, game_id=game_id, game_date=date, elo_value=elo, version=version) for id, game_id, date, elo, version in batch]
+    def insert_batch_metric(self, batch: list[tuple[int, int, datetime, float, float, str]]):
+        elo_batch = [Metric(player_id=id, game_id=game_id, game_date=date, metric_value=elo, version=version, metric=name) for id, game_id, date, elo, version, name in batch]
         self.session.bulk_save_objects(elo_batch)
         self.session.commit()
     
 
-    def get_elo(self, id: int, date: datetime, league: str, starter: bool, version: float) -> float:
+    def get_metric(self, id: int, date: datetime, league: str, starter: bool, version: float, metric: str) -> float:
         """ Extracts the Elo per player from the database
             Returns default value if player does not exists
         """
@@ -30,6 +30,7 @@ class DB_elo():
                                           Metric.game_date).filter(
                                               Metric.player_id == id,
                                               Metric.version == version, 
+                                              Metric.metric == metric,
                                               Metric.game_date < date).order_by(
                                                   Metric.game_date.desc()).first()
 
@@ -93,12 +94,13 @@ class DB_elo():
             return None
         return query_result
 
-def elo_query():
+def metric_query():
     return select(
         Metric.player_id,
+        Metric.metric,
         Metric.metric_value,
         func.rank().over(
-            partition_by=Metric.player_id,
+            partition_by=[Metric.player_id, Metric.metric],
             order_by=Metric.game_date.desc()
         ).label('RANK')
     ).subquery()

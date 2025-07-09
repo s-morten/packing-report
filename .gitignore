@@ -137,3 +137,4 @@ proto_db/
 srv/
 *.csv
 *.nc
+*.pckl

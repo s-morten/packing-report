@@ -4,7 +4,7 @@ from database_io.faks import Player
 from database_io.dims import Metric, Games
 import pandas as pd
 from sqlalchemy import func, over, and_, select
-from database_io.dims.elo import elo_query
+from database_io.dims.elo import metric_query
 from database_io.faks.squads import squads_query
 
 # class DB_player(DB_handler_abs):
@@ -48,22 +48,23 @@ class DB_player():
                         Games.player_id,
                         func.count().label('entries')).group_by(Games.player_id).subquery()
             
-        elo_subquery = elo_query()
+        metric_subquery = metric_query()
         squads_subquery = squads_query(game_date)
         # df -> player_id, exists, fapi_id, birthday, elo
         query_results = self.session.query(
             Player.id,
             Player.fapi_id,
             Player.birthday,
-            elo_subquery.c.elo_value,
+            metric_subquery.c.metric_value,
+            metric_subquery.c.metric,
             squads_subquery.c.kit_number,
             squads_subquery.c.team_id,
             games_sub.c.entries
         ).select_from(
             Player
         ).outerjoin(
-            elo_subquery,
-            Player.id == elo_subquery.c.player_id
+            metric_subquery,
+            Player.id == metric_subquery.c.player_id
         ).outerjoin(
             squads_subquery,
             Player.id == squads_subquery.c.player_id
@@ -73,14 +74,23 @@ class DB_player():
         ).filter(
             Player.id.in_(player_ids)
         ).filter(
-            elo_subquery.c.RANK == 1
+            metric_subquery.c.RANK == 1
         ).all()
 
         frame = pd.DataFrame(player_ids, columns=["id"])
-        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "elo", "kit_number", "team_id", "entries"])
+        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "metric_value", "metric", "kit_number", "team_id", "entries"])
         # set a column for if the player exists
         frame["exists"] = frame["id"].isin(results["id"])
         frame = frame.merge(results, on="id", how="left")
+        
+        
+        # pivot the results to get separate columns for metric1 and metric2
+        results_pivoted = results.pivot(index='id', columns='metric', values='metric_value')
+        frame = frame.merge(results_pivoted, on="id", how="left")
+        frame = frame.drop(["metric_value", "metric"], axis=1)
+
+        # keep only distinct rows
+        frame = frame.drop_duplicates()
         return frame
     
 

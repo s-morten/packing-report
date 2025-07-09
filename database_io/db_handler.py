@@ -1,7 +1,7 @@
 from database_io.faks.player import DB_player
 from database_io.dims.player_age import DB_player_age
 from database_io.faks.team import DB_team
-from database_io.dims.elo import DB_elo
+from database_io.dims.elo import DB_metric
 from database_io.dims.games import DB_games
 from database_io.webpage import DB_webpage
 from database_io.faks.squads import DB_squads
@@ -15,7 +15,7 @@ class DB_handler():
         self.player = DB_player(connection)
         self.player_age = DB_player_age(connection)
         self.team = DB_team(connection)
-        self.elo = DB_elo(connection)
+        self.metric = DB_metric(connection)
         self.games = DB_games(connection)
         self.webpage = DB_webpage(connection)
         self.squads = DB_squads(connection)

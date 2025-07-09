@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, Date, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 class Metric(declarative_base()):
-    __tablename__ = "GDE"
+    __tablename__ = "METRIC"
     __table_args__ = {'schema': 'METRICS'}
 
     player_id = Column(Integer, primary_key=True)

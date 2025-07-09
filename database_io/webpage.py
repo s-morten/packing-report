@@ -65,7 +65,7 @@ class DB_webpage():
         filterd_elo = (
             self.session.query(
                 Metric.player_id,
-                Metric.metric_value, 
+                Metric.elo_value, 
                 Metric.game_id
             )
             .join(max_elo_date, (

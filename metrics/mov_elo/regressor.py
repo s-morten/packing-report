@@ -1,20 +1,16 @@
 
 import numpy as np
-import arviz as az
-
+import pickle
+from ngboost import NGBRegressor
 class MOV_Regressor:
-    def __init__(self, path):
-        trace = az.from_netcdf(path)
-        self.posterior = trace.posterior
+    def __init__(self):
+        with open('/home/morten/Develop/packing-report/metrics/mov_elo/ngb.pckl', "rb") as f:
+            self.ngb = pickle.load(f)
 
-    def predict(self, home, elo_diff, minutes_missed, elo_diff_faktor, goal_diff_faktor, minutes_faktor):
+
+    def predict(self, home, elo_diff, minutes_missed):
         # preprocess data
-        elo_diff = elo_diff / elo_diff_faktor
-        minutes_missed = minutes_missed / minutes_faktor
 
-        pred = ((self.posterior.home_advantage[0].values * home) + 
-               (self.posterior.elo_diff_coeff[0].values * elo_diff) *
-               abs(1 -  minutes_missed * self.posterior.minutes_missed_coeff[0].values))
-               # (self.posterior.minutes_missed_coeff[0].values * minutes_missed))
-        
-        return np.sort(np.rint(np.percentile(pred, [20, 80])))
+        pred = self.ngb.pred_dist([[home, elo_diff, minutes_missed]])
+        # return np.sort(np.rint(np.percentile(pred, [20, 80])))
+        return pred.ppf(0.25), pred.ppf(0.75)

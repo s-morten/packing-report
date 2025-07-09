@@ -5,15 +5,15 @@ import soccerdata as sd
 from utils.date_utils import to_season
 from utils.football_data_utils import get_score
 from database_io.db_handler import DB_handler
-#import metrics.elo as elo
+import metrics.elo as elo
 from collections import defaultdict
 from scraper.club_elo_scraper import ClubEloScraper
-# from metrics.mov_elo.regressor import MOV_Regressor
+from metrics.mov_elo.regressor import MOV_Regressor
 import metrics.pm as pm
 
 class GameTimeline:
     def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, league: str,  db_handler: DB_handler, version: float, home: str
-                 #, mov_regressor: MOV_Regressor
+                 , mov_regressor: MOV_Regressor
                  ) -> None:
         # get necessary dataframes
         self.events = ws.read_events(match_id=[game_id])
@@ -21,8 +21,9 @@ class GameTimeline:
         self.loader_players_df = self.loader.players(game_id)
         self.df_teams = self.loader.teams(game_id=game_id)
         self.db_handler = db_handler
-        # self.mov_regressor = mov_regressor
-        self.pm = pm.PM()
+        self.mov_regressor = mov_regressor
+        self.metric_pm = pm.PM()
+        self.metric_elo = elo.PlayerELO()
 
         self.valid_for_training = None
         self.game_date = game_date
@@ -91,16 +92,19 @@ class GameTimeline:
             self.db_handler.player.insert_player(int(player_id), 
                                                     self.general_info_dict[int(player_id)]["player_name"], 
                                                     birthday)
-                        
-            # if self.db_handler.elo.get_player_count_per_league(self.game_league, self.version) < 50:
-            #     if league_elo is None:
-            #         # get Elo from Club Elo, because not enough players are 
-            #         league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)
-            #     start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.8
-            #     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = start_elo
-            # else:
-            #     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = self.db_handler.elo.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)
-            self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = 0    
+            
+            # init ELO
+            if self.db_handler.metric.get_player_count_per_league(self.game_league, self.version) < 50:
+                if league_elo is None:
+                    # get Elo from Club Elo, because not enough players are 
+                    league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)
+                start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.8
+                self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = start_elo
+            else:
+                self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version))
+            
+            # init pm
+            self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "pm"] = 0    
         
         missing_bd_df = self.player_info_df.loc[self.player_info_df["birthday"].isna() & self.player_info_df["exists"]]
         for player_id in missing_bd_df[["id"]].values:
@@ -293,33 +297,62 @@ class GameTimeline:
             player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
             player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
             home = self.general_info_dict[int(player_id)]["home"]
-            p_elo = self.player_info_df[self.player_info_df["id"] == player_id]["elo"].values[0]
-
-            # update elo, elo calc
             p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]
+
+            # METRIC Elo ################################
+            # update elo, elo calc
+            p_elo = self.player_info_df[self.player_info_df["id"] == player_id]["elo"].values[0]
             p_team_elo = np.mean([self.game_timeline_dict[team_id][str(minute)] for minute in range(player_on, player_off + 1)])
             opp_elo = np.mean([self.game_timeline_dict[opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
       
             # update elo
-            # updated_elo, expected_game_result, roundend_expected_game_result = elo.calc_elo_update(p_mov, home, p_elo, p_team_elo, opp_elo, self.end_of_game - minutes, minutes, self.mov_regressor)
-            expected_game_result = self.pm.predict(p_elo, minutes)
-            rounded_expected_game_result = -999
-            updated_elo = self.pm.update(p_elo, p_mov)
-            self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_elo"] = updated_elo
-            self.player_info_df.loc[self.player_info_df["id"] == player_id, "expected_game_result"] = expected_game_result
-            self.player_info_df.loc[self.player_info_df["id"] == player_id, "roundend_expected_game_result"] = rounded_expected_game_result
+            exp_res_lower, exp_res_upper = self.metric_elo.predict( home, p_elo, p_team_elo, opp_elo, self.end_of_game - minutes, self.mov_regressor)
+            updated_elo = self.metric_elo.update(p_mov, exp_res_lower, exp_res_upper, minutes)
             
+            self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_elo"] = updated_elo
+            self.player_info_df.loc[self.player_info_df["id"] == player_id, "exp_res_lower_elo"] = exp_res_lower
+            self.player_info_df.loc[self.player_info_df["id"] == player_id, "exp_res_upper_elo"] = exp_res_upper
+            
+            # METRIC pm ################################ 
+            p_pm = self.player_info_df[self.player_info_df["id"] == player_id]["pm"].values[0]
+            exp_res = self.metric_pm.predict(p_pm, minutes)
+            updated_pm = self.metric_pm.update(p_pm, p_mov, exp_res)
+            self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_pm"] = updated_pm
+            self.player_info_df.loc[self.player_info_df["id"] == player_id, "exp_res_lpm"] = exp_res
+
             # add new game
             result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
             games_batch.append([self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, 
-                                expected_game_result, rounded_expected_game_result, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"], 
+                                exp_res_lower, exp_res_upper, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"], 
                                 self.end_of_game, self.valid_for_training])
 
         # TODO can remove list(set()) when double ids are taken care off
-        elo_batch =  list(set([(int(p_id), int(self.game_id), self.game_date, updated_elo, self.version) for p_id, updated_elo in self.player_info_df[["id", "updated_elo"]].values]))
-        self.db_handler.elo.insert_batch_elo(elo_batch)
+        elo_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_elo, self.version, "elo") for p_id, updated_elo in self.player_info_df[["id", "updated_elo"]].values]))
+        pm_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_pm, self.version, "pm") for p_id, updated_pm in self.player_info_df[["id", "updated_pm"]].values]))
+        self.db_handler.metric.insert_batch_metric(elo_batch)
+        self.db_handler.metric.insert_batch_metric(pm_batch)
         self.db_handler.games.insert_games_batch(games_batch)
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     def predict(self):
         print(self.general_info_dict)
         general_info_df = pd.DataFrame.from_dict(self.general_info_dict)
