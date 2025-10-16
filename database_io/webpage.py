@@ -13,12 +13,13 @@ class Latest_elo(declarative_base()):
     __table_args__ = {'schema': 'METRICS'}
     
     player_id = Column(Integer, primary_key=True)
-    elo_value = Column(Float)
+    metric_value = Column(Float)
     game_date = Column(Date)
     name = Column(String)
     birthday = Column(Date)
     league = Column(String)
     team_name = Column(String)
+    metric = Column(String, primary_key=True)
     
 
 
@@ -28,13 +29,13 @@ class DB_webpage():
         self.session = connection_item.session
         self.engine = connection_item.engine
     
-    def get_table_data(self):
+    def get_table_data(self, metric):
         # TODO sort descending and return a rank
         df = pd.DataFrame(self.session.query(Latest_elo.player_id, Latest_elo.game_date,
-                                             Latest_elo.elo_value, Latest_elo.name,
-                                             Latest_elo.birthday, Latest_elo.league, Latest_elo.team_name).order_by(Latest_elo.elo_value.desc()).all(),
-                          columns=['player_id', 'game_date', 'elo_value', 'name', 'birthday', 'league', 'team_name'])
-        df['rank'] = df['elo_value'].rank(method='min', ascending=False).astype(int)
+                                             Latest_elo.metric_value, Latest_elo.name,
+                                             Latest_elo.birthday, Latest_elo.league, Latest_elo.team_name).filter(Latest_elo.metric == metric).order_by(Latest_elo.metric_value.desc()).all(),
+                          columns=['player_id', 'game_date', 'metric_value', 'name', 'birthday', 'league', 'team_name'])
+        df['rank'] = df['metric_value'].rank(method='min', ascending=False).astype(int)
         return df
 
     def get_clubs(self, league, date):

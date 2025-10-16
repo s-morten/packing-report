@@ -48,19 +48,16 @@ class GameTimeline:
         self._handle_missing()
         self._handle_squads()
 
-        self._create_timeline_df()
-
-        self._create_timeline_dict()
-
-        ## PRE Enhancements ca. 40-45s. per game
-        # TODO load all players from database, to reduce requests, all Database get/exists calls
-        # TODO look into multiple player ids
-        # TODO remove unlimited regressor file loading
+        self.game_timeline_dfs = {}
+        self.game_timeline_dicts = {}
+        for metric in ["elo", "pm"]:
+            self._create_timeline_df(metric)
+            self._create_timeline_dict(metric)
         
     def _valid_for_training(self):
         missing_df = self.player_info_df[~self.player_info_df["exists"]]
         missing_quote = missing_df.shape[0] / self.player_info_df.shape[0]
-        not_enough_entries = self.player_info_df[self.player_info_df["entries"] < 10]
+        not_enough_entries = self.player_info_df[self.player_info_df["entries"] < 5]
         not_enough_entries_quote = not_enough_entries.shape[0] / self.player_info_df.shape[0]
 
         if missing_quote > 0.2 or not_enough_entries_quote > 0.2:
@@ -98,11 +95,12 @@ class GameTimeline:
                 if league_elo is None:
                     # get Elo from Club Elo, because not enough players are 
                     league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)
-                start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.8
+                start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.7
                 self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = start_elo
+                print("league_elo", start_elo)
             else:
-                self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version))
-            
+                self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)) # * 0.7
+                print("50 players", np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)) * 0.7)
             # init pm
             self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "pm"] = 0    
         
@@ -242,13 +240,12 @@ class GameTimeline:
                 }
         self.player_goal_minute_mapping = player_goal_minute_mapping
 
-    def _create_timeline_df(self):
+    def _create_timeline_df(self, metric):
         player_timelines = []
         player_general_infos = []
         for player in self.player_goal_minute_mapping:
             # create timeline entry
-            #player_elo = self.db_handler.elo.get_elo(int(player), self.game_date, self.game_league, self.general_info_dict[int(player)]["starter"], self.version)
-            player_elo = self.player_info_df[self.player_info_df["id"] == player]["elo"].values[0]
+            player_metric = self.player_info_df[self.player_info_df["id"] == player][metric].values[0]
             game_timeline = np.empty(
                 self.end_of_game + 1
             )  # +1 for index of last minute
@@ -260,11 +257,11 @@ class GameTimeline:
             game_general_info[2] = (
                 self.player_goal_minute_mapping[player]["goals_for"] - self.player_goal_minute_mapping[player]["goals_against"]
             )
-            game_timeline[self.player_goal_minute_mapping[player]["on"]:self.player_goal_minute_mapping[player]["off"] + 1] = player_elo
+            game_timeline[self.player_goal_minute_mapping[player]["on"]:self.player_goal_minute_mapping[player]["off"] + 1] = player_metric
             player_timelines.append(game_timeline)
             player_general_infos.append(game_general_info)
         
-        self.game_timeline_df = pd.DataFrame(
+        self.game_timeline_dfs[metric] = pd.DataFrame(
             player_timelines,
             columns=[*np.arange(self.end_of_game + 1).astype(str)]
             ) 
@@ -272,18 +269,18 @@ class GameTimeline:
             player_general_infos,
             columns=["id", "team_id", "gd"])
         
-    def _create_timeline_dict(self):
+    def _create_timeline_dict(self, metric):
         game_timeline_dict = {}
         teams = self.game_general_info_df["team_id"].unique()
         for team in teams:
             game_timeline_dict[team] = {}
-        for minute in self.game_timeline_df:
+        for minute in self.game_timeline_dfs[metric]:
             for team in game_timeline_dict:
-                minute_df = self.game_timeline_df.loc[self.game_general_info_df["team_id"] == team, minute]
+                minute_df = self.game_timeline_dfs[metric].loc[self.game_general_info_df["team_id"] == team, minute]
                 average_elo = minute_df.mean()
                 game_timeline_dict[team][minute] = average_elo
 
-        self.game_timeline_dict = game_timeline_dict
+        self.game_timeline_dicts[metric] = game_timeline_dict
 
     def handle(self):
         games_batch = []
@@ -298,16 +295,17 @@ class GameTimeline:
             player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
             home = self.general_info_dict[int(player_id)]["home"]
             p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]
+            minutes_3_mon = self.player_info_df[self.player_info_df["id"] == player_id]["total_minutes"].values[0]
 
             # METRIC Elo ################################
             # update elo, elo calc
             p_elo = self.player_info_df[self.player_info_df["id"] == player_id]["elo"].values[0]
-            p_team_elo = np.mean([self.game_timeline_dict[team_id][str(minute)] for minute in range(player_on, player_off + 1)])
-            opp_elo = np.mean([self.game_timeline_dict[opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+            p_team_elo = np.mean([self.game_timeline_dicts["elo"][team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+            opp_elo = np.mean([self.game_timeline_dicts["elo"][opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
       
             # update elo
             exp_res_lower, exp_res_upper = self.metric_elo.predict( home, p_elo, p_team_elo, opp_elo, self.end_of_game - minutes, self.mov_regressor)
-            updated_elo = self.metric_elo.update(p_mov, exp_res_lower, exp_res_upper, minutes)
+            updated_elo = self.metric_elo.update(p_mov, exp_res_lower, exp_res_upper, minutes, minutes_3_mon)
             
             self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_elo"] = updated_elo
             self.player_info_df.loc[self.player_info_df["id"] == player_id, "exp_res_lower_elo"] = exp_res_lower
@@ -315,7 +313,9 @@ class GameTimeline:
             
             # METRIC pm ################################ 
             p_pm = self.player_info_df[self.player_info_df["id"] == player_id]["pm"].values[0]
-            exp_res = self.metric_pm.predict(p_pm, minutes)
+            p_team_pm = np.mean([self.game_timeline_dicts["pm"][team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+            opp_pm = np.mean([self.game_timeline_dicts["pm"][opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+            exp_res = self.metric_pm.predict(p_pm, p_team_pm, opp_pm, minutes)
             updated_pm = self.metric_pm.update(p_pm, p_mov, exp_res)
             self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_pm"] = updated_pm
             self.player_info_df.loc[self.player_info_df["id"] == player_id, "exp_res_lpm"] = exp_res
@@ -336,21 +336,7 @@ class GameTimeline:
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     
     
     def predict(self):

@@ -21,6 +21,12 @@ def layout(app, dbh: DB_handler):
         dbc.Row(                                        # Select Columns
             [
                 dbc.Col(),
+                dbc.Col(dmc.Select(
+                            id="metric-select",
+                            label="Metric",
+                            value=["elo"],
+                        data=["elo", "pm"],
+                        )), # league
                 dbc.Col(dmc.DatePicker(
                             id="date-picker",
                             label="Point in time",
@@ -98,11 +104,12 @@ def register_callbacks(app, dbh: DB_handler):
             Input('next-page-button', 'n_clicks'),
             Input('league-select', 'value'),
             Input('date-picker', 'value'),
-            Input('club-multi-select', 'value')
+            Input('club-multi-select', 'value'), 
+            Input('metric-select', 'value')
         ]
     )
-    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, club_select):
-        result_df = dbh.webpage.get_table_data()
+    def update_table(n_clicks, entries_per_page, prev_page_clicks, next_page_clicks, league_select, date_select, club_select, metric_select):
+        result_df = dbh.webpage.get_table_data(metric_select)
         fig = go.Figure(data=[go.Table(
             header=dict(values=result_df.columns,
                         line_color=colors["dark"],

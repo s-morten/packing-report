@@ -10,5 +10,5 @@ class PM(Metric):
         return player_value
 
     # TODO unabhängig vom gegener score -> (player_value - gegener_score)?
-    def predict(self, player_value: float, minute: int) -> int:
-        return player_value * min((minute / 90), 1)   
+    def predict(self, player_value: float, team_value: float, opp_value: float, minute: int) -> int:
+        return ((player_value * 0.34 + team_value * 0.66) - opp_value) * min((minute / 90), 1)   

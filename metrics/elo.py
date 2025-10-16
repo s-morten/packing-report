@@ -6,7 +6,7 @@ from metrics.metric import Metric
 
 class PlayerELO(Metric):
     # mov, player elo, team elo, opp elo, minutes -> updated elo
-    def update(self, margin_of_victory: int, exp_game_res_lower, exp_game_res_upper, minutes_played):
+    def update(self, margin_of_victory: int, exp_game_res_lower, exp_game_res_upper, minutes_played, minutes_3_mon):
         c = 400 # calculation parameter, 
        # print(regressed_game_outcome)
         # expected game outcome -> elo stays the same
@@ -22,14 +22,14 @@ class PlayerELO(Metric):
         p_rating = np.power(10, (self.p_rating/c))
         opp_rating = np.power(10, (self.opp_value/c))
 
-        k = self._calc_k(minutes_played)
+        k = self._calc_k(minutes_played, minutes_3_mon)
 
         # elo calc
         expected_game_outcome = p_rating / (p_rating + opp_rating)
         updated_score = self.p_elo + k * (game_result - expected_game_outcome)
         return updated_score
         
-    def _calc_k(self, minutes_played, max_k=20):
+    def _calc_k(self, minutes_played, minutes_3_mon, max_k=20):
         """
         Scales K-factor linearly based on minutes played.
         A 90-minute game corresponds to max_k.
@@ -39,6 +39,12 @@ class PlayerELO(Metric):
         
         # Linearly scale K from 0 to max_k
         k = (minutes_played / 90) * max_k
+        minutes_3_mon = minutes_3_mon if minutes_3_mon is not None else 0
+        if minutes_3_mon < 500:
+            established = False
+        else:
+            established = True
+        k = k / 2 if established else k
         return k
     
     def predict(self, home, player_value, team_value, opp_value, minutes_missed, mov_regressor):

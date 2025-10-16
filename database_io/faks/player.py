@@ -6,6 +6,7 @@ import pandas as pd
 from sqlalchemy import func, over, and_, select
 from database_io.dims.elo import metric_query
 from database_io.faks.squads import squads_query
+from datetime import timedelta
 
 # class DB_player(DB_handler_abs):
 class DB_player():
@@ -44,9 +45,20 @@ class DB_player():
 
 
     def get_overall_info(self, player_ids: list[int], game_date) -> pd.DataFrame: # version: float, date: datetime
-        games_sub = select(
-                        Games.player_id,
-                        func.count().label('entries')).group_by(Games.player_id).subquery()
+        games_sub = (
+                        select(
+                            Games.player_id,
+                            func.count().label('entries'),
+                            func.sum(Games.minutes).label('total_minutes')
+                        )
+                        .where(Games.game_date >= (game_date - timedelta(days=90)))
+                        .group_by(Games.player_id)
+                        .subquery()
+                    )    
+        
+        # select(
+        #                 Games.player_id,
+        #                 func.count().label('entries')).group_by(Games.player_id).subquery()
             
         metric_subquery = metric_query()
         squads_subquery = squads_query(game_date)
@@ -59,7 +71,8 @@ class DB_player():
             metric_subquery.c.metric,
             squads_subquery.c.kit_number,
             squads_subquery.c.team_id,
-            games_sub.c.entries
+            games_sub.c.entries, 
+            games_sub.c.total_minutes
         ).select_from(
             Player
         ).outerjoin(
@@ -78,7 +91,7 @@ class DB_player():
         ).all()
 
         frame = pd.DataFrame(player_ids, columns=["id"])
-        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "metric_value", "metric", "kit_number", "team_id", "entries"])
+        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "metric_value", "metric", "kit_number", "team_id", "entries", "total_minutes"])
         # set a column for if the player exists
         frame["exists"] = frame["id"].isin(results["id"])
         frame = frame.merge(results, on="id", how="left")

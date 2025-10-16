@@ -60,7 +60,7 @@ class DB_metric():
         ).filter(Games.team_id == int(club_id), Games.version == version).group_by(Games.player_id).subquery()
 
         # Main query to calculate average elo_value for players in the pre_select subquery
-        average_elo = self.session.query(func.avg(Metric.metric_value)).filter(Metric.game_date >= game_date - timedelta(weeks=6*4)).join(
+        average_elo = self.session.query(func.avg(Metric.metric_value)).filter(Metric.game_date >= game_date - timedelta(weeks=6*4), Metric.metric == 'elo').join(
             pre_select, (pre_select.c.player_id == Metric.player_id) & (pre_select.c.max_gd == Metric.game_date)).scalar()
         return average_elo
 
@@ -71,7 +71,7 @@ class DB_metric():
         ).filter(Games.league == league, Games.version == version).group_by(Games.player_id).subquery()
 
         # Main query to calculate average elo_value for players in the pre_select subquery
-        average_elo = self.session.query(func.avg(Metric.metric_value)).filter(Metric.game_date >= game_date - timedelta(weeks=6*4)).join(
+        average_elo = self.session.query(func.avg(Metric.metric_value)).filter(Metric.game_date >= game_date - timedelta(weeks=6*4), Metric.metric == 'elo').join(
             pre_select, (pre_select.c.player_id == Metric.player_id) & (pre_select.c.max_gd == Metric.game_date)).scalar()
         return average_elo
     
