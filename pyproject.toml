@@ -1,0 +1,16 @@
+[project]
+name = "packing-report"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dash>=3.2.0",
+    "dash-bootstrap-components>=2.0.4",
+    "dash-mantine-components>=2.3.0",
+    "oracledb>=3.4.0",
+    "pymc>=5.25.1",
+    "socceraction>=1.5.3",
+    "sqlalchemy>=2.0.44",
+    "tqdm>=4.67.1",
+]
