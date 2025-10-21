@@ -113,6 +113,7 @@ class GameTimeline:
                 self.db_handler.player.update_player_bday(int(player_id), birthday)
 
     def _create_general_info_dict(self):
+        """ dict of player_id: team_id, team_name, home, player_name, starter, kit_number"""
         # {player_id: team_id, team_name, player_name, starter}
         general_info_dict = {}
         players = list(self.player_goal_minute_mapping)
@@ -132,6 +133,7 @@ class GameTimeline:
         self.general_info_dict = general_info_dict
 
     def _create_player_goal_minute_mapping(self):
+        """ dict of player_id: {team_id, goals_for, goals_against, minutes, on, off}"""
         # player and minutes, including subs
         loader_players_df = self.loader_players_df[self.loader_players_df["is_starter"] == True]
         players = np.swapaxes(
@@ -241,6 +243,8 @@ class GameTimeline:
         self.player_goal_minute_mapping = player_goal_minute_mapping
 
     def _create_timeline_df(self, metric):
+        """ dataframe. columns are minutes of the game. rows are players (not explicitly set right now TODO)
+            metric at minute"""
         player_timelines = []
         player_general_infos = []
         for player in self.player_goal_minute_mapping:
@@ -270,6 +274,7 @@ class GameTimeline:
             columns=["id", "team_id", "gd"])
         
     def _create_timeline_dict(self, metric):
+        """ dict. team_id: minute: average metric"""
         game_timeline_dict = {}
         teams = self.game_general_info_df["team_id"].unique()
         for team in teams:
