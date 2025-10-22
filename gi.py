@@ -1,5 +1,5 @@
 from scraper.whoscored_chromeless import WhoScored
-from metrics.mov_elo.regressor import MOV_Regressor
+# from metrics.mov_elo.regressor import MOV_Regressor
 from pathlib import PosixPath
 import pandas as pd
 import numpy as np
@@ -33,7 +33,7 @@ logger.disabled = True
 dbh = DB_handler()
 schedule = ws.read_schedule().reset_index()
 schedule = schedule.sort_values("date")
-mov_regressor = MOV_Regressor()
+# mov_regressor = MOV_Regressor()
 
 # profiler.start()
 # code you want to profile
@@ -47,7 +47,7 @@ for league, game, date, home in tqdm(list(zip(schedule["league"].values,
                                               schedule["home_team"].values)), 
                                      desc="Processing games"):
     date = to_datetime(date)
-    game_timeline = GameTimeline(ws, game, date, league, dbh, 0.1, home, mov_regressor)
+    game_timeline = GameTimeline(ws, game, date, league, dbh, 0.1, home)
     # game_timeline.predict()
     game_timeline.handle()
 

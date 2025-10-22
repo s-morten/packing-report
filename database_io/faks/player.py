@@ -109,3 +109,47 @@ class DB_player():
 
     # To use this subquery in a different query, you can do something like:
     # result = self.session.query(subquery).filter(subquery.c.RANK == 1).all()
+
+
+    def get_basic_info(self, player_ids: list[int], game_date) -> pd.DataFrame: # version: float, date: datetime
+        games_sub = (
+                        select(
+                            Games.player_id,
+                            func.count().label('entries'),
+                            func.sum(Games.minutes).label('total_minutes')
+                        )
+                        .where(Games.game_date >= (game_date - timedelta(days=90)))
+                        .group_by(Games.player_id)
+                        .subquery()
+                    )
+        squads_subquery = squads_query(game_date)
+        # df -> player_id, exists, fapi_id, birthday, elo
+        query_results = self.session.query(
+            Player.id,
+            Player.fapi_id,
+            Player.birthday,
+            squads_subquery.c.kit_number,
+            squads_subquery.c.team_id,
+            games_sub.c.entries, 
+            games_sub.c.total_minutes
+        ).select_from(
+            Player
+        ).outerjoin(
+            squads_subquery,
+            Player.id == squads_subquery.c.player_id
+        ).outerjoin(
+            games_sub,
+            Player.id == games_sub.c.player_id
+        ).filter(
+            Player.id.in_(player_ids)
+        ).all()
+
+        frame = pd.DataFrame(player_ids, columns=["id"])
+        results = pd.DataFrame(query_results, columns=["id", "fapi_id", "birthday", "kit_number", "team_id", "entries", "total_minutes"])
+        # set a column for if the player exists
+        frame["exists"] = frame["id"].isin(results["id"])
+        frame = frame.merge(results, on="id", how="left")
+
+        # keep only distinct rows
+        frame = frame.drop_duplicates()
+        return frame

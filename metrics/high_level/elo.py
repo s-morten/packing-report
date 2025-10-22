@@ -62,3 +62,33 @@ class PlayerELO(Metric):
         regressed_game_outcome = mov_regressor.predict(home, rating_diff, minutes_missed=minutes_missed)
         return regressed_game_outcome
  
+
+
+ ## init 
+ # init ELO
+# if self.db_handler.metric.get_player_count_per_league(self.game_league, self.version) < 50:
+#     if league_elo is None:
+#         # get Elo from Club Elo, because not enough players are 
+#         league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)
+#     start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.7
+#     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = start_elo
+#     print("league_elo", start_elo)
+# else:
+#     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)) # * 0.7
+#     print("50 players", np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)) * 0.7)
+            
+
+
+# # METRIC Elo ################################
+# # update elo, elo calc
+# p_elo = self.player_info_df[self.player_info_df["id"] == player_id]["elo"].values[0]
+# p_team_elo = np.mean([self.game_timeline_dicts["elo"][team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+# opp_elo = np.mean([self.game_timeline_dicts["elo"][opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+
+# # update elo
+# exp_res_lower, exp_res_upper = self.metric_elo.predict( home, p_elo, p_team_elo, opp_elo, self.end_of_game - minutes, self.mov_regressor)
+# updated_elo = self.metric_elo.update(p_mov, exp_res_lower, exp_res_upper, minutes, minutes_3_mon)
+
+# self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_elo"] = updated_elo
+# self.player_info_df.loc[self.player_info_df["id"] == player_id, "exp_res_lower_elo"] = exp_res_lower
+# self.player_info_df.loc[self.player_info_df["id"] == player_id, "exp_res_upper_elo"] = exp_res_upper
