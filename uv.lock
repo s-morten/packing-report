@@ -700,11 +700,11 @@ wheels = [
 
 [[package]]
 name = "multimethod"
-version = "1.9"
+version = "2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ff/98/f9129727a257f2df3363db1a861b4225cd62b139ca4f678340d87d75086a/multimethod-1.9.tar.gz", hash = "sha256:cb1b87815732984172d6802bbfea81d68bfa2a0d5a562fb212ae7d59bad7a455", size = 12506, upload-time = "2022-09-14T18:54:21.759Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/55/14/34e8c84ba4f1ab1186dc07426e0e84be71d3336cc57e8d076ee14331d50e/multimethod-2.0.tar.gz", hash = "sha256:c628b6d2e7d61fbe58484dd884d990901e8314faf58af062e72b65e3423cb109", size = 16065, upload-time = "2024-12-27T02:09:34.423Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/77/8c31f7c97aa6ae78a8843b43aeb0e4e301e2b23e04f237f0c4a16f531b72/multimethod-1.9-py3-none-any.whl", hash = "sha256:59cb8ffec7449bd5557993c8d84e788fe04aca9c94b3b181ba8429ab954c24df", size = 10161, upload-time = "2022-09-14T18:54:20.736Z" },
+    { url = "https://files.pythonhosted.org/packages/84/42/a285fc4b89b3a249538954779cd4082a85bf35dc7d0a9c93e48e146e3dc7/multimethod-2.0-py3-none-any.whl", hash = "sha256:45aa231dc9dbb7f980c0f2ad8179e2c2b72a8cd5c7d7534337be66dde29d35be", size = 9836, upload-time = "2024-12-27T02:09:31.671Z" },
 ]
 
 [[package]]
@@ -834,7 +834,7 @@ requires-dist = [
     { name = "dash", specifier = ">=3.2.0" },
     { name = "dash-bootstrap-components", specifier = ">=2.0.4" },
     { name = "dash-mantine-components", specifier = ">=2.3.0" },
-    { name = "multimethod", specifier = "==1.9" },
+    { name = "multimethod", specifier = "==2.0" },
     { name = "ngboost", specifier = ">=0.5.7" },
     { name = "oracledb", specifier = ">=3.4.0" },
     { name = "pandera", specifier = "==0.17.2" },
