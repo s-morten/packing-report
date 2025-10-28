@@ -2,14 +2,14 @@ from sqlalchemy import Column, Integer, String, Float, Date, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 class Metric(declarative_base()):
-    __tablename__ = "METRIC"
+    __tablename__ = "BASE_METRIC"
     __table_args__ = {'schema': 'METRICS'}
 
     player_id = Column(Integer, primary_key=True)
     game_id = Column(Integer, primary_key=True)
-    game_date = Column(Date)
+    # game_date = Column(Date)
     metric_value = Column(Float)
-    version = Column(Float, primary_key=True)
+    # version = Column(Float, primary_key=True)
     metric = Column(String, primary_key=True)
 
 class Games(declarative_base()):

@@ -11,13 +11,13 @@ class DB_metric():
         self.session = connection_item.session
         self.engine = connection_item.engine
 
-    def insert_metric(self, id: int, game_id: int, date: datetime, elo: float, version: float, name: str):
-        elo = Metric(player_id=id, game_id=game_id, game_date=date, metric_value=elo, version=version, metric=name)
+    def insert_metric(self, id: int, game_id: int, elo: float, name: str):
+        elo = Metric(player_id=id, game_id=game_id, metric_value=elo, metric=name)
         self.session.add(elo)
         self.session.commit()
 
-    def insert_batch_metric(self, batch: list[tuple[int, int, datetime, float, float, str]]):
-        elo_batch = [Metric(player_id=id, game_id=game_id, game_date=date, metric_value=elo, version=version, metric=name) for id, game_id, date, elo, version, name in batch]
+    def insert_batch_metric(self, batch: list[tuple[int, int, float, str]]):
+        elo_batch = [Metric(player_id=int(id), game_id=int(game_id), metric_value=float(elo), metric=name) for id, game_id, elo, name in batch]
         self.session.bulk_save_objects(elo_batch)
         self.session.commit()
     

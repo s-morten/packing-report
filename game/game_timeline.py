@@ -6,6 +6,7 @@ from utils.date_utils import to_season
 from database_io.db_handler import DB_handler
 from collections import defaultdict
 from scraper.club_elo_scraper import ClubEloScraper
+from metrics.low_level.goals import Goals
 
 class GameTimeline:
     def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, league: str,  
@@ -46,12 +47,6 @@ class GameTimeline:
         self._valid_for_training()
         self._handle_missing()
         self._handle_squads()
-
-        self.game_timeline_dfs = {}
-        self.game_timeline_dicts = {}
-        for metric in ["elo", "pm"]:
-            self._create_timeline_df(metric)
-            self._create_timeline_dict(metric)
         
     def _valid_for_training(self):
         missing_df = self.player_info_df[~self.player_info_df["exists"]]
@@ -118,78 +113,36 @@ class GameTimeline:
         self.general_info_dict = general_info_dict
 
 
-    def _create_timeline_df(self, metric):
-        """ dataframe. columns are minutes of the game. rows are players (not explicitly set right now TODO)
-            metric at minute"""
-        player_timelines = []
-        player_general_infos = []
-        for player in self.player_goal_minute_mapping:
-            # create timeline entry
-            player_metric = self.player_info_df[self.player_info_df["id"] == player][metric].values[0]
-            game_timeline = np.empty(
-                self.end_of_game + 1
-            )  # +1 for index of last minute
-            game_general_info = np.empty( 3 )  # player id, team id, gd
-            
-            game_timeline[:] = np.nan
-            game_general_info[0] = player
-            game_general_info[1] = self.player_goal_minute_mapping[player]["team_id"]
-            game_general_info[2] = (
-                self.player_goal_minute_mapping[player]["goals_for"] - self.player_goal_minute_mapping[player]["goals_against"]
-            )
-            game_timeline[self.player_goal_minute_mapping[player]["on"]:self.player_goal_minute_mapping[player]["off"] + 1] = player_metric
-            player_timelines.append(game_timeline)
-            player_general_infos.append(game_general_info)
-        
-        self.game_timeline_dfs[metric] = pd.DataFrame(
-            player_timelines,
-            columns=[*np.arange(self.end_of_game + 1).astype(str)]
-            ) 
-        self.game_general_info_df = pd.DataFrame(
-            player_general_infos,
-            columns=["id", "team_id", "gd"])
-        
-    def _create_timeline_dict(self, metric):
-        """ dict. team_id: minute: average metric"""
-        game_timeline_dict = {}
-        teams = self.game_general_info_df["team_id"].unique()
-        for team in teams:
-            game_timeline_dict[team] = {}
-        for minute in self.game_timeline_dfs[metric]:
-            for team in game_timeline_dict:
-                minute_df = self.game_timeline_dfs[metric].loc[self.game_general_info_df["team_id"] == team, minute]
-                average_elo = minute_df.mean()
-                game_timeline_dict[team][minute] = average_elo
-
-        self.game_timeline_dicts[metric] = game_timeline_dict
-
     def handle(self):
-        games_batch = []
-        for player_id in self.general_info_dict:
-            player_name = self.general_info_dict[player_id]["player_name"]
-            team_id = self.general_info_dict[player_id]["team_id"]
-            team_name = self.general_info_dict[player_id]["team_name"]
-            opposition_team_id = self.df_teams[self.df_teams["team_id"] != team_id].team_id.values[0]
-            minutes = self.player_goal_minute_mapping[int(player_id)]["minutes"]
-            starter = self.general_info_dict[int(player_id)]["starter"]
-            player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
-            player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
-            home = self.general_info_dict[int(player_id)]["home"]
-            p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]
-            minutes_3_mon = self.player_info_df[self.player_info_df["id"] == player_id]["total_minutes"].values[0]
+        # games_batch = []
+        # for player_id in self.general_info_dict:
+        #     player_name = self.general_info_dict[player_id]["player_name"]
+        #     team_id = self.general_info_dict[player_id]["team_id"]
+        #     team_name = self.general_info_dict[player_id]["team_name"]
+        #     opposition_team_id = self.df_teams[self.df_teams["team_id"] != team_id].team_id.values[0]
+        #     minutes = self.player_goal_minute_mapping[int(player_id)]["minutes"]
+        #     starter = self.general_info_dict[int(player_id)]["starter"]
+        #     player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
+        #     player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
+        #     home = self.general_info_dict[int(player_id)]["home"]
+        #     p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]
+        #     minutes_3_mon = self.player_info_df[self.player_info_df["id"] == player_id]["total_minutes"].values[0]
 
-            # add new game
-            result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
-            games_batch.append([self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, 
-                                exp_res_lower, exp_res_upper, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"], 
-                                self.end_of_game, self.valid_for_training])
+        #     # add new game
+        #     result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
+        #     games_batch.append([self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id, 
+        #                         exp_res_lower, exp_res_upper, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"], 
+        #                         self.end_of_game, self.valid_for_training])
 
-        # TODO can remove list(set()) when double ids are taken care off
-        elo_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_elo, self.version, "elo") for p_id, updated_elo in self.player_info_df[["id", "updated_elo"]].values]))
-        pm_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_pm, self.version, "pm") for p_id, updated_pm in self.player_info_df[["id", "updated_pm"]].values]))
-        self.db_handler.metric.insert_batch_metric(elo_batch)
-        self.db_handler.metric.insert_batch_metric(pm_batch)
-        self.db_handler.games.insert_games_batch(games_batch)
+        # # TODO can remove list(set()) when double ids are taken care off
+        # elo_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_elo, self.version, "elo") for p_id, updated_elo in self.player_info_df[["id", "updated_elo"]].values]))
+        # pm_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_pm, self.version, "pm") for p_id, updated_pm in self.player_info_df[["id", "updated_pm"]].values]))
+        # self.db_handler.metric.insert_batch_metric(elo_batch)
+        # self.db_handler.metric.insert_batch_metric(pm_batch)
+        # self.db_handler.games.insert_games_batch(games_batch)
+        g = Goals(self.db_handler)
+        g.create_player_goal_minute_mapping(self.events, self.loader_players_df, self.df_teams)
+        g.write(self.game_id)
 
     
     
