@@ -7,6 +7,7 @@ from database_io.db_handler import DB_handler
 from collections import defaultdict
 from scraper.club_elo_scraper import ClubEloScraper
 from metrics.low_level.goals import Goals
+from metrics.low_level.minutes import Minutes
 
 class GameTimeline:
     def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, league: str,  
@@ -26,9 +27,6 @@ class GameTimeline:
         self.home_team_name = home
         self.version = version
         self.year = to_season(self.game_date)
-
-        # create game timeline dict
-        # self._create_player_goal_minute_mapping()
 
         # insert new teams
         # self.player_info_df = self.db_handler.player.get_overall_info(list(map(int, self.general_info_dict.keys())), 
@@ -140,9 +138,10 @@ class GameTimeline:
         # self.db_handler.metric.insert_batch_metric(elo_batch)
         # self.db_handler.metric.insert_batch_metric(pm_batch)
         # self.db_handler.games.insert_games_batch(games_batch)
-        g = Goals(self.db_handler)
-        g.create_player_goal_minute_mapping(self.events, self.loader_players_df, self.df_teams)
-        g.write(self.game_id)
+        metrics = [Minutes(self.db_handler), Goals(self.db_handler)]
+        for metric in metrics:
+            metric.calculate(self)
+            metric.write(self.game_id)
 
     
     
