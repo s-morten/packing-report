@@ -10,9 +10,8 @@ class DB_handler_connection:
         username = "ADMIN"
         password = os.environ.get("ORACLE_DB_PWD")
         dsn = "most"
-        self.connection = oracledb.connect(user=username, password=password,
-                            dsn=dsn, config_dir="/etc/")
+        self.connection = oracledb.connect(user=username, password=password, dsn=dsn, config_dir="/etc/")
 
-        self.engine = create_engine('oracle+oracledb://', creator=lambda: self.connection)
-        
+        self.engine = create_engine("oracle+oracledb://", creator=lambda: self.connection)
+
         self.session = Session(self.engine)

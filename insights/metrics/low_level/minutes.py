@@ -6,39 +6,41 @@ class Minutes:
         self.db_handler = db_handler
 
     def calculate(self, game_timeline):
-        """ dict of player_id: {team_id, goals_for, goals_against, minutes, on, off}"""
+        """dict of player_id: {team_id, goals_for, goals_against, minutes, on, off}"""
         # player and minutes, including subs
         loader_players_df = game_timeline.loader_players_df[game_timeline.loader_players_df["is_starter"] == True]
         players = np.swapaxes(
             [
-                loader_players_df["player_id"].values, # player
-                loader_players_df["team_id"].values, # team
-                [0 for _ in range(len(loader_players_df["player_id"].values))], # on
-                [-1 for _ in range(len(loader_players_df["player_id"].values))], # off
+                loader_players_df["player_id"].values,  # player
+                loader_players_df["team_id"].values,  # team
+                [0 for _ in range(len(loader_players_df["player_id"].values))],  # on
+                [-1 for _ in range(len(loader_players_df["player_id"].values))],  # off
             ],
             0,
             1,
         )
-        sub_dataframe = game_timeline.events.loc[(game_timeline.events["type"] == "SubstitutionOn") | (game_timeline.events["type"] == "SubstitutionOff")]
+        sub_dataframe = game_timeline.events.loc[
+            (game_timeline.events["type"] == "SubstitutionOn") | (game_timeline.events["type"] == "SubstitutionOff")
+        ]
         on_dataframe = sub_dataframe.loc[(sub_dataframe["type"] == "SubstitutionOn")].copy()
         off_dataframe = sub_dataframe.loc[(sub_dataframe["type"] == "SubstitutionOff")].copy()
 
         subbed_on_players = np.swapaxes(
             [
-                on_dataframe["player_id"].values.astype(int), # player
-                on_dataframe["team_id"].values, # team
-                on_dataframe["expanded_minute"].values, # on
-                [-1 for _ in range(len(on_dataframe["player_id"].values))], # off
+                on_dataframe["player_id"].values.astype(int),  # player
+                on_dataframe["team_id"].values,  # team
+                on_dataframe["expanded_minute"].values,  # on
+                [-1 for _ in range(len(on_dataframe["player_id"].values))],  # off
             ],
             0,
             1,
         )
         subbed_off_players = np.swapaxes(
             [
-                off_dataframe["player_id"].values.astype(int), # player
-                off_dataframe["team_id"].values, # team
-                [0 for _ in range(len(off_dataframe["player_id"].values))], # on
-                off_dataframe["expanded_minute"].values, # off
+                off_dataframe["player_id"].values.astype(int),  # player
+                off_dataframe["team_id"].values,  # team
+                [0 for _ in range(len(off_dataframe["player_id"].values))],  # on
+                off_dataframe["expanded_minute"].values,  # off
             ],
             0,
             1,
@@ -46,7 +48,7 @@ class Minutes:
         # TODO dafault dict?
         players_dict = {}
         for player in [*players, *subbed_on_players, *subbed_off_players]:
-            if player[0] == 0: # player does not exist in date, bug!
+            if player[0] == 0:  # player does not exist in date, bug!
                 continue
             if player[0] not in players_dict:
                 players_dict[player[0]] = {}
@@ -58,7 +60,9 @@ class Minutes:
                 players_dict[player[0]]["off"] = max(player[3], players_dict[player[0]]["off"])
 
         # end of game, either the last minute or a red card -> game no longer representative
-        red_card_df = game_timeline.events[(game_timeline.events["type"]== "Card") & (game_timeline.events["card_type"].isin(["SecondYellow", "Red"]))]
+        red_card_df = game_timeline.events[
+            (game_timeline.events["type"] == "Card") & (game_timeline.events["card_type"].isin(["SecondYellow", "Red"]))
+        ]
         game_end_df = game_timeline.events.loc[(game_timeline.events["type"] == "End")]
         end_of_game = game_end_df[(game_end_df["period"] == "SecondHalf")]["expanded_minute"].values[0]
         official_end_of_game = end_of_game
@@ -81,16 +85,12 @@ class Minutes:
         game_timeline.players_dict = players_dict
         self.players_dict = players_dict
 
-        
-
     def write(self, game_id):
         metric_batch = []
         for player in self.players_dict:
-            metric_batch.append([
-                player,
-                game_id,
-                self.players_dict[player]["off"] - self.players_dict[player]["on"],
-                "minutes"])
+            metric_batch.append(
+                [player, game_id, self.players_dict[player]["off"] - self.players_dict[player]["on"], "minutes"]
+            )
         self.db_handler.metric.insert_batch_metric(metric_batch)
 
     # def _create_timeline_df(self, metric):
@@ -105,7 +105,7 @@ class Minutes:
     #             self.end_of_game + 1
     #         )  # +1 for index of last minute
     #         game_general_info = np.empty( 3 )  # player id, team id, gd
-            
+
     #         game_timeline[:] = np.nan
     #         game_general_info[0] = player
     #         game_general_info[1] = self.player_goal_minute_mapping[player]["team_id"]
@@ -115,15 +115,15 @@ class Minutes:
     #         game_timeline[self.player_goal_minute_mapping[player]["on"]:self.player_goal_minute_mapping[player]["off"] + 1] = player_metric
     #         player_timelines.append(game_timeline)
     #         player_general_infos.append(game_general_info)
-        
+
     #     self.game_timeline_dfs[metric] = pd.DataFrame(
     #         player_timelines,
     #         columns=[*np.arange(self.end_of_game + 1).astype(str)]
-    #         ) 
+    #         )
     #     self.game_general_info_df = pd.DataFrame(
     #         player_general_infos,
     #         columns=["id", "team_id", "gd"])
-        
+
     # def _create_timeline_dict(self, metric):
     #     """ dict. team_id: minute: average metric"""
     #     game_timeline_dict = {}

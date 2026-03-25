@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from lxml import html
 
-locale.setlocale(locale.LC_TIME, "en_US") # swedish
+locale.setlocale(locale.LC_TIME, "en_US")  # swedish
 
 LEAGUE_DICT = {
     "ENG-Premier League": {
@@ -122,6 +122,7 @@ if _f_custom_league_dict.is_file():
 #         "No custom league dict found. You can configure additional leagues in %s.",
 #         _f_custom_league_dict,
 #     )
+
 
 class SeasonCode(Enum):
     """How to interpret season codes.
@@ -236,10 +237,7 @@ class SeasonCode(Enum):
             if self == SeasonCode.MULTI_YEAR:
                 if int(season[2:]) == int(season[:2]) + 1:
                     if season == "2021":
-                        msg = (
-                            f'Season id "{season}" is ambiguous: '
-                            f'interpreting as "{season[:2]}-{season[-2:]}"'
-                        )
+                        msg = f'Season id "{season}" is ambiguous: interpreting as "{season[:2]}-{season[-2:]}"'
                         warnings.warn(msg, stacklevel=1)
                     return season
                 if season[2:] == "99":
@@ -291,6 +289,7 @@ class SeasonCode(Enum):
 
         raise ValueError(f"Unrecognized season code: '{season}'")
 
+
 WHOSCORED_DATADIR = "/home/morten/Develop/Open-Data/soccerdata"
 NOCACHE = False
 NOSTORE = False
@@ -311,6 +310,7 @@ if os.path.isfile(_f_custom_teamnname_replacements):
 #         "No custom team name replacements found. You can configure these in %s.",
 #         _f_custom_teamnname_replacements,
 #     )
+
 
 def standardize_colnames(df: pd.DataFrame, cols: list[str] | None = None) -> pd.DataFrame:
     """Convert DataFrame column names to snake case."""
@@ -383,6 +383,7 @@ COLS_EVENTS = {
     # The ID of a secondary player that the event is associated with
     "related_player_id": np.nan,
 }
+
 
 def make_game_id(row: pd.Series) -> str:
     """Return a game id based on date, home and away team."""
@@ -539,7 +540,7 @@ class WhoScored:
         df.loc[mask, col] = np.nan
         df[col] = df[col].replace(flip)
         return df
-    
+
     def _all_leagues(cls) -> dict[str, str]:
         """Return a dict mapping all canonical league IDs to source league IDs."""
         if not hasattr(cls, "_all_leagues_dict"):
@@ -551,12 +552,13 @@ class WhoScored:
     def available_leagues(cls) -> list[str]:
         """Return a list of league IDs available for this source."""
         return sorted(cls._all_leagues().keys())
+
     @property
     def _selected_leagues(self) -> dict[str, str]:
         """Return a dict mapping selected canonical league IDs to source league IDs."""
         return self._leagues_dict
-    
-    @_selected_leagues.setter    
+
+    @_selected_leagues.setter
     def _selected_leagues(self, ids: str | list[str] | None = None) -> None:
         if ids is None:
             self._leagues_dict = self._all_leagues()
@@ -899,9 +901,7 @@ class WhoScored:
 
         df_schedule = self.read_schedule(force_cache).reset_index()
         if match_id is not None:
-            iterator = df_schedule[
-                df_schedule.game_id.isin([match_id] if isinstance(match_id, int) else match_id)
-            ]
+            iterator = df_schedule[df_schedule.game_id.isin([match_id] if isinstance(match_id, int) else match_id)]
             if len(iterator) == 0:
                 raise ValueError("No games found with the given IDs in the selected seasons.")
         else:
@@ -910,7 +910,9 @@ class WhoScored:
         match_sheets = []
         for i, (_, game) in enumerate(iterator.iterrows()):
             # url = urlmask.format(game.game_id)
-            filepath = "/home/morten/Develop/Open-Data/soccerdata/" / filemask.format(game["league"], game["season"], game["game_id"])
+            filepath = "/home/morten/Develop/Open-Data/soccerdata/" / filemask.format(
+                game["league"], game["season"], game["game_id"]
+            )
 
             # print(
             #     "[%s/%s] Retrieving game with id=%s",
@@ -932,14 +934,8 @@ class WhoScored:
                         "game_id": game["game_id"],
                         "team": game["home_team"],
                         "player": node.xpath("./td[contains(@class,'pn')]/a")[0].text,
-                        "player_id": int(
-                            node.xpath("./td[contains(@class,'pn')]/a")[0]
-                            .get("href")
-                            .split("/")[2]
-                        ),
-                        "reason": node.xpath("./td[contains(@class,'reason')]/span")[0].get(
-                            "title"
-                        ),
+                        "player_id": int(node.xpath("./td[contains(@class,'pn')]/a")[0].get("href").split("/")[2]),
+                        "reason": node.xpath("./td[contains(@class,'reason')]/span")[0].get("title"),
                         "status": node.xpath("./td[contains(@class,'confirmed')]")[0].text,
                     }
                 )
@@ -953,14 +949,8 @@ class WhoScored:
                         "game_id": game["game_id"],
                         "team": game["away_team"],
                         "player": node.xpath("./td[contains(@class,'pn')]/a")[0].text,
-                        "player_id": int(
-                            node.xpath("./td[contains(@class,'pn')]/a")[0]
-                            .get("href")
-                            .split("/")[2]
-                        ),
-                        "reason": node.xpath("./td[contains(@class,'reason')]/span")[0].get(
-                            "title"
-                        ),
+                        "player_id": int(node.xpath("./td[contains(@class,'pn')]/a")[0].get("href").split("/")[2]),
+                        "reason": node.xpath("./td[contains(@class,'reason')]/span")[0].get("title"),
                         "status": node.xpath("./td[contains(@class,'confirmed')]")[0].text,
                     }
                 )
@@ -968,11 +958,7 @@ class WhoScored:
         if len(match_sheets) == 0:
             return pd.DataFrame(index=["league", "season", "game", "team", "player"])
 
-        return (
-            pd.DataFrame(match_sheets)
-            .set_index(["league", "season", "game", "team", "player"])
-            .sort_index()
-        )
+        return pd.DataFrame(match_sheets).set_index(["league", "season", "game", "team", "player"]).sort_index()
 
     def read_events(  # noqa: C901
         self,
@@ -1034,10 +1020,7 @@ class WhoScored:
         output_fmt = output_fmt.lower() if output_fmt is not None else None
         if output_fmt in ["loader", "spadl", "atomic-spadl"]:
             if self.no_store:
-                raise ValueError(
-                    f"The '{output_fmt}' output format is not supported "
-                    "when using the 'no_store' option."
-                )
+                raise ValueError(f"The '{output_fmt}' output format is not supported when using the 'no_store' option.")
             try:
                 from socceraction.atomic.spadl import convert_to_atomic
                 from socceraction.data.opta import OptaLoader
@@ -1050,9 +1033,7 @@ class WhoScored:
                     from packaging import version
 
                     if version.parse(socceraction.__version__) < version.parse("1.2.3"):
-                        raise ImportError(
-                            "The 'loader' output format requires socceraction >= 1.2.3"
-                        )
+                        raise ImportError("The 'loader' output format requires socceraction >= 1.2.3")
             except ImportError:
                 raise ImportError(
                     "The socceraction package is required to use the 'spadl' "
@@ -1064,9 +1045,7 @@ class WhoScored:
 
         df_schedule = self.read_schedule(force_cache).reset_index()
         if match_id is not None:
-            iterator = df_schedule[
-                df_schedule.game_id.isin([match_id] if isinstance(match_id, int) else match_id)
-            ]
+            iterator = df_schedule[df_schedule.game_id.isin([match_id] if isinstance(match_id, int) else match_id)]
             if len(iterator) == 0:
                 raise ValueError("No games found with the given IDs in the selected seasons.")
         else:
@@ -1084,20 +1063,18 @@ class WhoScored:
             #     len(iterator),
             #     game["game_id"],
             # )
-            filepath = self.data_dir / filemask.format(
-                game["league"], game["season"], game["game_id"]
-            )
+            filepath = self.data_dir / filemask.format(game["league"], game["season"], game["game_id"])
 
-#            try:
+            #            try:
             reader = open(filepath, encoding="utf-8")
             # reader_value = reader.read()
             # if retry_missing and reader_value == b"null" or reader_value == b"":
-                #     reader = self.get(
-                #         url,
-                #         filepath,
-                #         var="require.config.params['args'].matchCentreData",
-                #         no_cache=True,
-                #     )
+            #     reader = self.get(
+            #         url,
+            #         filepath,
+            #         var="require.config.params['args'].matchCentreData",
+            #         no_cache=True,
+            #     )
             # except ConnectionError as e:
             #     if on_error == "skip":
             #         print("Error while scraping game %s: %s", game["game_id"], e)
@@ -1106,14 +1083,9 @@ class WhoScored:
             # reader.seek(0)
             json_data = json.load(reader)
             if json_data is not None:
-                player_names.update(
-                    {int(k): v for k, v in json_data["playerIdNameDictionary"].items()}
-                )
+                player_names.update({int(k): v for k, v in json_data["playerIdNameDictionary"].items()})
                 team_names.update(
-                    {
-                        int(json_data[side]["teamId"]): json_data[side]["name"]
-                        for side in ["home", "away"]
-                    }
+                    {int(json_data[side]["teamId"]): json_data[side]["name"] for side in ["home", "away"]}
                 )
                 if "events" in json_data:
                     game_events = json_data["events"]
@@ -1138,9 +1110,7 @@ class WhoScored:
                             .merge(_eventtypesdf, on="type_id", how="left")
                             .reset_index(drop=True)
                         )
-                        df_actions = convert_to_actions(
-                            df_events, home_team_id=int(json_data["home"]["teamId"])
-                        )
+                        df_actions = convert_to_actions(df_events, home_team_id=int(json_data["home"]["teamId"]))
                         if output_fmt == "spadl":
                             events[game["game_id"]] = df_actions
                         else:
@@ -1159,9 +1129,7 @@ class WhoScored:
             return OptaLoader(
                 root=self.data_dir,
                 parser="whoscored",
-                feeds={
-                    "whoscored": str(Path("events/{competition_id}_{season_id}/{game_id}.json"))
-                },
+                feeds={"whoscored": str(Path("events/{competition_id}_{season_id}/{game_id}.json"))},
             )
 
         if len(events) == 0:
@@ -1182,16 +1150,10 @@ class WhoScored:
             for col, default in COLS_EVENTS.items():
                 if col not in df.columns:
                     df[col] = default
-            df["outcome_type"] = df["outcome_type"].apply(
-                lambda x: x.get("displayName") if pd.notnull(x) else x
-            )
-            df["card_type"] = df["card_type"].apply(
-                lambda x: x.get("displayName") if pd.notnull(x) else x
-            )
+            df["outcome_type"] = df["outcome_type"].apply(lambda x: x.get("displayName") if pd.notnull(x) else x)
+            df["card_type"] = df["card_type"].apply(lambda x: x.get("displayName") if pd.notnull(x) else x)
             df["type"] = df["type"].apply(lambda x: x.get("displayName") if pd.notnull(x) else x)
-            df["period"] = df["period"].apply(
-                lambda x: x.get("displayName") if pd.notnull(x) else x
-            )
+            df["period"] = df["period"].apply(lambda x: x.get("displayName") if pd.notnull(x) else x)
             df = df[list(COLS_EVENTS.keys())]
 
         return df

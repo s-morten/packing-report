@@ -1,12 +1,10 @@
-
 import pickle
 
 
 class MOV_Regressor:
     def __init__(self):
-        with open('/home/morten/Develop/packing-report/metrics/mov_elo/ngb.pckl', "rb") as f:
+        with open("/home/morten/Develop/packing-report/metrics/mov_elo/ngb.pckl", "rb") as f:
             self.ngb = pickle.load(f)
-
 
     def predict(self, home, elo_diff, minutes_missed):
         # preprocess data

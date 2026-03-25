@@ -9,10 +9,7 @@ class Goals:
         # get goals and minutes
         event_dataframe = get_score(game_timeline.events, game_timeline.df_teams)
         # goal dict {key minute: value team}
-        goal_dict = dict(
-            zip(event_dataframe["expanded_minute"].values,
-            event_dataframe["goal_team_id"].values)
-        )
+        goal_dict = dict(zip(event_dataframe["expanded_minute"].values, event_dataframe["goal_team_id"].values))
 
         # TODO make sure players_dict is implemented in game_timeline
 
@@ -34,20 +31,24 @@ class Goals:
                 "team_id": player_team_id,
                 "goals_for": player_goals_for,
                 "goals_against": player_goals_against,
-                "minutes": player_off - game_timeline.players_dict[player]["on"], 
-                "on": game_timeline.players_dict[player]["on"], 
-                "off": player_off
-                }
+                "minutes": player_off - game_timeline.players_dict[player]["on"],
+                "on": game_timeline.players_dict[player]["on"],
+                "off": player_off,
+            }
         self.player_goal_minute_mapping = player_goal_minute_mapping
 
     def write(self, game_id):
         metric_batch = []
         for player in self.player_goal_minute_mapping:
-            metric_batch.append([
-                player,
-                game_id,
-                self.player_goal_minute_mapping[player]["goals_for"] - self.player_goal_minute_mapping[player]["goals_against"],
-                "goals"])
+            metric_batch.append(
+                [
+                    player,
+                    game_id,
+                    self.player_goal_minute_mapping[player]["goals_for"]
+                    - self.player_goal_minute_mapping[player]["goals_against"],
+                    "goals",
+                ]
+            )
         self.db_handler.metric.insert_batch_metric(metric_batch)
 
     # def _create_timeline_df(self, metric):
@@ -62,7 +63,7 @@ class Goals:
     #             self.end_of_game + 1
     #         )  # +1 for index of last minute
     #         game_general_info = np.empty( 3 )  # player id, team id, gd
-            
+
     #         game_timeline[:] = np.nan
     #         game_general_info[0] = player
     #         game_general_info[1] = self.player_goal_minute_mapping[player]["team_id"]
@@ -72,15 +73,15 @@ class Goals:
     #         game_timeline[self.player_goal_minute_mapping[player]["on"]:self.player_goal_minute_mapping[player]["off"] + 1] = player_metric
     #         player_timelines.append(game_timeline)
     #         player_general_infos.append(game_general_info)
-        
+
     #     self.game_timeline_dfs[metric] = pd.DataFrame(
     #         player_timelines,
     #         columns=[*np.arange(self.end_of_game + 1).astype(str)]
-    #         ) 
+    #         )
     #     self.game_general_info_df = pd.DataFrame(
     #         player_general_infos,
     #         columns=["id", "team_id", "gd"])
-        
+
     # def _create_timeline_dict(self, metric):
     #     """ dict. team_id: minute: average metric"""
     #     game_timeline_dict = {}

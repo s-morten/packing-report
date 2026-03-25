@@ -9,7 +9,7 @@ from database_io.db_handler import DB_handler
 
 nr = NameReplacer()
 
-berlin_tz = pytz.timezone('Europe/Berlin')
+berlin_tz = pytz.timezone("Europe/Berlin")
 time_now = datetime.now(berlin_tz)
 time_target = time_now + timedelta(minutes=30)
 
@@ -35,13 +35,11 @@ for id in game_id_list:
                 wh_id = dbh.squads.match_players(time_now, player["player"]["number"], team_name)
                 if wh_id is None:
                     start_xis["team_name"].append(wh_id)
-                else:    
+                else:
                     elo = dbh.metric.extract_latest_elo(wh_id, elo_version)
                     start_xis["team_name"].append(elo)
                     dbh.player.update_player_fapi_id(wh_id, player["player"]["id"])
-    
+
     # id, home, away, league, season, home_elo, away_elo, n_home_miss, n_away_miss, prediction_home, prediction_away, home_goals, away_goals
 
 # predict results and do sth with them, send notification and store results
-
-

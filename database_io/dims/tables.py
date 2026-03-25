@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 class Metric(declarative_base()):
     __tablename__ = "BASE_METRIC"
-    __table_args__ = {'schema': 'METRICS'}
+    __table_args__ = {"schema": "METRICS"}
 
     player_id = Column(Integer, primary_key=True)
     game_id = Column(Integer, primary_key=True)
@@ -13,9 +13,10 @@ class Metric(declarative_base()):
     # version = Column(Float, primary_key=True)
     metric = Column(String, primary_key=True)
 
+
 class Games(declarative_base()):
     __tablename__ = "GAMES"
-    __table_args__ = {'schema': 'BASIS'}
+    __table_args__ = {"schema": "BASIS"}
 
     game_id = Column(Integer, primary_key=True)
     player_id = Column(Integer, primary_key=True)
@@ -35,8 +36,9 @@ class Games(declarative_base()):
     game_minutes = Column(Integer)
     valid = Column(Integer)
 
+
 class Processed_Footballsquads(declarative_base()):
     __tablename__ = "FOOTBALLSQUADS_PROCESSED"
-    __table_args__ = {'schema': 'SCRAPING'}
+    __table_args__ = {"schema": "SCRAPING"}
 
     processed = Column(String, primary_key=True)

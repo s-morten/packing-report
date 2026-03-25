@@ -5,6 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
+    "beautifulsoup4>=4.14.3",
     "numpy>=1.26.4",
+    "pandas>=2.3.3",
+    "requests>=2.32.5",
+    "setuptools>=82.0.1",
     "soccerdata>=1.8.7",
+    "toml>=0.10.2",
 ]

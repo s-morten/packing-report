@@ -16,12 +16,13 @@ members = [
 
 [dependency-groups]
 dev = [
+    "pytest>=9.0.2",
     "ruff>=0.15.7",
 ]
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"  # adjust to your Python version
+indent-width = 4
 
 [tool.ruff.lint]
 select = [

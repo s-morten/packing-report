@@ -19,4 +19,4 @@ class WhoScoredScraper:
         )
 
     def scrape_games(self):
-        events = self.scraper.read_events()
+        _ = self.scraper.read_events()

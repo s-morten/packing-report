@@ -12,69 +12,65 @@ from page_assets.styling import colors
 #             style={"backgroundColor": colors["dark"]},
 #         )
 
+
 def header(app):
     return dmc.Group(
-    [
-        dmc.Group(
-            [
-                offcanvas_layout(app)
-            ]
-        ),
-        dmc.Divider()
-    ],
-    # direction="column",
-    # align="center"
-)
+        [dmc.Group([offcanvas_layout(app)]), dmc.Divider()],
+        # direction="column",
+        # align="center"
+    )
 
 
 def offcanvas_layout(app):
-    return html.Div([
-                html.Div([
+    return html.Div(
+        [
+            html.Div(
+                [
                     dbc.Button("Menu", id="open-offcanvas", n_clicks=0, style={"backgroundColor": colors["middle"]}),
-                    dbc.Offcanvas([
-                        html.Div(
-                            dcc.Link(
-                                "GDE", href="/gde"
-                        )),
-                        html.Div(
-                            dcc.Link(
-                                "GDE Trend", href="/gde_trend"
-                        )),
-                        html.Div(
-                            dcc.Link(
-                                "GDE Team", href="/gde_team"
-                        )),
-                        # Button to open the "Buy Me a Coffee" widget in a new window
-                        html.A([
+                    dbc.Offcanvas(
+                        [
+                            html.Div(dcc.Link("GDE", href="/gde")),
+                            html.Div(dcc.Link("GDE Trend", href="/gde_trend")),
+                            html.Div(dcc.Link("GDE Team", href="/gde_team")),
+                            # Button to open the "Buy Me a Coffee" widget in a new window
+                            html.A(
+                                [
+                                    html.Img(
+                                        src=app.get_asset_url("coffee.jpg"),
+                                        style={
+                                            "height": "80px",
+                                            "width": "80px",
+                                            "float": "left",
+                                            "position": "relative",
+                                            "padding-top": 0,
+                                            "padding-right": 0,
+                                        },
+                                    )
+                                    # TODO real buymeacoffe
+                                ],
+                                href="https://www.buymeacoffee.com/mortenstehR",
+                            ),
                             html.Img(
-                                src=app.get_asset_url('coffee.jpg'),
+                                src=app.get_asset_url("simple_logo.jpg"),
                                 style={
-                                    'height' : '80px',
-                                    'width' : '80px',
-                                    'float' : 'left',
-                                    'position' : 'relative',
-                                    'padding-top' : 0,
-                                    'padding-right' : 0
-                                })
-                                # TODO real buymeacoffe
-                        ], href="https://www.buymeacoffee.com/mortenstehR"),
-                        html.Img(
-                                src=app.get_asset_url('simple_logo.jpg'),
-                                style={
-                                    'height' : '80px',
-                                    'width' : '80px',
-                                    'float' : 'left',
-                                    'position' : 'relative',
-                                    'padding-top' : 0,
-                                    'padding-right' : 0
-                                })
-                    ],
+                                    "height": "80px",
+                                    "width": "80px",
+                                    "float": "left",
+                                    "position": "relative",
+                                    "padding-top": 0,
+                                    "padding-right": 0,
+                                },
+                            ),
+                        ],
                         id="offcanvas",
                         title="MoSt Analytics",
                         is_open=False,
-                    )
-                ])
-            ])
+                    ),
+                ]
+            )
+        ]
+    )
+
 
 def register_callbacks(app):
     @app.callback(

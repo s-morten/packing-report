@@ -6,7 +6,7 @@ class OddToPercentage:
             input_odd (float): the bookie odd
 
         Returns:
-            (probability, precentage): 
+            (probability, precentage):
             Probability: The probability in range 0-1
             Percentage: The percentage in %
         """

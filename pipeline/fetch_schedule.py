@@ -21,12 +21,16 @@ dbh.schedule.clear_table()
 batch = []
 for league in league_id:
     data = fapi.get_schedule(league, season)
-    schedule = [[game['fixture']['id'], 
-                datetime.strptime(game["fixture"]["date"], "%Y-%m-%dT%H:%M:%S%z"),
-                nr.replace_name(game["teams"]["home"]["name"]), 
-                nr.replace_name(game["teams"]["away"]["name"]),
-                league] 
-                for game in data["response"]]
+    schedule = [
+        [
+            game["fixture"]["id"],
+            datetime.strptime(game["fixture"]["date"], "%Y-%m-%dT%H:%M:%S%z"),
+            nr.replace_name(game["teams"]["home"]["name"]),
+            nr.replace_name(game["teams"]["away"]["name"]),
+            league,
+        ]
+        for game in data["response"]
+    ]
     batch.extend(schedule)
 
 dbh.schedule.insert_batch_schedule(batch)

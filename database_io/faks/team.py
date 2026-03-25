@@ -7,6 +7,7 @@ class DB_team:
         self.connection = connection_item.connection
         self.session = connection_item.session
         self.engine = connection_item.engine
+
     def insert_team(self, id: int, name: str):
         team = Team(name=str(name), id=int(id))
         self.session.add(team)

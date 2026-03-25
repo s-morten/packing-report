@@ -8,23 +8,26 @@ from database_io.db_handler import DB_handler
 
 
 def layout(app, dbh):
-    return html.Div(children=[
-        dbc.Row(                                        # Select Columns
-            [
-                dbc.Col(    
-                    dcc.Dropdown(
-                        id="dropdown",
-                        options=[],  # Initially empty, will be populated dynamically
-                        value=None,
-                        placeholder="Search and select an option",
-                        searchable=True,  # Enables the autocomplete feature
-                        clearable=True,   # Allows clearing the selection
+    return html.Div(
+        children=[
+            dbc.Row(  # Select Columns
+                [
+                    dbc.Col(
+                        dcc.Dropdown(
+                            id="dropdown",
+                            options=[],  # Initially empty, will be populated dynamically
+                            value=None,
+                            placeholder="Search and select an option",
+                            searchable=True,  # Enables the autocomplete feature
+                            clearable=True,  # Allows clearing the selection
+                        )
                     )
-                )    
-            ]
-        ),
-        dbc.Row(dbc.Col(dcc.Graph(id='elo_trend')))
-    ])
+                ]
+            ),
+            dbc.Row(dbc.Col(dcc.Graph(id="elo_trend"))),
+        ]
+    )
+
 
 # def top_100_all_time():
 #     subquery = session.query(func.max(Elo.elo_value).label("max_elo")).group_by(Elo.player_id).subquery()
@@ -32,9 +35,11 @@ def layout(app, dbh):
 #     hundredth_highest_elo = session.query(subquery.c.max_elo).order_by(desc(subquery.c.max_elo)).limit(1).offset(99).scalar()
 #     return hundredth_highest_elo
 
+
 def fetch_options_from_db(dbh: DB_handler):
     options = dbh.webpage.player_id_select()
     return [{"label": option[1], "value": option[0]} for option in options]
+
 
 def register_callbacks(app, dbh: DB_handler):
     @app.callback(
@@ -46,50 +51,59 @@ def register_callbacks(app, dbh: DB_handler):
         options = fetch_options_from_db(dbh)
         return options
 
-    @app.callback(
-        Output('elo_trend', 'figure'),
-        Input('dropdown', 'value'),
-        Input('dropdown', 'label')
-    )
+    @app.callback(Output("elo_trend", "figure"), Input("dropdown", "value"), Input("dropdown", "label"))
     def update_table(player_id, name):
         elo_trend = dbh.webpage.trend(player_id)
-        fig = px.scatter(elo_trend, x="game_date", y="elo_value", hover_data=["minutes", "starter", "opposition_team_id", 
-                                                                              "result", "game_elo", "opposition_elo", "game_date", 
-                                                                              "team_id", "expected_game_result_lower", 
-                                                                              "expected_game_result_upper"
-                                                                            ], color_discrete_sequence=[colors["middle"]])
+        fig = px.scatter(
+            elo_trend,
+            x="game_date",
+            y="elo_value",
+            hover_data=[
+                "minutes",
+                "starter",
+                "opposition_team_id",
+                "result",
+                "game_elo",
+                "opposition_elo",
+                "game_date",
+                "team_id",
+                "expected_game_result_lower",
+                "expected_game_result_upper",
+            ],
+            color_discrete_sequence=[colors["middle"]],
+        )
         # fig.add_hline(y=top_100_all_time(), line_width=2, line_dash="dash", line_color=colors["dark"])
         fig.update_layout(
             plot_bgcolor=colors["background"],  # Set the background color
             xaxis=dict(gridcolor=colors["dark"], tickfont=dict(color=colors["dark"])),
             yaxis=dict(gridcolor=colors["dark"], tickfont=dict(color=colors["dark"])),
-            xaxis_title='Date',
-            yaxis_title='GDE',
-            title_text=name
+            xaxis_title="Date",
+            yaxis_title="GDE",
+            title_text=name,
         )
         fig.update_xaxes(
-            #tickangle=45,
-            #title_font=dict(size=18, color='red')
+            # tickangle=45,
+            # title_font=dict(size=18, color='red')
             title_font=dict(color=colors["dark"]),
-            showgrid=False
+            showgrid=False,
         )
 
         # Update y-axis properties
-        fig.update_yaxes(
-            title_font=dict(color=colors["dark"])
-        )
+        fig.update_yaxes(title_font=dict(color=colors["dark"]))
         # TODO image not showing
         fig.update_layout(
-            images=[dict(
-                source="/home/morten/Develop/packing-report/webpage/assets/simple_logo.jpg",
-                x=-0.1,
-                y=0,
-                xref="paper",
-                yref="paper",
-                sizex=0.2,
-                sizey=0.2,
-                opacity=1,
-                layer="below"
-            )]
+            images=[
+                dict(
+                    source="/home/morten/Develop/packing-report/webpage/assets/simple_logo.jpg",
+                    x=-0.1,
+                    y=0,
+                    xref="paper",
+                    yref="paper",
+                    sizex=0.2,
+                    sizey=0.2,
+                    opacity=1,
+                    layer="below",
+                )
+            ]
         )
         return fig
