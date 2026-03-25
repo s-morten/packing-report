@@ -1,6 +1,6 @@
 import numpy as np
-import pandas as pd
-from utils.football_data_utils import get_score
+
+
 class Minutes:
     def __init__(self, db_handler):
         self.db_handler = db_handler

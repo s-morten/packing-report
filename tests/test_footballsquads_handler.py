@@ -1,9 +1,8 @@
-import pytest
-import sys
 from collections import defaultdict
-from database_io.db_handler import DB_handler
 
 from scraper.footballsquads_scraper import Footballsquads_scraper
+
+from database_io.db_handler import DB_handler
 
 # setup test environment, setting up a database handler
 dbh = DB_handler()

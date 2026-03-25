@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, Date, Boolean
+from sqlalchemy import Column, Date, Float, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
+
 
 class Metric(declarative_base()):
     __tablename__ = "BASE_METRIC"

@@ -1,7 +1,8 @@
 # from database_io.db_handler_abs import DB_handler_abs
 from database_io.faks import Team
 
-class DB_team():
+
+class DB_team:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session
@@ -13,4 +14,4 @@ class DB_team():
 
     def team_exists(self, id: int) -> bool:
         query_result = self.session.query(Team).filter(Team.id == id).first()
-        return not (query_result is None)
+        return query_result is not None

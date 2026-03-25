@@ -1,9 +1,12 @@
-import sys 
+import sys
+
 print(sys.path)
-from api.football_api import FApi_Handler
-from database_io.db_handler import DB_handler
 from datetime import datetime
+
+from api.football_api import FApi_Handler
+
 from configs import NameReplacer
+from database_io.db_handler import DB_handler
 
 fapi = FApi_Handler()
 dbh = DB_handler()

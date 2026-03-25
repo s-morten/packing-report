@@ -1,9 +1,11 @@
-from api.football_api import FApi_Handler
-from database_io.db_handler import DB_handler
 from collections import defaultdict
 from datetime import datetime, timedelta
+
 import pytz
+from api.football_api import FApi_Handler
+
 from configs import NameReplacer
+from database_io.db_handler import DB_handler
 
 nr = NameReplacer()
 

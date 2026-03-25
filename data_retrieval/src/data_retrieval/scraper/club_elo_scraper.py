@@ -1,5 +1,6 @@
-import soccerdata as sd
 import numpy as np
+import soccerdata as sd
+
 
 class ClubEloScraper:
     def __init__(self):

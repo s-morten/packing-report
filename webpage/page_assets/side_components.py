@@ -1,11 +1,8 @@
-import dash_mantine_components as dmc
-import dash
-from dash import html
-from dash.dependencies import Input, Output, State
-from dash import dcc
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+from dash import dcc, html
+from dash.dependencies import Input, Output, State
 from page_assets.styling import colors
-
 
 # def footer():
 #     return dmc.Footer(
@@ -37,15 +34,15 @@ def offcanvas_layout(app):
                     dbc.Offcanvas([
                         html.Div(
                             dcc.Link(
-                                f"GDE", href="/gde"
+                                "GDE", href="/gde"
                         )),
                         html.Div(
                             dcc.Link(
-                                f"GDE Trend", href="/gde_trend"
+                                "GDE Trend", href="/gde_trend"
                         )),
                         html.Div(
                             dcc.Link(
-                                f"GDE Team", href="/gde_team"
+                                "GDE Team", href="/gde_team"
                         )),
                         # Button to open the "Buy Me a Coffee" widget in a new window
                         html.A([

@@ -1,5 +1,7 @@
+from datetime import UTC, datetime
+
 import numpy as np
-from datetime import datetime, timezone
+
 
 def to_season(date: datetime) -> str:
     """ Converts datetime date to season str. 
@@ -21,5 +23,5 @@ def to_datetime(date: np.datetime64) -> datetime:
     """
     timestamp = ((date - np.datetime64('1970-01-01T00:00:00'))
                  / np.timedelta64(1, 's'))
-    return datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
+    return datetime.utcfromtimestamp(timestamp).replace(tzinfo=UTC)
         

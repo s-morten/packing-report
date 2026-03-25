@@ -1,12 +1,12 @@
-import pandas as pd
 from datetime import datetime
+
+import pandas as pd
+
 # from database_io.db_handler_abs import DB_handler_abs
 from database_io.dims import Games
 
-from sqlalchemy import func
 
-
-class DB_games():
+class DB_games:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session

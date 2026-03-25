@@ -1,12 +1,14 @@
 # from database_io.db_handler_abs import DB_handler_abs
-from database_io.faks import Player, Team
-from database_io.dims import Metric, Games
-from sqlalchemy import func
-import numpy as np
 from time import sleep
-from sqlalchemy import Column, Integer, String, Date, Float
-from sqlalchemy.ext.declarative import declarative_base
+
+import numpy as np
 import pandas as pd
+from sqlalchemy import Column, Date, Float, Integer, String, func
+from sqlalchemy.ext.declarative import declarative_base
+
+from database_io.dims import Games, Metric
+from database_io.faks import Player, Team
+
 
 class Latest_elo(declarative_base()):
     __tablename__ = "METRIC_LATEST"
@@ -23,7 +25,7 @@ class Latest_elo(declarative_base()):
     
 
 
-class DB_webpage():
+class DB_webpage:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session

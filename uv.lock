@@ -106,9 +106,6 @@ requires-dist = [
     { name = "soccerdata", specifier = ">=1.8.7" },
 ]
 
-[package.metadata.requires-dev]
-dev = []
-
 [[package]]
 name = "database-io"
 version = "0.1.0"

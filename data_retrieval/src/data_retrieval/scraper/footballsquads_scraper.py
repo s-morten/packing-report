@@ -1,17 +1,14 @@
-import pandas as pd
-import numpy as np
-import sqlite3
+
+import json
+from collections import defaultdict
+from time import sleep
 
 import requests
 from bs4 import BeautifulSoup
-from time import sleep
-import pickle
-import os
-import json
 
-from collections import defaultdict
 import utils.filesystem_io as filesystem_io
 from database_io.db_handler import DB_handler
+
 
 class Footballsquads_scraper:
     def __init__(self, cache_location:str, db_handler: DB_handler) -> None:

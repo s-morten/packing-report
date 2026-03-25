@@ -1,7 +1,9 @@
+import os
+
+import oracledb
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-import os
-import oracledb
+
 
 class DB_handler_connection:
     def __init__(self):

@@ -1,12 +1,10 @@
-from scraper.whoscored_chromeless import WhoScored
+
 # from metrics.mov_elo.regressor import MOV_Regressor
 from pathlib import PosixPath
-import pandas as pd
-import numpy as np
 
-import os
-import cProfile
+from scraper.whoscored_chromeless import WhoScored
 from tqdm import tqdm
+
 # profiler = Profiler()
 
 
@@ -23,11 +21,13 @@ schedule = ws.read_schedule().reset_index()
 
 schedule = schedule.sort_values("date")
 
-from utils.date_utils import to_datetime
-from database_io.db_handler import DB_handler
+import logging
+
 from game.game_timeline import GameTimeline
 
-import logging
+from database_io.db_handler import DB_handler
+from utils.date_utils import to_datetime
+
 logger = logging.getLogger()
 logger.disabled = True
 dbh = DB_handler()

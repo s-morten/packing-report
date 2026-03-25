@@ -1,4 +1,6 @@
 import json
+
+
 class NameReplacer:
     def __init__(self):
         self.team_substitutes = json.load(open("configs/teamname_replacements.json"))

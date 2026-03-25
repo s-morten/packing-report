@@ -1,5 +1,6 @@
 from metrics.metric import Metric
 
+
 class PM(Metric):
     def update(self, player_value: float, score: int, expected_score: float) -> float:
         orig_player_value = player_value

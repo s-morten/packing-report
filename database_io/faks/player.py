@@ -1,15 +1,17 @@
 #from database_io.db_handler_abs import DB_handler_abs
-from datetime import datetime
-from database_io.faks import Player
-from database_io.dims import Metric, Games
+from datetime import datetime, timedelta
+
 import pandas as pd
-from sqlalchemy import func, over, and_, select
+from sqlalchemy import func, select
+
+from database_io.dims import Games
 from database_io.dims.elo import metric_query
+from database_io.faks import Player
 from database_io.faks.squads import squads_query
-from datetime import timedelta
+
 
 # class DB_player(DB_handler_abs):
-class DB_player():
+class DB_player:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session
@@ -23,11 +25,11 @@ class DB_player():
 
     def player_exists(self, id: int) -> bool:
         query_result = self.session.query(Player).filter(Player.id == id).first()
-        return not (query_result is None)
+        return query_result is not None
     
     def player_has_no_bday(self, id: int) -> bool:
         query_result = self.session.query(Player).filter(Player.id == id, Player.birthday == None).first()
-        return not (query_result is None)
+        return query_result is not None
     
     def update_player_bday(self, id: int, birthday: str):
         birthday = datetime.strptime(birthday, "%d-%m-%y") if birthday else None

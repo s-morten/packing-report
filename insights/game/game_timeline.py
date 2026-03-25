@@ -1,13 +1,12 @@
-import numpy as np
-import pandas as pd
-from  datetime import datetime
+from datetime import datetime
+
 import soccerdata as sd
-from utils.date_utils import to_season
-from database_io.db_handler import DB_handler
-from collections import defaultdict
-from scraper.club_elo_scraper import ClubEloScraper
 from metrics.low_level.goals import Goals
 from metrics.low_level.minutes import Minutes
+
+from database_io.db_handler import DB_handler
+from utils.date_utils import to_season
+
 
 class GameTimeline:
     def __init__(self, ws : sd.WhoScored, game_id : int , game_date: datetime, league: str,  

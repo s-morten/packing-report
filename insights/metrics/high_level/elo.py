@@ -1,8 +1,7 @@
+
 import numpy as np
-import json
-from database_io.db_handler import DB_handler
-from metrics.mov_elo.regressor import MOV_Regressor
 from metrics.metric import Metric
+
 
 class PlayerELO(Metric):
     # mov, player elo, team elo, opp elo, minutes -> updated elo

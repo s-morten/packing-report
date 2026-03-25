@@ -1,6 +1,7 @@
 from database_io.db_handler import DB_handler
-from database_io.dims import Metric, Games
+from database_io.dims import Games, Metric
 from database_io.faks import Player, Squads
+
 db = DB_handler()
 
 db.metric.session.query(Metric).delete()

@@ -1,11 +1,10 @@
 # file app.py
 import dash
-from dash import dcc, _dash_renderer, html, Input, Output, State, html
-import dash_mantine_components as dmc
-import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-import webbrowser
-from pages import gde, gde_trend, gde_league
+import dash_mantine_components as dmc
+from dash import Input, Output, _dash_renderer, dcc, html
+from pages import gde, gde_league, gde_trend
+
 import webpage.page_assets.side_components as custum_side_comp
 from database_io.db_handler import DB_handler
 

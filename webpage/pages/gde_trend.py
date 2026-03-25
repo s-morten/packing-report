@@ -1,17 +1,9 @@
-import dash
-from dash import html, dcc, Output, Input, State, callback
-import plotly.graph_objects as go
-import pandas as pd
-import sqlite3
-import matplotlib.pyplot as plt
 # from app import colors, app
-import pandas as pd
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Float, DateTime, func, and_, desc
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
 import dash_bootstrap_components as dbc
 import plotly.express as px
+from dash import Input, Output, dcc, html
 from page_assets.styling import colors
+
 from database_io.db_handler import DB_handler
 
 

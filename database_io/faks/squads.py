@@ -1,8 +1,10 @@
 #from database_io.db_handler_abs import DB_handler_abs
-from database_io.faks import Squads, Team
 from datetime import datetime
 
-class DB_squads():
+from database_io.faks import Squads, Team
+
+
+class DB_squads:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session
@@ -50,7 +52,8 @@ class DB_squads():
             return None
         return wh_player_id[0]
     
-from sqlalchemy import select, between
+from sqlalchemy import between, select
+
 
 def squads_query(game_date):
     return select(

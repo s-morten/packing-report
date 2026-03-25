@@ -1,17 +1,16 @@
-import soccerdata as sd
-import pytest
-from pathlib import PosixPath
 import json
-import numpy as np
+from pathlib import PosixPath
+
+import soccerdata as sd
 import toml
-import sys
+
 import utils.filesystem_io as filesystem_io
 
 
 def test_team_name_replacement_ws():
     in_config = set()
     # load config
-    config = json.load(open("/home/morten/soccerdata/config/teamname_replacements.json", "r"))
+    config = json.load(open("/home/morten/soccerdata/config/teamname_replacements.json"))
     run_config = toml.load("gde/config.toml")
     ws = sd.WhoScored(
         leagues=run_config["whoscored"]["leagues"],
@@ -38,7 +37,7 @@ def test_team_name_replacement_ws():
 def test_team_name_replacement_ce():
     in_config = set()
     # load config
-    config = json.load(open("/home/morten/soccerdata/config/teamname_replacements.json", "r"))
+    config = json.load(open("/home/morten/soccerdata/config/teamname_replacements.json"))
     run_config = toml.load("gde/config.toml")
     
     ce = sd.ClubElo()
@@ -81,8 +80,8 @@ def test_name_replacements_footballsquads():
               ]
     in_config_league, in_config = set(), set()
     cache_file_list = filesystem_io.directory_files("/home/morten/Develop/packing-report/gde/.cache_footballsquads")
-    config = json.load(open("/home/morten/soccerdata/config/teamname_replacements.json", "r"))
-    league_config = json.load(open("/home/morten/soccerdata/config/league_replacements.json", "r"))
+    config = json.load(open("/home/morten/soccerdata/config/teamname_replacements.json"))
+    league_config = json.load(open("/home/morten/soccerdata/config/league_replacements.json"))
     teams, leagues = set(), set()
     for cache_file in cache_file_list:
         country, league, team = (cfs:=cache_file.split("_"))[1], cfs[2], cfs[3].split(".")[0]

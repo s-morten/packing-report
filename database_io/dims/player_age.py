@@ -1,8 +1,9 @@
 # from database_io.db_handler_abs import DB_handler_abs
-from database_io.faks import Birthday_Footballsquads
 from database_io.dims import Processed_Footballsquads
+from database_io.faks import Birthday_Footballsquads
 
-class DB_player_age():
+
+class DB_player_age:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session

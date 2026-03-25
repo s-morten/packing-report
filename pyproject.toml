@@ -20,7 +20,7 @@ dev = [
 ]
 
 [tool.ruff]
-line-length = 88
+line-length = 120
 target-version = "py311"  # adjust to your Python version
 
 [tool.ruff.lint]
@@ -42,6 +42,3 @@ fixable = ["ALL"]
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
-
-[tool.uv.scripts]
-lint = "ruff check . --fix && ruff format ."

@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Date, Float
+from sqlalchemy import Column, Date, Float, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
+
 
 class Player(declarative_base()):
     __tablename__ = "PLAYER"

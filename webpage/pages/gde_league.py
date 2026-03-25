@@ -1,19 +1,13 @@
-import dash
-from dash import html, dcc, Output, Input, State, callback
-import plotly.graph_objects as go
-import pandas as pd
-import sqlite3
-import matplotlib.pyplot as plt
+from datetime import date
+
 # from app import colors, app
-import pandas as pd
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Float, DateTime, func
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
 import dash_bootstrap_components as dbc
-from page_assets.styling import colors
 import dash_mantine_components as dmc
-import numpy as np
-from datetime import datetime, date
+import pandas as pd
+import plotly.graph_objects as go
+from dash import Input, Output, dcc
+from page_assets.styling import colors
+
 
 def layout(app, dbh):
     return dbc.Container([

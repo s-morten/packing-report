@@ -2,23 +2,21 @@
 
 import itertools
 import json
-import re
-from datetime import datetime, timezone
-import pprint
-from collections.abc import Iterable
-from pathlib import Path
-from typing import Callable, Literal, Optional, Union
+import locale
 import os
+import pprint
+import re
+import warnings
+from collections.abc import Callable, Iterable
+from datetime import UTC, datetime
+from enum import Enum
+from pathlib import Path, PosixPath
+from typing import Literal, Union
 
 import numpy as np
 import pandas as pd
 from lxml import html
-import warnings
-from enum import Enum
 
-from pathlib import PosixPath
-
-import locale
 locale.setlocale(locale.LC_TIME, "en_US") # swedish
 
 LEAGUE_DICT = {
@@ -197,7 +195,7 @@ class SeasonCode(Enum):
         )
         return SeasonCode.MULTI_YEAR
 
-    def parse(self, season: Union[str, int]) -> str:  # noqa: C901
+    def parse(self, season: str | int) -> str:  # noqa: C901
         """Convert a string or int to a standard season format."""
         season = str(season)
         patterns = [
@@ -231,7 +229,7 @@ class SeasonCode(Enum):
             ),
         ]
 
-        current_year = datetime.now(tz=timezone.utc).year
+        current_year = datetime.now(tz=UTC).year
 
         def process_four_digit_year(season: str) -> str:
             """Process a 4-digit string like '1994' or '9495'."""
@@ -300,7 +298,7 @@ NOSTORE = False
 TEAMNAME_REPLACEMENTS = {}
 _f_custom_teamnname_replacements = "/home/morten/soccerdata/config/teamname_replacements.json"
 if os.path.isfile(_f_custom_teamnname_replacements):
-    with open(_f_custom_teamnname_replacements, "r", encoding="utf8") as json_file:
+    with open(_f_custom_teamnname_replacements, encoding="utf8") as json_file:
         for team, to_replace_list in json.load(json_file).items():
             for to_replace in to_replace_list:
                 TEAMNAME_REPLACEMENTS[to_replace] = team
@@ -314,7 +312,7 @@ if os.path.isfile(_f_custom_teamnname_replacements):
 #         _f_custom_teamnname_replacements,
 #     )
 
-def standardize_colnames(df: pd.DataFrame, cols: Optional[list[str]] = None) -> pd.DataFrame:
+def standardize_colnames(df: pd.DataFrame, cols: list[str] | None = None) -> pd.DataFrame:
     """Convert DataFrame column names to snake case."""
 
     def to_snake(name: str) -> str:
@@ -439,7 +437,7 @@ def _parse_url(url: str) -> dict:
     raise ValueError(f"Could not parse URL: {url}")
 
 
-class WhoScored():
+class WhoScored:
     """Provides pd.DataFrames from data available at http://whoscored.com.
 
     Data will be downloaded as necessary and cached locally in
@@ -484,11 +482,9 @@ class WhoScored():
 
     def __init__(
         self,
-        leagues: Optional[Union[str, list[str]]] = None,
-        seasons: Optional[Union[str, int, Iterable[Union[str, int]]]] = None,
-        proxy: Optional[
-            Union[str, dict[str, str], list[dict[str, str]], Callable[[], dict[str, str]]]
-        ] = None,
+        leagues: str | list[str] | None = None,
+        seasons: str | int | Iterable[str | int] | None = None,
+        proxy: str | dict[str, str] | list[dict[str, str]] | Callable[[], dict[str, str]] | None = None,
         no_cache: bool = NOCACHE,
         no_store: bool = NOSTORE,
         data_dir: Path = WHOSCORED_DATADIR,
@@ -523,10 +519,10 @@ class WhoScored():
         return self._season_ids
 
     @seasons.setter
-    def seasons(self, seasons: Optional[Union[str, int, Iterable[Union[str, int]]]]) -> None:
+    def seasons(self, seasons: str | int | Iterable[str | int] | None) -> None:
         if seasons is None:
             print("No seasons provided. Will retrieve data for the last 5 seasons.")
-            year = datetime.now(tz=timezone.utc).year
+            year = datetime.now(tz=UTC).year
             seasons = [f"{y - 1}-{y}" for y in range(year, year - 6, -1)]
         if isinstance(seasons, (str, int)):
             seasons = [seasons]
@@ -561,7 +557,7 @@ class WhoScored():
         return self._leagues_dict
     
     @_selected_leagues.setter    
-    def _selected_leagues(self, ids: Optional[Union[str, list[str]]] = None) -> None:
+    def _selected_leagues(self, ids: str | list[str] | None = None) -> None:
         if ids is None:
             self._leagues_dict = self._all_leagues()
         else:
@@ -590,7 +586,7 @@ class WhoScored():
         """
         # url = WHOSCORED_URL
         filepath = self.data_dir / "tiers.json"
-        reader = open(filepath, "r", encoding="utf-8")
+        reader = open(filepath, encoding="utf-8")
 
         data = json.load(reader)
 
@@ -633,7 +629,7 @@ class WhoScored():
             # )
             filemask = "seasons/{}.html"
             filepath = self.data_dir / filemask.format(lkey)
-            reader = open(filepath, "r", encoding="utf-8")
+            reader = open(filepath, encoding="utf-8")
 
             # extract team links
             tree = html.parse(reader)
@@ -686,7 +682,7 @@ class WhoScored():
             #     + f"/Seasons/{season['season_id']}"
             # )
             filepath = self.data_dir / filemask.format(lkey, skey)
-            reader = open(filepath, "r", encoding="utf-8")
+            reader = open(filepath, encoding="utf-8")
             tree = html.parse(reader)
 
             # get default season stage
@@ -773,7 +769,7 @@ class WhoScored():
                 #     lkey,
                 #     skey,
                 # )
-            calendar = open(calendar_filepath, "r", encoding="utf-8")
+            calendar = open(calendar_filepath, encoding="utf-8")
             mask = json.load(calendar)["mask"]
 
             # get the fixtures for each month
@@ -800,7 +796,7 @@ class WhoScored():
                 #         skey,
                 #     )
 
-                reader = open(filepath, "r", encoding="utf-8")
+                reader = open(filepath, encoding="utf-8")
                 data = json.load(reader)
                 for tournament in data["tournaments"]:
                     df_schedule = pd.DataFrame(tournament["matches"])
@@ -875,7 +871,7 @@ class WhoScored():
 
     def read_missing_players(
         self,
-        match_id: Optional[Union[int, list[int]]] = None,
+        match_id: int | list[int] | None = None,
         force_cache: bool = False,
     ) -> pd.DataFrame:
         """Retrieve a list of injured and suspended players ahead of each game.
@@ -922,7 +918,7 @@ class WhoScored():
             #     len(iterator),
             #     game["game_id"],
             # )
-            reader = open(filepath, "r", encoding="utf-8")
+            reader = open(filepath, encoding="utf-8")
 
             # extract missing players
             tree = html.parse(reader)
@@ -980,13 +976,13 @@ class WhoScored():
 
     def read_events(  # noqa: C901
         self,
-        match_id: Optional[Union[int, list[int]]] = None,
+        match_id: int | list[int] | None = None,
         force_cache: bool = False,
         live: bool = False,
-        output_fmt: Optional[str] = "events",
+        output_fmt: str | None = "events",
         retry_missing: bool = True,
         on_error: Literal["raise", "skip"] = "raise",
-    ) -> Optional[Union[pd.DataFrame, dict[int, list], "OptaLoader"]]:  # type: ignore  # noqa: F821
+    ) -> Union[pd.DataFrame, dict[int, list], "OptaLoader"] | None:  # type: ignore  # noqa: F821
         """Retrieve the the event data for each game in the selected leagues and seasons.
 
         Parameters
@@ -1093,7 +1089,7 @@ class WhoScored():
             )
 
 #            try:
-            reader = open(filepath, "r", encoding="utf-8")
+            reader = open(filepath, encoding="utf-8")
             # reader_value = reader.read()
             # if retry_missing and reader_value == b"null" or reader_value == b"":
                 #     reader = self.get(

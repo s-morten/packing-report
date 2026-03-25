@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
-from scraper.club_elo_scraper import ClubEloScraper
+
 # from database_io.db_handler_abs import DB_handler_abs
-import pandas as pd
-from database_io.dims import Metric, Games
 from sqlalchemy import func, select
 
-class DB_metric():
+from database_io.dims import Games, Metric
+
+
+class DB_metric:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session

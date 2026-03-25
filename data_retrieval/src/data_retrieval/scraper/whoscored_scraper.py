@@ -1,5 +1,6 @@
-import soccerdata as sd
 from pathlib import PosixPath
+
+import soccerdata as sd
 import toml
 
 

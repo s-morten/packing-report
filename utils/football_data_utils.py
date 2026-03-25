@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def is_own_goal(qualifiers):
     return [max([(True if x["type"]["displayName"] == "OwnGoal" else False) for x in events], default=False) for events in qualifiers]
 

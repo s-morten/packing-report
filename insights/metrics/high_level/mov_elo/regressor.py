@@ -1,7 +1,7 @@
 
-import numpy as np
 import pickle
-from ngboost import NGBRegressor
+
+
 class MOV_Regressor:
     def __init__(self):
         with open('/home/morten/Develop/packing-report/metrics/mov_elo/ngb.pckl', "rb") as f:

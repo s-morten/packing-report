@@ -1,5 +1,7 @@
 from database_io.faks import Prediction
-class DB_predictions():
+
+
+class DB_predictions:
     def __init__(self, connection_item):
         self.connection = connection_item.connection
         self.session = connection_item.session
