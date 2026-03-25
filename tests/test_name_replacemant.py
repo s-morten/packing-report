@@ -5,7 +5,7 @@ import json
 import numpy as np
 import toml
 import sys
-import filesystem_io.filesystem_io as filesystem_io
+import utils.filesystem_io as filesystem_io
 
 
 def test_team_name_replacement_ws():

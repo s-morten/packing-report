@@ -10,7 +10,7 @@ import os
 import json
 
 from collections import defaultdict
-import filesystem_io.filesystem_io as filesystem_io
+import utils.filesystem_io as filesystem_io
 from database_io.db_handler import DB_handler
 
 class Footballsquads_scraper:
