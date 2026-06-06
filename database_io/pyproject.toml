@@ -3,7 +3,7 @@ name = "database-io"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = "==3.12.*"
+
 dependencies = [
     "numpy>=1.26.4",
     "oracledb>=3.4.2",

@@ -3,10 +3,13 @@ name = "insights"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = "==3.12.*"
-dependencies = [    
+dependencies = [
+    "database-io",
     "numpy>=1.26.4",
     "pandas>=2.3.3",
     "soccerdata>=1.8.7",
     "tqdm>=4.67.3",
-    ]
+]
+
+[tool.uv.sources]
+database-io = { workspace = true }
