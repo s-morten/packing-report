@@ -6,8 +6,8 @@ import pandas as pd
 from sqlalchemy import Column, Date, Float, Integer, String, func
 from sqlalchemy.ext.declarative import declarative_base
 
-from database_io.dims import Games, Metric
-from database_io.faks import Player, Team
+from database_io.models import Player, Team
+from database_io.models.legacy import Games, Metric
 
 
 class Latest_elo(declarative_base()):

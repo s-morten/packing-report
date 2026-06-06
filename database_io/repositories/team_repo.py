@@ -1,5 +1,4 @@
-# from database_io.db_handler_abs import DB_handler_abs
-from database_io.faks import Team
+from database_io.models import Team
 
 
 class DB_team:

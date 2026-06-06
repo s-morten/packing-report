@@ -2,8 +2,7 @@ from datetime import datetime
 
 import pandas as pd
 
-# from database_io.db_handler_abs import DB_handler_abs
-from database_io.dims import Games
+from database_io.models.legacy import Games
 
 
 class DB_games:
@@ -70,7 +69,6 @@ class DB_games:
                 .all()
             )
         else:
-            # order by date and return newest games
             query_result = (
                 self.session.query(
                     Games.game_id,

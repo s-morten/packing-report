@@ -1,6 +1,4 @@
-# from database_io.db_handler_abs import DB_handler_abs
-from database_io.dims import Processed_Footballsquads
-from database_io.faks import Birthday_Footballsquads
+from database_io.models.legacy import Birthday_Footballsquads, Processed_Footballsquads
 
 
 class DB_player_age:
@@ -23,7 +21,6 @@ class DB_player_age:
             return None
 
     def get_processed_player_age_files(self):
-        # get all files already written to db:
         processed_files = self.session.query(Processed_Footballsquads.processed).all()
         return processed_files
 

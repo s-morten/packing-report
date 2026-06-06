@@ -1,12 +1,12 @@
-from database_io.db_handler_abs import DB_handler_connection
-from database_io.dims.elo import DB_metric
-from database_io.dims.games import DB_games
-from database_io.dims.player_age import DB_player_age
-from database_io.faks.player import DB_player
-from database_io.faks.predictions import DB_predictions
-from database_io.faks.schedule import DB_schedule
-from database_io.faks.squads import DB_squads
-from database_io.faks.team import DB_team
+from database_io.connection import DB_handler_connection
+from database_io.repositories.game_repo import DB_games
+from database_io.repositories.metric_repo import DB_metric
+from database_io.repositories.player_age_repo import DB_player_age
+from database_io.repositories.player_repo import DB_player
+from database_io.repositories.predictions_repo import DB_predictions
+from database_io.repositories.schedule_repo import DB_schedule
+from database_io.repositories.squads_repo import DB_squads
+from database_io.repositories.team_repo import DB_team
 from database_io.webpage import DB_webpage
 
 

@@ -1,4 +1,4 @@
-from database_io.faks import Prediction
+from database_io.models.legacy import Prediction
 
 
 class DB_predictions:

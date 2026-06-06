@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta
 
-# from database_io.db_handler_abs import DB_handler_abs
 from sqlalchemy import func, select
 
-from database_io.dims import Games, Metric
+from database_io.models.legacy import Games, Metric
 
 
 class DB_metric:
@@ -26,9 +25,6 @@ class DB_metric:
         self.session.commit()
 
     def get_metric(self, id: int, date: datetime, league: str, starter: bool, version: float, metric: str) -> float:
-        """Extracts the Elo per player from the database
-        Returns default value if player does not exists
-        """
         query_result = (
             self.session.query(Metric.metric_value, Metric.game_date)
             .filter(Metric.player_id == id, Metric.version == version, Metric.metric == metric, Metric.game_date < date)
@@ -36,13 +32,7 @@ class DB_metric:
             .first()
         )
 
-        if not query_result:  # and self.get_player_count_per_league(league, version) < 50:
-            #     league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(date, format="%Y-%m-%d"), league)
-            #     start_elo = league_elo if starter else league_elo * 0.8
-            #     return start_elo
-            # elif not query_result:
-            #     a = self.average_elo_by_league(league, version)
-            #     return a
+        if not query_result:
             return None
         elo, _ = query_result
         return elo
@@ -63,7 +53,6 @@ class DB_metric:
             .subquery()
         )
 
-        # Main query to calculate average elo_value for players in the pre_select subquery
         average_elo = (
             self.session.query(func.avg(Metric.metric_value))
             .filter(Metric.game_date >= game_date - timedelta(weeks=6 * 4), Metric.metric == "elo")
@@ -80,7 +69,6 @@ class DB_metric:
             .subquery()
         )
 
-        # Main query to calculate average elo_value for players in the pre_select subquery
         average_elo = (
             self.session.query(func.avg(Metric.metric_value))
             .filter(Metric.game_date >= game_date - timedelta(weeks=6 * 4), Metric.metric == "elo")
@@ -97,7 +85,6 @@ class DB_metric:
             .subquery()
         )
 
-        # Main query to count the number of rows in the pre_select subquery
         count_result = self.session.query(func.count()).select_from(pre_select).scalar()
         return count_result
 

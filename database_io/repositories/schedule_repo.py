@@ -1,7 +1,6 @@
-# from database_io.db_handler_abs import DB_handler_abs
 from datetime import datetime
 
-from database_io.faks import Schedule
+from database_io.models.legacy import Schedule
 
 
 class DB_schedule:

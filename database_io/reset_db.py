@@ -1,17 +1,17 @@
 from database_io.db_handler import DB_handler
-from database_io.dims import Games, Metric
-from database_io.faks import Player, Squads
+from database_io.models import Game, Player, PlayerGame, PlayerGameMetric, ScrapeLog
+from database_io.models.scrape import FootballsquadsRaw
 
 db = DB_handler()
 
-db.metric.session.query(Metric).delete()
-db.metric.session.commit()
-db.player.session.query(Player).delete()
-db.player.session.commit()
-db.games.session.query(Games).delete()
-db.games.session.commit()
-db.squads.session.query(Squads).delete()
-db.squads.session.commit()
+session = db.player.session
 
+session.query(PlayerGameMetric).delete()
+session.query(Player).delete()
+session.query(Game).delete()
+session.query(PlayerGame).delete()
+session.query(FootballsquadsRaw).delete()
+session.query(ScrapeLog).delete()
+session.commit()
 
-db.games.session.close()
+session.close()

@@ -1,7 +1,9 @@
-# from database_io.db_handler_abs import DB_handler_abs
 from datetime import datetime
 
-from database_io.faks import Squads, Team
+from sqlalchemy import between, select
+
+from database_io.models import Team
+from database_io.models.legacy import Squads
 
 
 class DB_squads:
@@ -11,7 +13,6 @@ class DB_squads:
         self.engine = connection_item.engine
 
     def insert_player(self, player_id: int, kit_number: int, team_id: int, date: datetime):
-        # insert a player that has been never seen before
         self._number_in_use(team_id, kit_number, date)
         squad_player = Squads(
             player_id=player_id,
@@ -24,8 +25,6 @@ class DB_squads:
         self.session.commit()
 
     def update_player(self, player_id: int, kit_number: int, team_id: int, update_date: datetime):
-        # alter old entry
-        # TODO same date for valid_from and valid_to
         self._number_in_use(team_id, kit_number, update_date)
         self.session.query(Squads).filter(Squads.player_id == player_id).filter(
             Squads.valid_to == datetime.strptime("2099-12-31", "%Y-%m-%d")
@@ -54,7 +53,6 @@ class DB_squads:
         return self.session.query(Squads).filter(Squads.player_id == player_id).first() is not None
 
     def _number_in_use(self, team_id: int, kit_number: int, date: datetime):
-        # if an entry exists, alter valid to date
         (
             self.session.query(Squads)
             .filter(Squads.team_id == team_id)
@@ -66,7 +64,6 @@ class DB_squads:
 
     def match_players(self, date: str, kit_number: int, team_name: str):
         date = datetime.strptime(date, "%Y-%m-%d")
-        # team_id by name
         team_id = self.session.query(Team.id).filter(Team.name == team_name).first()[0]
         wh_player_id = (
             self.session.query(Squads.player_id)
@@ -79,9 +76,6 @@ class DB_squads:
         if wh_player_id is None:
             return None
         return wh_player_id[0]
-
-
-from sqlalchemy import between, select
 
 
 def squads_query(game_date):
