@@ -1,5 +1,9 @@
 import sys
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 print(sys.path)
 from datetime import datetime
 

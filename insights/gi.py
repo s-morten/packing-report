@@ -1,6 +1,10 @@
 # from metrics.mov_elo.regressor import MOV_Regressor
+import os
 from pathlib import PosixPath
 
+from dotenv import load_dotenv
+
+load_dotenv()
 from scraper.whoscored_chromeless import WhoScored
 from tqdm import tqdm
 
@@ -12,7 +16,7 @@ ws = WhoScored(
     seasons=[18, 19, 20, 21, 22],  # 15, 16, 17, 18, 19, 20, 21, 22, 23
     # no_cache=False,
     # no_store=False,
-    data_dir=PosixPath("/home/morten/Develop/Open-Data/soccerdata"),
+    data_dir=PosixPath(os.environ.get("SOCCERDATA_DIR", "")),
     # path_to_browser="/usr/bin/chromium",
     # headless=True,
 )

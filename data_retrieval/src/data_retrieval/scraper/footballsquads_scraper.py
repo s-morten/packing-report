@@ -1,5 +1,7 @@
 import json
+import os
 from collections import defaultdict
+from pathlib import Path
 from time import sleep
 
 import requests
@@ -164,7 +166,9 @@ class Footballsquads_scraper:
 def replace_from_config(initial_name: str, what: str):
     if what not in ["league", "teamname"]:
         raise ValueError("Only replacement options are league and teamname")
-    name_substitutes = json.load(open(f"/home/morten/soccerdata/config/{what}_replacements.json"))
+    _default_config_dir = Path(__file__).resolve().parents[4] / "configs"
+    _config_dir = os.environ.get("SOCCERDATA_CONFIG_DIR", str(_default_config_dir))
+    name_substitutes = json.load(open(Path(_config_dir) / f"{what}_replacements.json"))
     for replacement in name_substitutes:
         for to_replace in name_substitutes[replacement]:
             if initial_name == to_replace:

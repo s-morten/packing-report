@@ -1,9 +1,11 @@
 import json
+from pathlib import Path
 
 
 class NameReplacer:
     def __init__(self):
-        self.team_substitutes = json.load(open("configs/teamname_replacements.json"))
+        config_path = Path(__file__).resolve().parent / "teamname_replacements.json"
+        self.team_substitutes = json.load(open(config_path))
 
     def replace_name(self, club_name: str) -> str:
         for replace in self.team_substitutes:

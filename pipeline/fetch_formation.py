@@ -1,8 +1,12 @@
+import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pytz
 from api.football_api import FApi_Handler
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from configs import NameReplacer
 from database_io.db_handler import DB_handler
@@ -15,8 +19,7 @@ time_target = time_now + timedelta(minutes=30)
 
 fapi = FApi_Handler()
 dbh = DB_handler()
-# TODO get from config
-elo_version = 0.1
+elo_version = float(os.environ.get("ELO_VERSION", "0.1"))
 
 # get ids of games in next 30 minutes
 game_id_list = dbh.schedule.games_in_timeframe(time_now, time_target)

@@ -1,4 +1,6 @@
 # from app import colors, app
+from pathlib import Path
+
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import Input, Output, dcc, html
@@ -94,7 +96,7 @@ def register_callbacks(app, dbh: DB_handler):
         fig.update_layout(
             images=[
                 dict(
-                    source="/home/morten/Develop/packing-report/webpage/assets/simple_logo.jpg",
+                    source=str(Path(__file__).resolve().parent.parent / "assets" / "simple_logo.jpg"),
                     x=-0.1,
                     y=0,
                     xref="paper",

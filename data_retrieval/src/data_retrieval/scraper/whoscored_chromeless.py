@@ -10,7 +10,7 @@ import warnings
 from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from enum import Enum
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import Literal, Union
 
 import numpy as np
@@ -112,7 +112,8 @@ LEAGUE_DICT = {
         "season_code": "single-year",
     },
 }
-_f_custom_league_dict = PosixPath("/home/morten/soccerdata/config/") / "league_dict.json"
+_default_config_dir = Path(__file__).resolve().parents[4] / "configs"
+_f_custom_league_dict = Path(os.environ.get("SOCCERDATA_CONFIG_DIR", str(_default_config_dir))) / "league_dict.json"
 if _f_custom_league_dict.is_file():
     with _f_custom_league_dict.open(encoding="utf8") as json_file:
         LEAGUE_DICT = {**LEAGUE_DICT, **json.load(json_file)}
@@ -290,12 +291,12 @@ class SeasonCode(Enum):
         raise ValueError(f"Unrecognized season code: '{season}'")
 
 
-WHOSCORED_DATADIR = "/home/morten/Develop/Open-Data/soccerdata"
+WHOSCORED_DATADIR = os.environ.get("SOCCERDATA_DIR", "")
 NOCACHE = False
 NOSTORE = False
 
 TEAMNAME_REPLACEMENTS = {}
-_f_custom_teamnname_replacements = "/home/morten/soccerdata/config/teamname_replacements.json"
+_f_custom_teamnname_replacements = os.environ.get("SOCCERDATA_CONFIG_DIR", str(_default_config_dir)) + "/teamname_replacements.json"
 if os.path.isfile(_f_custom_teamnname_replacements):
     with open(_f_custom_teamnname_replacements, encoding="utf8") as json_file:
         for team, to_replace_list in json.load(json_file).items():
@@ -910,7 +911,7 @@ class WhoScored:
         match_sheets = []
         for i, (_, game) in enumerate(iterator.iterrows()):
             # url = urlmask.format(game.game_id)
-            filepath = "/home/morten/Develop/Open-Data/soccerdata/" / filemask.format(
+            filepath = self.data_dir / filemask.format(
                 game["league"], game["season"], game["game_id"]
             )
 
