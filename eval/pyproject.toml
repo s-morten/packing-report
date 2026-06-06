@@ -1,11 +1,14 @@
 [project]
-name = "webpage"
+name = "eval"
 version = "0.1.0"
-description = "Add your description here"
+description = "Model evaluation and plotting scripts"
 readme = "README.md"
 dependencies = [
     "database-io",
+    "insights",
+    "matplotlib>=3.8",
 ]
 
 [tool.uv.sources]
 database-io = { workspace = true }
+insights = { workspace = true }

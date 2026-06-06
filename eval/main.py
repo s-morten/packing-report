@@ -1,5 +1,5 @@
 def main():
-    print("Hello from webpage!")
+    print("Hello from eval!")
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ members = [
     "data_retrieval",
     "insights",
     "database_io",
-    "webpage",
+    "eval",
 ]
 
 [dependency-groups]

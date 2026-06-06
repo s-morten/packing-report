@@ -7,9 +7,6 @@ from database_io.repositories.predictions_repo import DB_predictions
 from database_io.repositories.schedule_repo import DB_schedule
 from database_io.repositories.squads_repo import DB_squads
 from database_io.repositories.team_repo import DB_team
-from database_io.webpage import DB_webpage
-
-
 class DB_handler:
     def __init__(self):
         connection = DB_handler_connection()
@@ -18,7 +15,6 @@ class DB_handler:
         self.team = DB_team(connection)
         self.metric = DB_metric(connection)
         self.games = DB_games(connection)
-        self.webpage = DB_webpage(connection)
         self.squads = DB_squads(connection)
         self.schedule = DB_schedule(connection)
         self.predictions = DB_predictions(connection)
