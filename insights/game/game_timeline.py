@@ -4,7 +4,12 @@ import soccerdata as sd
 from metrics.low_level.goals import Goals
 from metrics.low_level.minutes import Minutes
 
-from database_io.db_handler import DB_handler
+from database_io.connection import get_session
+from database_io.repositories.metric_repo import DB_metric
+from database_io.repositories.player_age_repo import DB_player_age
+from database_io.repositories.player_repo import DB_player
+from database_io.repositories.squads_repo import DB_squads
+from database_io.repositories.team_repo import DB_team
 from utils.date_utils import to_season
 
 
@@ -15,17 +20,19 @@ class GameTimeline:
         game_id: int,
         game_date: datetime,
         league: str,
-        db_handler: DB_handler,
         version: float,
         home: str,
     ) -> None:
-        # get necessary dataframes
         self.events = ws.read_events(match_id=[game_id])
         self.loader = ws.read_events(match_id=[game_id], output_fmt="loader")
         self.loader_players_df = self.loader.players(game_id)
         self.df_teams = self.loader.teams(game_id=game_id)
-        self.db_handler = db_handler
-        # self.mov_regressor = mov_regressor
+
+        self.player = DB_player()
+        self.player_age = DB_player_age()
+        self.team = DB_team()
+        self.squads = DB_squads()
+        self.metric = DB_metric()
 
         self.valid_for_training = None
         self.game_date = game_date
@@ -35,24 +42,20 @@ class GameTimeline:
         self.version = version
         self.year = to_season(self.game_date)
 
-        # insert new teams
-        # self.player_info_df = self.db_handler.player.get_overall_info(list(map(int, self.general_info_dict.keys())),
-        #                                                               self.game_date)
+        with get_session() as session:
+            self.player_info_df = self.player.get_basic_info(
+                session,
+                list(map(int, self.loader_players_df.player_id)),
+                self.game_date,
+            )
+            for team_id, team_name in self.df_teams[["team_id", "team_name"]].values:
+                if not self.team.team_exists(session, int(team_id)):
+                    self.team.insert_team(session, int(team_id), team_name)
 
-        # get player info.
-        self.player_info_df = self.db_handler.player.get_basic_info(
-            list(map(int, self.loader_players_df.player_id)), self.game_date
-        )
-        for team_id, team_name in self.df_teams[["team_id", "team_name"]].values:
-            if not self.db_handler.team.team_exists(int(team_id)):
-                self.db_handler.team.insert_team(int(team_id), team_name)
-
-        # create general info dict
-        self._create_general_info_dict()
-
-        self._valid_for_training()
-        self._handle_missing()
-        self._handle_squads()
+            self._create_general_info_dict()
+            self._valid_for_training()
+            self._handle_missing(session)
+            self._handle_squads(session)
 
     def _valid_for_training(self):
         missing_df = self.player_info_df[~self.player_info_df["exists"]]
@@ -65,7 +68,7 @@ class GameTimeline:
         else:
             self.valid_for_training = 1
 
-    def _handle_squads(self):
+    def _handle_squads(self, session):
         for player_id in self.general_info_dict.keys():
             kit_number = self.general_info_dict[int(player_id)]["kit_number"]
             team_id = self.general_info_dict[int(player_id)]["team_id"]
@@ -78,56 +81,57 @@ class GameTimeline:
             ).empty:
                 row = self.player_info_df.loc[self.player_info_df["id"] == player_id]
                 if not row["kit_number"].isna().values[0]:
-                    # if (self.player_info_df.loc[self.player_info_df["id"] == player_id, "kit_number"]):
-                    self.db_handler.squads.update_player(
+                    self.squads.update_player(
+                        session,
                         int(player_id),
                         self.general_info_dict[int(player_id)]["kit_number"],
                         int(team_id),
                         self.game_date,
                     )
                 else:
-                    self.db_handler.squads.insert_player(
+                    self.squads.insert_player(
+                        session,
                         int(player_id),
                         self.general_info_dict[int(player_id)]["kit_number"],
                         int(team_id),
                         self.game_date,
                     )
 
-    def _handle_missing(self):
+    def _handle_missing(self, session):
         missing_df = self.player_info_df[~self.player_info_df["exists"]]
         for player_id in missing_df[["id"]].values:
-            # get age
-            birthday = self.db_handler.player_age.get_player_age(
+            birthday = self.player_age.get_player_age(
+                session,
                 self.general_info_dict[int(player_id)]["team_name"],
                 self.general_info_dict[int(player_id)]["kit_number"],
                 self.year,
             )
-            # insert to db
-            self.db_handler.player.insert_player(
-                int(player_id), self.general_info_dict[int(player_id)]["player_name"], birthday
+            self.player.insert_player(
+                session,
+                int(player_id),
+                self.general_info_dict[int(player_id)]["player_name"],
+                birthday,
             )
 
         missing_bd_df = self.player_info_df.loc[self.player_info_df["birthday"].isna() & self.player_info_df["exists"]]
         for player_id in missing_bd_df[["id"]].values:
-            birthday = self.db_handler.player_age.get_player_age(
+            birthday = self.player_age.get_player_age(
+                session,
                 self.general_info_dict[int(player_id)]["team_name"],
                 self.general_info_dict[int(player_id)]["kit_number"],
                 self.year,
             )
             if birthday is not None:
-                self.db_handler.player.update_player_bday(int(player_id), birthday)
+                self.player.update_player_bday(session, int(player_id), birthday)
 
     def _create_general_info_dict(self):
-        """dict of player_id: team_id, team_name, home, player_name, starter, kit_number"""
-        # {player_id: team_id, team_name, player_name, starter}
         general_info_dict = {}
         players = list(self.loader_players_df.player_id)
         for player in players:
             player_df = self.loader_players_df[self.loader_players_df["player_id"] == player]
             if (
                 player_df.shape[0] == 0
-            ):  # sometimes whoscored messes up and player does not exist, shouldnt happen to often
-                # del self.player_goal_minute_mapping[player]
+            ):
                 self.loader_players_df = self.loader_players_df[self.loader_players_df["player_id"] != player]
                 print("player not found")
                 continue
@@ -145,55 +149,8 @@ class GameTimeline:
         self.general_info_dict = general_info_dict
 
     def handle(self):
-        # games_batch = []
-        # for player_id in self.general_info_dict:
-        #     player_name = self.general_info_dict[player_id]["player_name"]
-        #     team_id = self.general_info_dict[player_id]["team_id"]
-        #     team_name = self.general_info_dict[player_id]["team_name"]
-        #     opposition_team_id = self.df_teams[self.df_teams["team_id"] != team_id].team_id.values[0]
-        #     minutes = self.player_goal_minute_mapping[int(player_id)]["minutes"]
-        #     starter = self.general_info_dict[int(player_id)]["starter"]
-        #     player_on = self.player_goal_minute_mapping[int(player_id)]["on"]
-        #     player_off = self.player_goal_minute_mapping[int(player_id)]["off"]
-        #     home = self.general_info_dict[int(player_id)]["home"]
-        #     p_mov = self.player_goal_minute_mapping[player_id]["goals_for"] - self.player_goal_minute_mapping[player_id]["goals_against"]
-        #     minutes_3_mon = self.player_info_df[self.player_info_df["id"] == player_id]["total_minutes"].values[0]
-
-        #     # add new game
-        #     result = f"{self.player_goal_minute_mapping[int(player_id)]['goals_for']}-{self.player_goal_minute_mapping[int(player_id)]['goals_against']}"
-        #     games_batch.append([self.game_id, player_id, minutes, starter, opposition_team_id, result, p_elo, opp_elo, self.game_date, team_id,
-        #                         exp_res_lower, exp_res_upper, self.game_league, self.version, self.general_info_dict[int(player_id)]["home"],
-        #                         self.end_of_game, self.valid_for_training])
-
-        # # TODO can remove list(set()) when double ids are taken care off
-        # elo_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_elo, self.version, "elo") for p_id, updated_elo in self.player_info_df[["id", "updated_elo"]].values]))
-        # pm_batch = list(set([(int(p_id), int(self.game_id), self.game_date, updated_pm, self.version, "pm") for p_id, updated_pm in self.player_info_df[["id", "updated_pm"]].values]))
-        # self.db_handler.metric.insert_batch_metric(elo_batch)
-        # self.db_handler.metric.insert_batch_metric(pm_batch)
-        # self.db_handler.games.insert_games_batch(games_batch)
-        metrics = [Minutes(self.db_handler), Goals(self.db_handler)]
-        for metric in metrics:
-            metric.calculate(self)
-            metric.write(self.game_id)
-
-    # def predict(self):
-    #     print(self.general_info_dict)
-    #     general_info_df = pd.DataFrame.from_dict(self.general_info_dict)
-    #     print(general_info_df)
-    #     home_ids = general_info_df.loc[general_info_df["starter"] == 1 &
-    #                                           general_info_df["team_name"] == self.home_team_name,
-    #                                           "player_id"]
-    #     home_elo = self.player_info_df.loc[self.player_info_df["id"].isin(home_ids), "elo"].mean()
-    #     away_ids = general_info_df.loc[general_info_df["starter"] == 1 &
-    #                                            general_info_df["team_name"] != self.home_team_name,
-    #                                           "player_id"]
-    #     away_elo = self.player_info_df.loc[self.player_info_df["id"].isin(away_ids), "elo"].mean()
-    #     # predict using model
-    #     # TODO using MOV regressor, just for eval right now, better model needed for prediction
-    #     prediction_low, prediction_high = self.mov_regressor.predict(1, home_elo - away_elo, 0, elo_diff_faktor=352, goal_diff_faktor=8, minutes_faktor=101)
-    #     # write to db
-    #     goals_df = get_score(self.events, self.df_teams)
-    #     home_goals = goals_df.loc[self.goals_df["team_id"] == self.df_teams["team_name" == self.home_team_name, "team_id"]].count()
-    #     away_goals = goals_df.loc[self.goals_df["team_id"] == self.df_teams["team_name" != self.home_team_name, "team_id"]].count()
-    #     self.db_handler.predictions(self.game_id, home_elo, away_elo, prediction_low, prediction_high,
-    #           f"{home_goals}-{away_goals}")
+        with get_session() as session:
+            metrics = [Minutes(self.metric), Goals(self.metric)]
+            for metric in metrics:
+                metric.calculate(self)
+                metric.write(session, self.game_id)

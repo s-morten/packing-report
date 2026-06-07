@@ -8,11 +8,12 @@ import requests
 from bs4 import BeautifulSoup
 
 import utils.filesystem_io as filesystem_io
-from database_io.db_handler import DB_handler
+from database_io.connection import get_session
+from database_io.repositories.player_age_repo import DB_player_age
 
 
 class Footballsquads_scraper:
-    def __init__(self, cache_location: str, db_handler: DB_handler) -> None:
+    def __init__(self, cache_location: str) -> None:
         self.FORBIDDEN_URLS = [
             "index.html",
             "forums",
@@ -27,10 +28,9 @@ class Footballsquads_scraper:
             "credits.htm",
             "links.htm",
         ]
-        # URL to scrape
         self.url_archive = "http://www.footballsquads.co.uk/archive.htm"
         self.cache_location = cache_location
-        self.db_handler = db_handler
+        self.player_age = DB_player_age()
 
     def fetch_all_links_on_page(self, url: str) -> list[str]:
         link_list = []
@@ -58,21 +58,15 @@ class Footballsquads_scraper:
         table = soup.find("div", {"id": "main"})
         if table:
             rows = table.find_all("tr")
-            # Loop through rows and extract data
             for row in rows:
-                # Extract table data from each row
                 cells = row.find_all(["th", "td"])
                 row_data = []
                 for cell in cells:
-                    # Check if the cell contains italic text
                     italic_text = cell.find("i")
                     if italic_text:
-                        # If italic text is present, add it to row_data
                         row_data.append(italic_text.get_text(strip=True))
                     else:
-                        # If no italic text, add the regular text
                         row_data.append(cell.get_text(strip=True))
-                    # Print row data
                 if self.validate_row_data(row_data) and (key := row_data[0]) not in kit_numbers:
                     kit_numbers[key] = row_data[1:]
         else:
@@ -93,9 +87,7 @@ class Footballsquads_scraper:
         return allowed_urls
 
     def scrape_archive(self):
-        # get top level leagues/seasons
         season_links = self.fetch_all_links_on_page(self.url_archive)
-        # get clubs
         for league_season in season_links:
             teams = self.fetch_all_links_on_page(f"http://www.footballsquads.co.uk/{league_season}")
             league_str = league_season.split("/")[2].split(".")[0]
@@ -118,33 +110,30 @@ class Footballsquads_scraper:
                 sleep(1)
 
     def cache_to_db(self, leagues: list[str] | None = None):
-
-        # get already processed files
-        already_processed_files = self.db_handler.player_age.get_processed_player_age_files()
-        cache_file_list = filesystem_io.directory_files(self.cache_location)
-        # remove already processed files
-        cache_file_list_removed = [i for i in cache_file_list if i not in already_processed_files]
-        # get infos like team, league and season.
-        for cache_file in cache_file_list_removed:
-            scraped_infos = self.scrape_infos_from_filename(cache_file)
-            if scraped_infos is None:
-                continue
-            replaced_team_name = scraped_infos[0]
-            replaced_league = scraped_infos[1]
-            scraped_season = scraped_infos[2]
-
-            if (leagues is not None) and (replaced_league not in leagues):
-                continue
-            age_table = filesystem_io.footballsquads_table_from_file(self.cache_location + cache_file)
-            for kit_number in age_table:
-                player_information = age_table[kit_number]
-                if len(player_information) < 8:
-                    # errorenous data, skip
+        with get_session() as session:
+            already_processed_files = self.player_age.get_processed_player_age_files(session)
+            cache_file_list = filesystem_io.directory_files(self.cache_location)
+            cache_file_list_removed = [i for i in cache_file_list if i not in already_processed_files]
+            for cache_file in cache_file_list_removed:
+                scraped_infos = self.scrape_infos_from_filename(cache_file)
+                if scraped_infos is None:
                     continue
-                self.db_handler.player_age.player_age_to_sql(
-                    [kit_number, *player_information, replaced_team_name, replaced_league, scraped_season]
-                )
-            self.db_handler.player_age.update_processed_player_age(cache_file)
+                replaced_team_name = scraped_infos[0]
+                replaced_league = scraped_infos[1]
+                scraped_season = scraped_infos[2]
+
+                if (leagues is not None) and (replaced_league not in leagues):
+                    continue
+                age_table = filesystem_io.footballsquads_table_from_file(self.cache_location + cache_file)
+                for kit_number in age_table:
+                    player_information = age_table[kit_number]
+                    if len(player_information) < 8:
+                        continue
+                    self.player_age.player_age_to_sql(
+                        session,
+                        [kit_number, *player_information, replaced_team_name, replaced_league, scraped_season],
+                    )
+                self.player_age.update_processed_player_age(session, cache_file)
 
     def scrape_infos_from_filename(self, file_name):
         file_name_split = file_name.split("_")

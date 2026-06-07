@@ -1,4 +1,4 @@
-from database_io.connection import DB_handler_connection
+from database_io.connection import get_session
 from database_io.repositories.game_repo import DB_games
 from database_io.repositories.metric_repo import DB_metric
 from database_io.repositories.player_age_repo import DB_player_age
@@ -10,13 +10,24 @@ from database_io.repositories.team_repo import DB_team
 
 
 class DB_handler:
+    """Thin wrapper for callers that haven't migrated to session-in-method pattern yet.
+
+    Creates a session and delegates repo calls through the session.
+    Usage:
+        dbh = DB_handler()
+        with dbh.session() as s:
+            dbh.player.insert_player(s, 1, "name", "01-01-90")
+    """
+
     def __init__(self):
-        connection = DB_handler_connection()
-        self.player = DB_player(connection)
-        self.player_age = DB_player_age(connection)
-        self.team = DB_team(connection)
-        self.metric = DB_metric(connection)
-        self.games = DB_games(connection)
-        self.squads = DB_squads(connection)
-        self.schedule = DB_schedule(connection)
-        self.predictions = DB_predictions(connection)
+        self.player = DB_player()
+        self.player_age = DB_player_age()
+        self.team = DB_team()
+        self.metric = DB_metric()
+        self.games = DB_games()
+        self.squads = DB_squads()
+        self.schedule = DB_schedule()
+        self.predictions = DB_predictions()
+
+    def session(self):
+        return get_session()

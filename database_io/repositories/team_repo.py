@@ -2,16 +2,10 @@ from database_io.models import Team
 
 
 class DB_team:
-    def __init__(self, connection_item):
-        self.connection = connection_item.connection
-        self.session = connection_item.session
-        self.engine = connection_item.engine
-
-    def insert_team(self, id: int, name: str):
+    def insert_team(self, session, id: int, name: str):
         team = Team(name=str(name), id=int(id))
-        self.session.add(team)
-        self.session.commit()
+        session.add(team)
+        session.commit()
 
-    def team_exists(self, id: int) -> bool:
-        query_result = self.session.query(Team).filter(Team.id == id).first()
-        return query_result is not None
+    def team_exists(self, session, id: int) -> bool:
+        return session.query(Team).filter(Team.id == id).first() is not None

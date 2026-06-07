@@ -1,22 +1,8 @@
+from unittest.mock import MagicMock
+
 import pandas as pd
 import pytest
 from metrics.low_level.minutes import Minutes
-
-
-class FakeDBHandler:
-    def __init__(self):
-        self.inserted_batches = []
-
-    class MetricHandler:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def insert_batch_metric(self, batch):
-            self.parent.inserted_batches.append(batch)
-
-    @property
-    def metric(self):
-        return self.MetricHandler(self)
 
 
 def make_starter_df(players):
@@ -73,7 +59,7 @@ class TestCalculate:
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.players_dict[1]["on"] == 0
@@ -111,7 +97,7 @@ class TestCalculate:
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.players_dict[1]["on"] == 0
@@ -165,7 +151,7 @@ class TestCalculate:
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.players_dict[1]["off"] == 45
@@ -185,7 +171,7 @@ class TestCalculate:
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert 0 not in timeline.players_dict
@@ -202,7 +188,7 @@ class TestCalculate:
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.end_of_game == 75
@@ -231,7 +217,7 @@ class TestCalculate:
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.end_of_game == 70
@@ -246,7 +232,7 @@ class TestCalculate:
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.players_dict[1]["off"] == 90
@@ -260,7 +246,7 @@ class TestCalculate:
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.end_of_game == 90
@@ -285,7 +271,7 @@ class TestCalculate:
         )
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         with pytest.raises(IndexError):
             minutes.calculate(timeline)
 
@@ -316,7 +302,7 @@ class TestCalculate:
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.end_of_game == 90
@@ -341,7 +327,7 @@ class TestCalculate:
         )
         timeline = FakeGameTimeline(starter_df, events_df)
 
-        minutes = Minutes(FakeDBHandler())
+        minutes = Minutes()
         minutes.calculate(timeline)
 
         assert timeline.players_dict[1]["on"] == 0
@@ -350,30 +336,33 @@ class TestCalculate:
 
 class TestWrite:
     def test_writes_minutes_to_db(self):
-        dbh = FakeDBHandler()
-        minutes = Minutes(dbh)
+        session = MagicMock()
+        repo = MagicMock()
+        minutes = Minutes(metric_repo=repo)
         minutes.players_dict = {
             1: {"team_id": 10, "on": 0, "off": 90},
             2: {"team_id": 10, "on": 60, "off": 85},
         }
 
-        minutes.write(game_id=42)
+        minutes.write(session, game_id=42)
 
-        assert len(dbh.inserted_batches) == 1
-        batch = dbh.inserted_batches[0]
+        assert repo.insert_batch_metric.call_count == 1
+        batch = repo.insert_batch_metric.call_args[0][1]
         assert [1, 42, 90, "minutes"] in batch
         assert [2, 42, 25, "minutes"] in batch
 
-    def test_empty_dict_writes_empty(self):
-        dbh = FakeDBHandler()
-        minutes = Minutes(dbh)
+    def test_empty_dict_writes_empty_batch(self):
+        session = MagicMock()
+        repo = MagicMock()
+        minutes = Minutes(metric_repo=repo)
         minutes.players_dict = {}
 
-        minutes.write(game_id=1)
+        minutes.write(session, game_id=1)
 
-        assert dbh.inserted_batches == [[]]
+        assert repo.insert_batch_metric.call_args[0][1] == []
 
     def test_write_without_calculate_raises(self):
-        minutes = Minutes(FakeDBHandler())
+        session = MagicMock()
+        minutes = Minutes(metric_repo=MagicMock())
         with pytest.raises(AttributeError):
-            minutes.write(game_id=1)
+            minutes.write(session, game_id=1)

@@ -4,27 +4,21 @@ from database_io.models.legacy import Schedule
 
 
 class DB_schedule:
-    def __init__(self, connection_item):
-        self.connection = connection_item.connection
-        self.session = connection_item.session
-        self.engine = connection_item.engine
-
-    def insert_batch_schedule(self, schedule: list) -> None:
+    def insert_batch_schedule(self, session, schedule: list) -> None:
         batch = [
-            Schedule(schedule_id=schedule_id, date_time=date_time, home=home, away=away, league=league)
-            for schedule_id, date_time, home, away, league in schedule
+            Schedule(schedule_id=sid, date_time=dt, home=h, away=a, league=l)
+            for sid, dt, h, a, l in schedule
         ]
-        self.session.add_all(batch)
-        self.session.commit()
+        session.add_all(batch)
+        session.commit()
 
-    def clear_table(self):
-        self.session.query(Schedule).delete()
-        self.session.commit()
+    def clear_table(self, session):
+        session.query(Schedule).delete()
+        session.commit()
 
-    def games_in_timeframe(self, time_now: datetime, time_target: datetime) -> list[int]:
+    def games_in_timeframe(self, session, time_now: datetime, time_target: datetime) -> list[int]:
         return (
-            self.session.query(Schedule.schedule_id)
-            .filter(Schedule.date_time >= time_now)
-            .filter(Schedule.date_time <= time_target)
+            session.query(Schedule.schedule_id)
+            .filter(Schedule.date_time >= time_now, Schedule.date_time <= time_target)
             .all()
         )

@@ -9,7 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from configs import NameReplacer
-from database_io.db_handler import DB_handler
+from database_io.connection import get_session
+from database_io.repositories.metric_repo import DB_metric
+from database_io.repositories.player_repo import DB_player
+from database_io.repositories.schedule_repo import DB_schedule
+from database_io.repositories.squads_repo import DB_squads
 
 nr = NameReplacer()
 
@@ -18,31 +22,30 @@ time_now = datetime.now(berlin_tz)
 time_target = time_now + timedelta(minutes=30)
 
 fapi = FApi_Handler()
-dbh = DB_handler()
 elo_version = float(os.environ.get("ELO_VERSION", "0.1"))
 
-# get ids of games in next 30 minutes
-game_id_list = dbh.schedule.games_in_timeframe(time_now, time_target)
+player = DB_player()
+schedule = DB_schedule()
+squads = DB_squads()
+metric = DB_metric()
 
-# get ids of players and match them
-for id in game_id_list:
-    formations = fapi.get_formation(id)
-    start_xis = defaultdict(list)
-    for team in formations["response"]:
-        team_name = nr.replace_name(team["team"]["name"])
-        for player in team["startXI"]:
-            if wh_id := dbh.player.player_by_fapi_id(player) is not None:
-                elo = dbh.metric.extract_latest_elo(wh_id[0], elo_version)
-                start_xis["team_name"].append(elo)
-            else:
-                wh_id = dbh.squads.match_players(time_now, player["player"]["number"], team_name)
-                if wh_id is None:
-                    start_xis["team_name"].append(wh_id)
-                else:
-                    elo = dbh.metric.extract_latest_elo(wh_id, elo_version)
+with get_session() as session:
+    game_id_list = schedule.games_in_timeframe(session, time_now, time_target)
+
+    for id in game_id_list:
+        formations = fapi.get_formation(id)
+        start_xis = defaultdict(list)
+        for team in formations["response"]:
+            team_name = nr.replace_name(team["team"]["name"])
+            for p in team["startXI"]:
+                if wh_id := player.player_by_fapi_id(session, p) is not None:
+                    elo = metric.extract_latest_elo(session, wh_id[0], elo_version)
                     start_xis["team_name"].append(elo)
-                    dbh.player.update_player_fapi_id(wh_id, player["player"]["id"])
-
-    # id, home, away, league, season, home_elo, away_elo, n_home_miss, n_away_miss, prediction_home, prediction_away, home_goals, away_goals
-
-# predict results and do sth with them, send notification and store results
+                else:
+                    wh_id = squads.match_players(session, time_now, p["player"]["number"], team_name)
+                    if wh_id is None:
+                        start_xis["team_name"].append(wh_id)
+                    else:
+                        elo = metric.extract_latest_elo(session, wh_id, elo_version)
+                        start_xis["team_name"].append(elo)
+                        player.update_player_fapi_id(session, wh_id, p["player"]["id"])

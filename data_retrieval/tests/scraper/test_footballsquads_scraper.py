@@ -1,30 +1,11 @@
 # ruff: noqa: I001
 
 from collections import defaultdict
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from data_retrieval.scraper import footballsquads_scraper as module
-
-
-class DummyPlayerAge:
-    def __init__(self):
-        self.to_sql_calls = []
-        self.updated_files = []
-
-    def get_processed_player_age_files(self):
-        return ["already_done.pckl"]
-
-    def player_age_to_sql(self, payload):
-        self.to_sql_calls.append(payload)
-
-    def update_processed_player_age(self, file_name):
-        self.updated_files.append(file_name)
-
-
-class DummyDBHandler:
-    def __init__(self):
-        self.player_age = DummyPlayerAge()
 
 
 class FakeResponse:
@@ -44,7 +25,7 @@ def _mock_full_team_html() -> bytes:
 
 @pytest.fixture
 def scraper():
-    return module.Footballsquads_scraper(cache_location="/tmp/cache", db_handler=DummyDBHandler())
+    return module.Footballsquads_scraper(cache_location="/tmp/cache")
 
 
 def test_validate_row_data(scraper):
@@ -179,10 +160,22 @@ def test_cache_to_db_processes_unseen_files(monkeypatch, scraper):
         },
     )
 
+    mock_session = MagicMock()
+    mock_cm = MagicMock()
+    mock_cm.__enter__.return_value = mock_session
+    mock_cm.__exit__.return_value = None
+    monkeypatch.setattr(module, "get_session", lambda: mock_cm)
+
+    scraper.player_age.get_processed_player_age_files = MagicMock(return_value=["already_done.pckl"])
+    scraper.player_age.player_age_to_sql = MagicMock()
+    scraper.player_age.update_processed_player_age = MagicMock()
+
     scraper.cache_to_db(leagues=["Premier League"])
 
-    assert len(scraper.db_handler.player_age.to_sql_calls) == 1
-    assert scraper.db_handler.player_age.to_sql_calls[0] == [
+    assert scraper.player_age.player_age_to_sql.call_count == 1
+    call_args = scraper.player_age.player_age_to_sql.call_args
+    assert call_args[0][0] is mock_session
+    assert call_args[0][1] == [
         "10",
         "Player",
         "MID",
@@ -196,7 +189,8 @@ def test_cache_to_db_processes_unseen_files(monkeypatch, scraper):
         "Premier League",
         "2020/2021",
     ]
-    assert scraper.db_handler.player_age.updated_files == ["2020-2021_eng_prem_arsenal.pckl"]
+    assert scraper.player_age.update_processed_player_age.call_args[0][0] is mock_session
+    assert scraper.player_age.update_processed_player_age.call_args[0][1] == "2020-2021_eng_prem_arsenal.pckl"
 
 
 def test_replace_from_config_invalid_option_raises():
