@@ -296,7 +296,9 @@ NOCACHE = False
 NOSTORE = False
 
 TEAMNAME_REPLACEMENTS = {}
-_f_custom_teamnname_replacements = os.environ.get("SOCCERDATA_CONFIG_DIR", str(_default_config_dir)) + "/teamname_replacements.json"
+_f_custom_teamnname_replacements = (
+    os.environ.get("SOCCERDATA_CONFIG_DIR", str(_default_config_dir)) + "/teamname_replacements.json"
+)
 if os.path.isfile(_f_custom_teamnname_replacements):
     with open(_f_custom_teamnname_replacements, encoding="utf8") as json_file:
         for team, to_replace_list in json.load(json_file).items():
@@ -911,9 +913,7 @@ class WhoScored:
         match_sheets = []
         for i, (_, game) in enumerate(iterator.iterrows()):
             # url = urlmask.format(game.game_id)
-            filepath = self.data_dir / filemask.format(
-                game["league"], game["season"], game["game_id"]
-            )
+            filepath = self.data_dir / filemask.format(game["league"], game["season"], game["game_id"])
 
             # print(
             #     "[%s/%s] Retrieving game with id=%s",

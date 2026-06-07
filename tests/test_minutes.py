@@ -64,10 +64,12 @@ class FakeGameTimeline:
 
 class TestCalculate:
     def test_two_starters_full_game(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-            {"id": 2, "team_id": 20},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+                {"id": 2, "team_id": 20},
+            ]
+        )
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
@@ -81,15 +83,31 @@ class TestCalculate:
         assert timeline.end_of_game == 90
 
     def test_substitution(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-        ])
-        events = build_full_game_events(additional_events=[
-            {"type": "SubstitutionOff", "period": "SecondHalf", "expanded_minute": 60, "player_id": 1, "team_id": 10,
-                "card_type": None},
-            {"type": "SubstitutionOn", "period": "SecondHalf", "expanded_minute": 60, "player_id": 11, "team_id": 10,
-                "card_type": None},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+            ]
+        )
+        events = build_full_game_events(
+            additional_events=[
+                {
+                    "type": "SubstitutionOff",
+                    "period": "SecondHalf",
+                    "expanded_minute": 60,
+                    "player_id": 1,
+                    "team_id": 10,
+                    "card_type": None,
+                },
+                {
+                    "type": "SubstitutionOn",
+                    "period": "SecondHalf",
+                    "expanded_minute": 60,
+                    "player_id": 11,
+                    "team_id": 10,
+                    "card_type": None,
+                },
+            ]
+        )
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
 
@@ -102,20 +120,48 @@ class TestCalculate:
         assert timeline.players_dict[11]["off"] == 90
 
     def test_multiple_subs(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-            {"id": 2, "team_id": 10},
-        ])
-        events = build_full_game_events(additional_events=[
-            {"type": "SubstitutionOff", "period": "SecondHalf", "expanded_minute": 45, "player_id": 1, "team_id": 10,
-                "card_type": None},
-            {"type": "SubstitutionOn", "period": "SecondHalf", "expanded_minute": 45, "player_id": 11, "team_id": 10,
-                "card_type": None},
-            {"type": "SubstitutionOff", "period": "SecondHalf", "expanded_minute": 70, "player_id": 2, "team_id": 10,
-                "card_type": None},
-            {"type": "SubstitutionOn", "period": "SecondHalf", "expanded_minute": 70, "player_id": 12, "team_id": 10,
-                "card_type": None},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+                {"id": 2, "team_id": 10},
+            ]
+        )
+        events = build_full_game_events(
+            additional_events=[
+                {
+                    "type": "SubstitutionOff",
+                    "period": "SecondHalf",
+                    "expanded_minute": 45,
+                    "player_id": 1,
+                    "team_id": 10,
+                    "card_type": None,
+                },
+                {
+                    "type": "SubstitutionOn",
+                    "period": "SecondHalf",
+                    "expanded_minute": 45,
+                    "player_id": 11,
+                    "team_id": 10,
+                    "card_type": None,
+                },
+                {
+                    "type": "SubstitutionOff",
+                    "period": "SecondHalf",
+                    "expanded_minute": 70,
+                    "player_id": 2,
+                    "team_id": 10,
+                    "card_type": None,
+                },
+                {
+                    "type": "SubstitutionOn",
+                    "period": "SecondHalf",
+                    "expanded_minute": 70,
+                    "player_id": 12,
+                    "team_id": 10,
+                    "card_type": None,
+                },
+            ]
+        )
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
 
@@ -130,10 +176,12 @@ class TestCalculate:
         assert timeline.players_dict[12]["off"] == 90
 
     def test_player_id_zero_skipped(self):
-        starter_df = make_starter_df([
-            {"id": 0, "team_id": 10},
-            {"id": 1, "team_id": 10},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 0, "team_id": 10},
+                {"id": 1, "team_id": 10},
+            ]
+        )
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
@@ -144,10 +192,12 @@ class TestCalculate:
         assert 1 in timeline.players_dict
 
     def test_red_card_ends_game_early(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-            {"id": 2, "team_id": 20},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+                {"id": 2, "team_id": 20},
+            ]
+        )
         events = build_full_game_events(red_card_minute=75)
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
@@ -160,14 +210,22 @@ class TestCalculate:
         assert timeline.players_dict[2]["off"] == 75
 
     def test_sub_after_red_card_removed(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+            ]
+        )
         events = build_full_game_events(
             red_card_minute=70,
             additional_events=[
-                {"type": "SubstitutionOn", "period": "SecondHalf", "expanded_minute": 80, "player_id": 11,
-                    "team_id": 10, "card_type": None},
+                {
+                    "type": "SubstitutionOn",
+                    "period": "SecondHalf",
+                    "expanded_minute": 80,
+                    "player_id": 11,
+                    "team_id": 10,
+                    "card_type": None,
+                },
             ],
         )
         events_df = make_events_df(events)
@@ -180,9 +238,11 @@ class TestCalculate:
         assert 11 not in timeline.players_dict
 
     def test_off_minus_one_becomes_end_of_game(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+            ]
+        )
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
@@ -192,9 +252,11 @@ class TestCalculate:
         assert timeline.players_dict[1]["off"] == 90
 
     def test_end_of_game_stored_on_timeline(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+            ]
+        )
         events_df = make_events_df(build_full_game_events())
         timeline = FakeGameTimeline(starter_df, events_df)
 
@@ -204,13 +266,23 @@ class TestCalculate:
         assert timeline.end_of_game == 90
 
     def test_no_second_half_end_raises(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-        ])
-        events_df = make_events_df([
-            {"type": "End", "period": "FirstHalf", "expanded_minute": 45, "player_id": 0, "team_id": 0,
-                "card_type": None},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+            ]
+        )
+        events_df = make_events_df(
+            [
+                {
+                    "type": "End",
+                    "period": "FirstHalf",
+                    "expanded_minute": 45,
+                    "player_id": 0,
+                    "team_id": 0,
+                    "card_type": None,
+                },
+            ]
+        )
         timeline = FakeGameTimeline(starter_df, events_df)
 
         minutes = Minutes(FakeDBHandler())
@@ -218,14 +290,28 @@ class TestCalculate:
             minutes.calculate(timeline)
 
     def test_only_second_half_end_used(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+            ]
+        )
         events = [
-            {"type": "End", "period": "FirstHalf", "expanded_minute": 45, "player_id": 0, "team_id": 0,
-                "card_type": None},
-            {"type": "End", "period": "SecondHalf", "expanded_minute": 90, "player_id": 0, "team_id": 0,
-                "card_type": None},
+            {
+                "type": "End",
+                "period": "FirstHalf",
+                "expanded_minute": 45,
+                "player_id": 0,
+                "team_id": 0,
+                "card_type": None,
+            },
+            {
+                "type": "End",
+                "period": "SecondHalf",
+                "expanded_minute": 90,
+                "player_id": 0,
+                "team_id": 0,
+                "card_type": None,
+            },
         ]
         events_df = make_events_df(events)
         timeline = FakeGameTimeline(starter_df, events_df)
@@ -236,13 +322,23 @@ class TestCalculate:
         assert timeline.end_of_game == 90
 
     def test_starter_not_in_players_dict_if_not_in_loader(self):
-        starter_df = make_starter_df([
-            {"id": 1, "team_id": 10},
-        ])
-        events_df = make_events_df([
-            {"type": "End", "period": "SecondHalf", "expanded_minute": 90, "player_id": 0, "team_id": 0,
-                "card_type": None},
-        ])
+        starter_df = make_starter_df(
+            [
+                {"id": 1, "team_id": 10},
+            ]
+        )
+        events_df = make_events_df(
+            [
+                {
+                    "type": "End",
+                    "period": "SecondHalf",
+                    "expanded_minute": 90,
+                    "player_id": 0,
+                    "team_id": 0,
+                    "card_type": None,
+                },
+            ]
+        )
         timeline = FakeGameTimeline(starter_df, events_df)
 
         minutes = Minutes(FakeDBHandler())

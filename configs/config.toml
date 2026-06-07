@@ -2,5 +2,11 @@
 leagues = ["GER-Bundesliga2", "GER-Bundesliga", "ENG-Premier League", "ESP-La Liga"]
 seasons = [15, 16, 17, 18, 19, 20, 21, 22]
 
+[fetch]
+days_back = 7
+days_forward = 0
+chrome_path = "/usr/bin/chromium"
+headless = true
+
 [training]
 version = 0.09

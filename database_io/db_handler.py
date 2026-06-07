@@ -7,6 +7,8 @@ from database_io.repositories.predictions_repo import DB_predictions
 from database_io.repositories.schedule_repo import DB_schedule
 from database_io.repositories.squads_repo import DB_squads
 from database_io.repositories.team_repo import DB_team
+
+
 class DB_handler:
     def __init__(self):
         connection = DB_handler_connection()
