@@ -6,15 +6,15 @@ class Goals:
     def __init__(self, metric_repo=None):
         self.metric_repo = metric_repo or DB_metric()
 
-    def calculate(self, game_timeline):
-        event_dataframe = get_score(game_timeline.events, game_timeline.df_teams)
+    def calculate(self, game_facts):
+        event_dataframe = get_score(game_facts.events, game_facts.df_teams)
         goal_dict = dict(zip(event_dataframe["expanded_minute"].values, event_dataframe["goal_team_id"].values))
 
         player_goal_minute_mapping = {}
-        for player in game_timeline.players_dict:
-            player_on = game_timeline.players_dict[player]["on"]
-            player_off = game_timeline.players_dict[player]["off"]
-            player_team_id = game_timeline.players_dict[player]["team_id"]
+        for player in game_facts.players_dict:
+            player_on = game_facts.players_dict[player]["on"]
+            player_off = game_facts.players_dict[player]["off"]
+            player_team_id = game_facts.players_dict[player]["team_id"]
             player_goals_for = 0
             player_goals_against = 0
             for goal in goal_dict:
@@ -27,8 +27,8 @@ class Goals:
                 "team_id": player_team_id,
                 "goals_for": player_goals_for,
                 "goals_against": player_goals_against,
-                "minutes": player_off - game_timeline.players_dict[player]["on"],
-                "on": game_timeline.players_dict[player]["on"],
+                "minutes": player_off - game_facts.players_dict[player]["on"],
+                "on": game_facts.players_dict[player]["on"],
                 "off": player_off,
             }
         self.player_goal_minute_mapping = player_goal_minute_mapping

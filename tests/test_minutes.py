@@ -40,7 +40,7 @@ def build_full_game_events(additional_events=None, red_card_minute=None):
     return base
 
 
-class FakeGameTimeline:
+class FakeGameFacts:
     def __init__(self, loader_players_df, events_df):
         self.loader_players_df = loader_players_df
         self.events = events_df
@@ -57,7 +57,7 @@ class TestCalculate:
             ]
         )
         events_df = make_events_df(build_full_game_events())
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -95,7 +95,7 @@ class TestCalculate:
             ]
         )
         events_df = make_events_df(events)
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -149,7 +149,7 @@ class TestCalculate:
             ]
         )
         events_df = make_events_df(events)
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -169,7 +169,7 @@ class TestCalculate:
             ]
         )
         events_df = make_events_df(build_full_game_events())
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -186,7 +186,7 @@ class TestCalculate:
         )
         events = build_full_game_events(red_card_minute=75)
         events_df = make_events_df(events)
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -215,7 +215,7 @@ class TestCalculate:
             ],
         )
         events_df = make_events_df(events)
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -230,7 +230,7 @@ class TestCalculate:
             ]
         )
         events_df = make_events_df(build_full_game_events())
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -244,7 +244,7 @@ class TestCalculate:
             ]
         )
         events_df = make_events_df(build_full_game_events())
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -269,7 +269,7 @@ class TestCalculate:
                 },
             ]
         )
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         with pytest.raises(IndexError):
@@ -300,7 +300,7 @@ class TestCalculate:
             },
         ]
         events_df = make_events_df(events)
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)
@@ -325,7 +325,7 @@ class TestCalculate:
                 },
             ]
         )
-        timeline = FakeGameTimeline(starter_df, events_df)
+        timeline = FakeGameFacts(starter_df, events_df)
 
         minutes = Minutes()
         minutes.calculate(timeline)

@@ -7,8 +7,8 @@ class Minutes:
     def __init__(self, metric_repo=None):
         self.metric_repo = metric_repo or DB_metric()
 
-    def calculate(self, game_timeline):
-        loader_players_df = game_timeline.loader_players_df[game_timeline.loader_players_df["is_starter"] == True]
+    def calculate(self, game_facts):
+        loader_players_df = game_facts.loader_players_df[game_facts.loader_players_df["is_starter"] == True]
         players = np.swapaxes(
             [
                 loader_players_df["player_id"].values,
@@ -18,8 +18,8 @@ class Minutes:
             ],
             0, 1,
         )
-        sub_dataframe = game_timeline.events.loc[
-            (game_timeline.events["type"] == "SubstitutionOn") | (game_timeline.events["type"] == "SubstitutionOff")
+        sub_dataframe = game_facts.events.loc[
+            (game_facts.events["type"] == "SubstitutionOn") | (game_facts.events["type"] == "SubstitutionOff")
         ]
         on_dataframe = sub_dataframe.loc[(sub_dataframe["type"] == "SubstitutionOn")].copy()
         off_dataframe = sub_dataframe.loc[(sub_dataframe["type"] == "SubstitutionOff")].copy()
@@ -50,15 +50,15 @@ class Minutes:
                 players_dict[player[0]]["on"] = max(player[2], players_dict[player[0]]["on"])
                 players_dict[player[0]]["off"] = max(player[3], players_dict[player[0]]["off"])
 
-        red_card_df = game_timeline.events[
-            (game_timeline.events["type"] == "Card") & (game_timeline.events["card_type"].isin(["SecondYellow", "Red"]))
+        red_card_df = game_facts.events[
+            (game_facts.events["type"] == "Card") & (game_facts.events["card_type"].isin(["SecondYellow", "Red"]))
         ]
-        game_end_df = game_timeline.events.loc[(game_timeline.events["type"] == "End")]
+        game_end_df = game_facts.events.loc[(game_facts.events["type"] == "End")]
         end_of_game = game_end_df[(game_end_df["period"] == "SecondHalf")]["expanded_minute"].values[0]
         if not red_card_df.empty:
             red_card_game_end = min(red_card_df["expanded_minute"].values)
             end_of_game = min(end_of_game, red_card_game_end)
-        game_timeline.end_of_game = end_of_game
+        game_facts.end_of_game = end_of_game
 
         player_dict_keys = list(players_dict.keys())
         for player in player_dict_keys:
@@ -68,7 +68,7 @@ class Minutes:
             if (players_dict[player]["off"] == -1) or (players_dict[player]["off"] > end_of_game):
                 players_dict[player]["off"] = end_of_game
 
-        game_timeline.players_dict = players_dict
+        game_facts.players_dict = players_dict
         self.players_dict = players_dict
 
     def write(self, session, game_id):

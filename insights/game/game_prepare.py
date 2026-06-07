@@ -1,11 +1,8 @@
 from datetime import datetime
 
 import soccerdata as sd
-from metrics.low_level.goals import Goals
-from metrics.low_level.minutes import Minutes
 
 from database_io.connection import get_session
-from database_io.repositories.metric_repo import DB_metric
 from database_io.repositories.player_age_repo import DB_player_age
 from database_io.repositories.player_repo import DB_player
 from database_io.repositories.squads_repo import DB_squads
@@ -13,35 +10,32 @@ from database_io.repositories.team_repo import DB_team
 from utils.date_utils import to_season
 
 
-class GameTimeline:
+class GamePrepare:
     def __init__(
         self,
         ws: sd.WhoScored,
         game_id: int,
         game_date: datetime,
         league: str,
-        version: float,
         home: str,
     ) -> None:
-        self.events = ws.read_events(match_id=[game_id])
-        self.loader = ws.read_events(match_id=[game_id], output_fmt="loader")
-        self.loader_players_df = self.loader.players(game_id)
-        self.df_teams = self.loader.teams(game_id=game_id)
+        loader = ws.read_events(match_id=[game_id], output_fmt="loader")
+        self.loader_players_df = loader.players(game_id)
+        self.df_teams = loader.teams(game_id=game_id)
 
         self.player = DB_player()
         self.player_age = DB_player_age()
         self.team = DB_team()
         self.squads = DB_squads()
-        self.metric = DB_metric()
 
         self.valid_for_training = None
         self.game_date = game_date
         self.game_id = game_id
         self.game_league = league
         self.home_team_name = home
-        self.version = version
         self.year = to_season(self.game_date)
 
+    def sync(self):
         with get_session() as session:
             self.player_info_df = self.player.get_basic_info(
                 session,
@@ -129,9 +123,7 @@ class GameTimeline:
         players = list(self.loader_players_df.player_id)
         for player in players:
             player_df = self.loader_players_df[self.loader_players_df["player_id"] == player]
-            if (
-                player_df.shape[0] == 0
-            ):
+            if player_df.shape[0] == 0:
                 self.loader_players_df = self.loader_players_df[self.loader_players_df["player_id"] != player]
                 print("player not found")
                 continue
@@ -147,10 +139,3 @@ class GameTimeline:
             general_info_dict[player]["starter"] = player_df.is_starter.values[0]
             general_info_dict[player]["kit_number"] = player_df.jersey_number.values[0]
         self.general_info_dict = general_info_dict
-
-    def handle(self):
-        with get_session() as session:
-            metrics = [Minutes(self.metric), Goals(self.metric)]
-            for metric in metrics:
-                metric.calculate(self)
-                metric.write(session, self.game_id)

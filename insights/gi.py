@@ -17,10 +17,11 @@ schedule = schedule.sort_values("date")
 
 import logging
 
-from game.game_timeline import GameTimeline
-
 from database_io.connection import get_session
 from database_io.repositories.game_repo import DB_games
+from game.game_facts import GameFacts
+from game.game_metrics import GameMetrics
+from game.game_prepare import GamePrepare
 from utils.date_utils import to_datetime
 
 logger = logging.getLogger()
@@ -41,5 +42,10 @@ for league, game, date, home in tqdm(
     desc="Processing games",
 ):
     date = to_datetime(date)
-    game_timeline = GameTimeline(ws, game, date, league, 0.1, home)
-    game_timeline.handle()
+    prepare = GamePrepare(ws, game, date, league, home)
+    prepare.sync()
+
+    facts = GameFacts(ws, game)
+    with get_session() as session:
+        facts.handle(session)
+        GameMetrics().handle(session)

@@ -5,7 +5,7 @@ import pytest
 from metrics.low_level.goals import Goals
 
 
-class FakeGameTimeline:
+class FakeGameFacts:
     def __init__(self, players_dict, events=None, df_teams=None):
         self.players_dict = players_dict
         self.events = events if events is not None else pd.DataFrame()
@@ -24,7 +24,7 @@ class TestCalculate:
             1: {"team_id": team_a_id, "on": 0, "off": 90},
             2: {"team_id": team_b_id, "on": 0, "off": 90},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([30, 50], [team_a_id, team_b_id]),
@@ -43,7 +43,7 @@ class TestCalculate:
         players_dict = {
             1: {"team_id": team_a, "on": 0, "off": 90},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([10, 20, 30], [team_a, team_a, team_a]),
@@ -61,7 +61,7 @@ class TestCalculate:
         players_dict = {
             1: {"team_id": team_a, "on": 0, "off": 90},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([15, 75], [team_b, team_b]),
@@ -79,7 +79,7 @@ class TestCalculate:
             1: {"team_id": team_a, "on": 0, "off": 90},
             2: {"team_id": team_a, "on": 60, "off": 90},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([45, 70, 85], [team_a, team_a, team_a]),
@@ -96,7 +96,7 @@ class TestCalculate:
         players_dict = {
             1: {"team_id": team_a, "on": 30, "off": 90},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([30, 31], [team_a, team_a]),
@@ -112,7 +112,7 @@ class TestCalculate:
         players_dict = {
             1: {"team_id": team_a, "on": 0, "off": 80},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([79, 80, 81], [team_a, team_a, team_a]),
@@ -127,7 +127,7 @@ class TestCalculate:
         players_dict = {
             1: {"team_id": 10, "on": 0, "off": 90},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([], []),
@@ -147,7 +147,7 @@ class TestCalculate:
             2: {"team_id": team_a, "on": 0, "off": 90},
             3: {"team_id": team_b, "on": 0, "off": 90},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([25], [team_a]),
@@ -167,7 +167,7 @@ class TestCalculate:
             1: {"team_id": team_a, "on": 0, "off": 90},
             2: {"team_id": team_a, "on": 0, "off": 0},
         }
-        timeline = FakeGameTimeline(players_dict)
+        timeline = FakeGameFacts(players_dict)
         monkeypatch.setattr(
             "metrics.low_level.goals.get_score",
             lambda events, teams: make_goal_df([25], [team_a]),
