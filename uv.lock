@@ -1118,6 +1118,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pandas" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -1127,6 +1128,7 @@ requires-dist = [{ name = "python-dotenv", specifier = ">=1.0.1" }]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "pandas", specifier = ">=2.3.3" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "ruff", specifier = ">=0.15.7" },
 ]
