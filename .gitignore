@@ -138,3 +138,7 @@ srv/
 *.csv
 *.nc
 *.pckl
+
+# model related
+models/meta/*
+models/model/*

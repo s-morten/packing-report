@@ -4,7 +4,7 @@ from pathlib import PosixPath
 from dotenv import load_dotenv
 
 load_dotenv()
-from scraper.whoscored_chromeless import WhoScored
+from data_retrieval.scraper.whoscored_chromeless import WhoScored
 from tqdm import tqdm
 
 ws = WhoScored(
@@ -45,7 +45,7 @@ for league, game, date, home in tqdm(
     prepare = GamePrepare(ws, game, date, league, home)
     prepare.sync()
 
-    facts = GameFacts(ws, game)
+    facts = GameFacts(ws, game, home)
     with get_session() as session:
         facts.handle(session)
         GameMetrics().handle(session)

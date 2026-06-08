@@ -1,3 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["game", "metrics"]
+
+[tool.setuptools.package-dir]
+"game" = "game"
+"metrics" = "metrics"
+
 [project]
 name = "insights"
 version = "0.1.0"
@@ -5,8 +16,11 @@ description = "Add your description here"
 readme = "README.md"
 dependencies = [
     "database-io",
+    "joblib>=1.5.2",
     "numpy>=1.26.4",
     "pandas>=2.3.3",
+    "multimethod<2",
+    "socceraction[xgboost]>=1.5.3",
     "soccerdata>=1.8.7",
     "tqdm>=4.67.3",
 ]
