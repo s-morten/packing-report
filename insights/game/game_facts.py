@@ -2,6 +2,7 @@ import soccerdata as sd
 from metrics.low_level.goals import Goals
 from metrics.low_level.minutes import Minutes
 from metrics.low_level.vaep import Vaep
+from metrics.low_level.xt import Xt
 
 from database_io.repositories.metric_repo import DB_metric
 
@@ -41,3 +42,7 @@ class GameFacts:
         vaep = Vaep(self.metric)
         vaep.calculate(self)
         vaep.write(session, self.game_id)
+
+        xt = Xt(self.metric)
+        xt.calculate(self)
+        xt.write(session, self.game_id)

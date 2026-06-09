@@ -8,7 +8,7 @@ import pandas as pd
 from database_io.repositories.metric_repo import DB_metric
 
 logger = logging.getLogger(__name__)
-_MODEL_DIR = Path(__file__).resolve().parents[3] / "models"
+_MODEL_DIR = Path(__file__).resolve().parents[3] / "models" / "model"
 
 
 def _find_latest_model(model_dir, pattern="vaep_*.pkl"):
