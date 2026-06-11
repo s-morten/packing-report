@@ -411,7 +411,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26.4" },
     { name = "oracledb", specifier = ">=3.4.2" },
     { name = "pandas", specifier = ">=2.3.3" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.7" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
     { name = "sqlalchemy", specifier = ">=2.0.48" },
 ]
 
