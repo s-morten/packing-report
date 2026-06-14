@@ -43,15 +43,15 @@ wheels = [
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.14.3"
+version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "soupsieve" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c3/b0/1c6a16426d389813b48d95e26898aff79abbde42ad353958ad95cc8c9b21/beautifulsoup4-4.14.3.tar.gz", hash = "sha256:6292b1c5186d356bba669ef9f7f051757099565ad9ada5dd630bd9de5fa7fb86", size = 627737, upload-time = "2025-11-30T15:08:26.084Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/43/65/318323f98dbee45d42dff61d8f047181bc6f2268a9068cfad035a46be5af/beautifulsoup4-4.15.0.tar.gz", hash = "sha256:288e3ca7d54b06f2ac191970bc275c1939cb46d450b255bf6718b04aa37ab4f7", size = 632571, upload-time = "2026-06-07T16:44:20.453Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/39/47f9197bdd44df24d67ac8893641e16f386c984a0619ef2ee4c51fbbc019/beautifulsoup4-4.14.3-py3-none-any.whl", hash = "sha256:0918bfe44902e6ad8d57732ba310582e98da931428d231a5ecb9e7c703a735bb", size = 107721, upload-time = "2025-11-30T15:08:24.087Z" },
+    { url = "https://files.pythonhosted.org/packages/88/c6/92fcd42f1ba33e1184263f25bfabf3d27c383410470f169e4b8163bf9c17/beautifulsoup4-4.15.0-py3-none-any.whl", hash = "sha256:d6f88de62e1d4e38ecb1077eb9724cd0eff29d2a08ca16a401e9b9e93f117cf9", size = 109924, upload-time = "2026-06-07T16:44:21.566Z" },
 ]
 
 [[package]]
@@ -386,7 +386,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.14.3" },
+    { name = "beautifulsoup4", specifier = ">=4.15.0" },
     { name = "database-io", editable = "database_io" },
     { name = "numpy", specifier = ">=1.26.4" },
     { name = "pandas", specifier = ">=2.3.3" },
@@ -467,11 +467,11 @@ wheels = [
 
 [[package]]
 name = "filelock"
-version = "3.29.1"
+version = "3.29.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1f/f9/f38573ed5844586db374d085911740a501ccfa373b455fc9413f09f85237/filelock-3.29.1.tar.gz", hash = "sha256:d97e6b1b9757569626c58caa07dc4beb1613f4a2938b1e8cc81afca398906c9e", size = 59335, upload-time = "2026-06-03T15:19:04.053Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/f5/3557bf28e0f1943e4849154c821533706e6dea010f96fb6aa0b6949037d1/filelock-3.29.3.tar.gz", hash = "sha256:7fc1b3f39cf172fd8203812043c57b8a65aef9969f38b6704f628b881f761a84", size = 61956, upload-time = "2026-06-10T17:37:11.832Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/a0/614c5fe402fd88951df45f4dda2fa3b4e17a99ecd92340771929169b3b95/filelock-3.29.1-py3-none-any.whl", hash = "sha256:85199dfd706869641b72b2e8955d5416a4b2b7dc4b0e8e6d97b4cc1299a6983b", size = 40750, upload-time = "2026-06-03T15:19:02.959Z" },
+    { url = "https://files.pythonhosted.org/packages/81/8f/b61d427c4f49a8bdadc93f4e7e74df8a6df6f77ee6e26bf0df53d3925363/filelock-3.29.3-py3-none-any.whl", hash = "sha256:e58333029cc9b925f39aad59b1d8f0a1ad836af4e60d7217f4a4dba87461261d", size = 42324, upload-time = "2026-06-10T17:37:10.37Z" },
 ]
 
 [[package]]
@@ -2029,7 +2029,7 @@ wheels = [
 
 [[package]]
 name = "seleniumbase"
-version = "4.49.7"
+version = "4.49.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs", marker = "python_full_version < '3.13'" },
@@ -2093,9 +2093,9 @@ dependencies = [
     { name = "wheel", marker = "python_full_version < '3.13'" },
     { name = "wsproto", marker = "python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/8d/e21249a29f1f8a27b7b9ef48722fd61e64061332395450d7b88af48da68d/seleniumbase-4.49.7.tar.gz", hash = "sha256:79f7f394a475bb211ea9715d2618bbbff684126249ef3fd6606e356e2cd4691c", size = 660715, upload-time = "2026-06-05T15:51:05.564Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e2/9a/e9c2e64c14121f5baf4c293dfd39415bb16807fe829ffb614c21defa3bec/seleniumbase-4.49.9.tar.gz", hash = "sha256:2d80a9fa7717518bd183238ad4d3c8c18f0ea2b9f165b053fc114236fbb77938", size = 662254, upload-time = "2026-06-10T20:44:45.929Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/8d/8e1305cf773e4dd8c5af8aa7a29da31a5839c030cc5823ffc9bb5232e272/seleniumbase-4.49.7-py3-none-any.whl", hash = "sha256:37b261d5ac732952bc2aed9e7db248d34d3d07eb4b5df02dee195f6539d74c40", size = 665981, upload-time = "2026-06-05T15:51:01.893Z" },
+    { url = "https://files.pythonhosted.org/packages/77/63/e8ab492ea0516a98ed32734eb53d5b0d146594c709d0ed4bfebf3ae39c1e/seleniumbase-4.49.9-py3-none-any.whl", hash = "sha256:92f78d66a1d2baebc06229f315fcaf57669a0d506eb9080a754c459b65149b27", size = 667722, upload-time = "2026-06-10T20:44:42.537Z" },
 ]
 
 [[package]]
