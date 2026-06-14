@@ -18,7 +18,7 @@ schedule = schedule.sort_values("date")
 import logging
 
 from database_io.connection import get_session, init_db
-from database_io.repositories.game_repo import DB_games
+from database_io.repositories.metric_repo import DB_metric
 from game.game_facts import GameFacts
 from game.game_metrics import GameMetrics
 from game.game_prepare import GamePrepare
@@ -27,12 +27,12 @@ from utils.date_utils import to_datetime
 logger = logging.getLogger()
 logger.disabled = True
 
-games = DB_games()
+metrics = DB_metric()
 init_db()
 with get_session() as session:
-    processed_games = games.get_all_games(session, 0.1)
+    processed_game_ids = metrics.get_processed_game_ids(session)
 
-schedule = schedule[~schedule["game_id"].isin(processed_games.id)]
+schedule = schedule[~schedule["game_id"].isin(processed_game_ids)]
 
 for league, game, date, home in tqdm(
     list(
