@@ -1,16 +1,87 @@
 # packing-report
 
-This project aims to rate football players on different metrics, but on a player basis. Meaning only the time of a player on the pitch is counted. However the action the player is rated on doesnt necessarily needs to be executed by him. A goal counts for the complete team, as does a goal conceded. This furthers the idea of indirect impact of a football player on the pitch that isnt directly observable from direct actions.  
-This calculated metrics could be used for player evaluation or comparison and later for team comparison and score prediction. 
+[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
-### Metrics
-- GDE - Goal Difference Elo. An ELO like system, rating players on their margin of victory results in games. Should be an advancement of the plus-minus score known from basketball. 
-- xT-impact - The proportional expected Thread impact of a player during a game.
+Player-level football (soccer) analytics pipeline. Rates players on metrics that capture their indirect impact on the pitch — actions that affect the team's performance but aren't directly attributable to the individual.
 
-### Metric Backlog
-- time to ball recovery
-- average distance to opposition / seperation (tracking data needed)
+## Metrics
 
-### Code functionality. 
-The code downloads and scrapes necessary data for the analysis.  
-For each game the metrics are calculated on a per player base and stored in an Oracle Database in the Oracle cloud.
+| Metric | Description |
+|---|---|
+| **GDE** (Goal Difference Elo) | An Elo-based system that rates players on margin of victory. An advancement of the plus-minus score from basketball. |
+| **xT-impact** | Proportional Expected Threat impact of a player during a game. |
+| **VAEP** | Valuing Actions by Estimating Probabilities — rates every on-ball action by its impact on scoring/conceding probability. |
+
+### Backlog
+
+- Time to ball recovery
+- Average distance to opposition / separation (requires tracking data)
+
+## Architecture
+
+```
+packing-report/
+├── data_retrieval/        # Scraping and API data fetching (WhoScored, api-sports.io, ClubElo)
+├── database_io/           # Database access layer (SQLAlchemy ORM, repositories, SQLite/PostgreSQL/Oracle)
+├── insights/              # Metric computation pipeline (minutes, goals, VAEP, xT)
+├── eval/                  # Model evaluation and plotting scripts
+├── pipeline/              # ETL orchestration (fetch schedule, formations, event data)
+├── models/                # Trained ML models (xT grid, VAEP XGBoost) and training scripts
+├── utils/                 # Shared utilities (date helpers, filesystem I/O, football data parsing)
+├── configs/               # Configuration files and name-mapping dictionaries
+├── tests/                 # Test suite
+└── srv/                   # Oracle TNS configuration
+```
+
+## Setup
+
+```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
+
+# Copy environment file and configure
+cp .env.example .env
+```
+
+Configure `.env` with your database connection and API keys (see `.env.example`).
+
+## Usage
+
+### Fetch match event data
+
+```bash
+uv run pipeline/fetch_data.py --config configs/config.toml
+```
+
+### Compute player metrics
+
+```bash
+uv run insights/gi.py
+```
+
+### Run evaluation scripts
+
+```bash
+uv run eval/some_script.py
+```
+
+### Lint
+
+```bash
+make lint
+```
+
+## Testing
+
+```bash
+uv run pytest
+```
+
+## Project Status
+
+Active development. The new normalized database schema (Game, Player, PlayerGame, PlayerGameMetric) is being rolled out alongside legacy tables. See `database_io/MIGRATION_PLAN.md` for details.
