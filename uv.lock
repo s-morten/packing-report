@@ -20,6 +20,7 @@ members = [
     "eval",
     "insights",
     "packing-report",
+    "utils",
 ]
 
 [[package]]
@@ -380,6 +381,7 @@ dependencies = [
     { name = "soccerdata", version = "1.8.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
     { name = "soccerdata", version = "1.9.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
     { name = "toml" },
+    { name = "utils" },
 ]
 
 [package.metadata]
@@ -392,6 +394,7 @@ requires-dist = [
     { name = "setuptools", specifier = ">=82.0.1" },
     { name = "soccerdata", specifier = ">=1.8.7" },
     { name = "toml", specifier = ">=0.10.2" },
+    { name = "utils", editable = "utils" },
 ]
 
 [[package]]
@@ -621,6 +624,7 @@ dependencies = [
     { name = "soccerdata", version = "1.8.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
     { name = "soccerdata", version = "1.9.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
     { name = "tqdm" },
+    { name = "utils" },
 ]
 
 [package.metadata]
@@ -633,6 +637,7 @@ requires-dist = [
     { name = "socceraction", extras = ["xgboost"], specifier = ">=1.5.3" },
     { name = "soccerdata", specifier = ">=1.8.7" },
     { name = "tqdm", specifier = ">=4.67.3" },
+    { name = "utils", editable = "utils" },
 ]
 
 [[package]]
@@ -2425,6 +2430,11 @@ wheels = [
 socks = [
     { name = "pysocks" },
 ]
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+source = { editable = "utils" }
 
 [[package]]
 name = "webencodings"

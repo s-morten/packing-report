@@ -41,7 +41,11 @@ class Xt:
             self.player_xt_mapping = {}
             return
 
-        xt_values = self.xt_model.rate(actions)
+        mask = actions["end_x"].notna() & actions["end_y"].notna()
+        xt_values = np.full(len(actions), np.nan)
+        if mask.any():
+            xt_values[mask.values] = self.xt_model.rate(actions[mask])
+
         actions = actions.assign(xt_value=xt_values)
 
         player_xt_mapping = {}

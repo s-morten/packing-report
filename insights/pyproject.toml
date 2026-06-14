@@ -17,13 +17,15 @@ readme = "README.md"
 dependencies = [
     "database-io",
     "joblib>=1.5.2",
+    "multimethod<2",
     "numpy>=1.26.4",
     "pandas>=2.3.3",
-    "multimethod<2",
     "socceraction[xgboost]>=1.5.3",
     "soccerdata>=1.8.7",
     "tqdm>=4.67.3",
+    "utils",
 ]
 
 [tool.uv.sources]
 database-io = { workspace = true }
+utils = { workspace = true }

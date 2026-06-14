@@ -3,20 +3,19 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, select
 
 from database_io.models.legacy import Games, Metric
+from database_io.models.metric import PlayerGameMetric
 
 
 class DB_metric:
     def insert_metric(self, session, id: int, game_id: int, elo: float, name: str):
-        elo = Metric(player_id=id, game_id=game_id, metric_value=elo, metric=name)
-        session.add(elo)
+        obj = PlayerGameMetric(player_id=id, game_id=game_id, value=elo, metric=name)
+        session.merge(obj)
         session.commit()
 
     def insert_batch_metric(self, session, batch: list[tuple[int, int, float, str]]):
-        elo_batch = [
-            Metric(player_id=int(id), game_id=int(game_id), metric_value=float(elo), metric=name)
-            for id, game_id, elo, name in batch
-        ]
-        session.bulk_save_objects(elo_batch)
+        for id, game_id, elo, name in batch:
+            obj = PlayerGameMetric(player_id=int(id), game_id=int(game_id), value=float(elo), metric=name)
+            session.merge(obj)
         session.commit()
 
     def get_metric(self, session, id: int, date: datetime, league: str, starter: bool, version: float, metric: str) -> float | None:
