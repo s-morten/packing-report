@@ -20,8 +20,8 @@ class PM(Metric):
 
 # # METRIC pm ################################
 # p_pm = self.player_info_df[self.player_info_df["id"] == player_id]["pm"].values[0]
-# p_team_pm = np.mean([self.game_timeline_dicts["pm"][team_id][str(minute)] for minute in range(player_on, player_off + 1)])
-# opp_pm = np.mean([self.game_timeline_dicts["pm"][opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+# p_team_pm = np.mean([self.game_timeline_dicts["pm"][team_id][str(minute)] for minute in range(player_on, player_off + 1)])  # noqa: E501
+# opp_pm = np.mean([self.game_timeline_dicts["pm"][opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])  # noqa: E501
 # exp_res = self.metric_pm.predict(p_pm, p_team_pm, opp_pm, minutes)
 # updated_pm = self.metric_pm.update(p_pm, p_mov, exp_res)
 # self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_pm"] = updated_pm

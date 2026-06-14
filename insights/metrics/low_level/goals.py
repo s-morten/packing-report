@@ -8,7 +8,13 @@ class Goals:
 
     def calculate(self, game_facts):
         event_dataframe = get_score(game_facts.events, game_facts.df_teams)
-        goal_dict = dict(zip(event_dataframe["expanded_minute"].values, event_dataframe["goal_team_id"].values))
+        goal_dict = dict(
+            zip(
+                event_dataframe["expanded_minute"].values,
+                event_dataframe["goal_team_id"].values,
+                strict=True,
+            )
+        )
 
         player_goal_minute_mapping = {}
         for player in game_facts.players_dict:

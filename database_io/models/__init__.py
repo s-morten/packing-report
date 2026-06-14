@@ -1,3 +1,21 @@
+__all__ = [
+    "Birthday_Footballsquads",
+    "FootballsquadsRaw",
+    "Game",
+    "Games",
+    "Metric",
+    "Player",
+    "PlayerAlias",
+    "PlayerGame",
+    "PlayerGameMetric",
+    "Prediction",
+    "Processed_Footballsquads",
+    "Schedule",
+    "ScrapeLog",
+    "Squads",
+    "Team",
+]
+
 from database_io.models.game import Game
 from database_io.models.legacy import (
     Birthday_Footballsquads,

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import func, select, distinct
+from sqlalchemy import distinct, func, select
 
 from database_io.models.legacy import Games, Metric
 from database_io.models.metric import PlayerGameMetric
@@ -22,7 +22,9 @@ class DB_metric:
         rows = session.query(distinct(PlayerGameMetric.game_id)).all()
         return {r[0] for r in rows}
 
-    def get_metric(self, session, id: int, date: datetime, league: str, starter: bool, version: float, metric: str) -> float | None:
+    def get_metric(
+        self, session, id: int, date: datetime, league: str, starter: bool, version: float, metric: str
+    ) -> float | None:  # noqa: E501
         query_result = (
             session.query(Metric.metric_value, Metric.game_date)
             .filter(Metric.player_id == id, Metric.version == version, Metric.metric == metric, Metric.game_date < date)

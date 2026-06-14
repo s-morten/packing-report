@@ -19,10 +19,7 @@ def _find_latest_model(model_dir, pattern="vaep_*.pkl"):
 class Vaep:
     def __init__(self, metric_repo=None, model_path=None):
         self.metric_repo = metric_repo or DB_metric()
-        if model_path:
-            model_path = Path(model_path)
-        else:
-            model_path = _find_latest_model(_MODEL_DIR)
+        model_path = Path(model_path) if model_path else _find_latest_model(_MODEL_DIR)
 
         if model_path and model_path.exists():
             self.vaep_model = joblib.load(model_path)
@@ -41,9 +38,7 @@ class Vaep:
             self.player_vaep_mapping = {}
             return
 
-        game = pd.Series(
-            {"home_team_id": game_facts.home_team_id, "game_id": game_facts.game_id}
-        )
+        game = pd.Series({"home_team_id": game_facts.home_team_id, "game_id": game_facts.game_id})
         ratings = self.vaep_model.rate(game, actions)
 
         actions = actions.assign(
@@ -71,7 +66,6 @@ class Vaep:
 
     def write(self, session, game_id):
         metric_batch = [
-            [player, game_id, float(vaep_value), "vaep"]
-            for player, vaep_value in self.player_vaep_mapping.items()
+            [player, game_id, float(vaep_value), "vaep"] for player, vaep_value in self.player_vaep_mapping.items()
         ]
         self.metric_repo.insert_batch_metric(session, metric_batch)

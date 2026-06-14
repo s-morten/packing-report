@@ -2,10 +2,7 @@ import pandas as pd
 
 
 def is_own_goal(qualifiers):
-    return [
-        max([(True if x["type"]["displayName"] == "OwnGoal" else False) for x in events], default=False)
-        for events in qualifiers
-    ]
+    return [max([x["type"]["displayName"] == "OwnGoal" for x in events], default=False) for events in qualifiers]
 
 
 def get_opposition_team(df_goals: pd.DataFrame, df_teams: pd.DataFrame):
@@ -17,7 +14,7 @@ def get_opposition_team(df_goals: pd.DataFrame, df_teams: pd.DataFrame):
 
 
 def get_score(events_df: pd.DataFrame, df_teams: pd.DataFrame):
-    goals = events_df.loc[(events_df["is_goal"] == True)].copy()
+    goals = events_df.loc[(events_df["is_goal"])].copy()
     goals["own_goal"] = is_own_goal(goals["qualifiers"])
     goals.loc[~goals["own_goal"], "goal_team_id"] = goals.loc[~goals["own_goal"], "team_id"]
     goals.loc[goals["own_goal"], "goal_team_id"] = get_opposition_team(goals["team_id"], df_teams)[goals["own_goal"]]

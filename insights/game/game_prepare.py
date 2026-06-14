@@ -63,7 +63,7 @@ class GamePrepare:
             self.valid_for_training = 1
 
     def _handle_squads(self, session):
-        for player_id in self.general_info_dict.keys():
+        for player_id in self.general_info_dict:
             kit_number = self.general_info_dict[int(player_id)]["kit_number"]
             team_id = self.general_info_dict[int(player_id)]["team_id"]
             if not (

@@ -10,7 +10,9 @@ class DB_squads:
     def insert_player(self, session, player_id: int, kit_number: int, team_id: int, date: datetime):
         self._number_in_use(session, team_id, kit_number, date)
         squad_player = Squads(
-            player_id=player_id, kit_number=int(kit_number), team_id=team_id,
+            player_id=player_id,
+            kit_number=int(kit_number),
+            team_id=team_id,
             valid_from=datetime.strptime("1900-01-01", "%Y-%m-%d"),
             valid_to=datetime.strptime("2099-12-31", "%Y-%m-%d"),
         )
@@ -24,7 +26,9 @@ class DB_squads:
             Squads.valid_to == datetime.strptime("2099-12-31", "%Y-%m-%d"),
         ).update({"valid_to": update_date})
         squad_player = Squads(
-            player_id=player_id, kit_number=int(kit_number), team_id=team_id,
+            player_id=player_id,
+            kit_number=int(kit_number),
+            team_id=team_id,
             valid_from=update_date,
             valid_to=datetime.strptime("2099-12-31", "%Y-%m-%d"),
         )

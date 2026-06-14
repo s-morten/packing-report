@@ -1,18 +1,17 @@
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import joblib
 import pandas as pd
+from data_retrieval.scraper.whoscored_chromeless import WhoScored
 from dotenv import load_dotenv
+from socceraction.vaep import VAEP
 from tqdm import tqdm
 
 load_dotenv()
-
-from data_retrieval.scraper.whoscored_chromeless import WhoScored
-from socceraction.vaep import VAEP
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -113,7 +112,7 @@ def train_vaep_model(
     logger.info("Training VAEP model (learner=xgboost, val_size=0.25) ...")
     model.fit(X_all, Y_all, learner="xgboost", val_size=0.25)
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     model_path = Path(output_prefix + f"_{timestamp}.pkl")
     metadata_path = Path("models/meta") / f"vaep_{timestamp}.json"
 
@@ -122,7 +121,7 @@ def train_vaep_model(
 
     metadata = {
         "model": "vaep",
-        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "created_utc": datetime.now(UTC).isoformat(),
         "leagues": leagues,
         "seasons": seasons,
         "n_games": len(game_ids),

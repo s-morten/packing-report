@@ -157,7 +157,9 @@ def replace_from_config(initial_name: str, what: str):
         raise ValueError("Only replacement options are league and teamname")
     _default_config_dir = Path(__file__).resolve().parents[4] / "configs"
     _config_dir = os.environ.get("SOCCERDATA_CONFIG_DIR", str(_default_config_dir))
-    name_substitutes = json.load(open(Path(_config_dir) / f"{what}_replacements.json"))
+    config_file = Path(_config_dir) / f"{what}_replacements.json"
+    with open(config_file) as f:
+        name_substitutes = json.load(f)
     for replacement in name_substitutes:
         for to_replace in name_substitutes[replacement]:
             if initial_name == to_replace:

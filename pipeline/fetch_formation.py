@@ -6,14 +6,14 @@ import pytz
 from api.football_api import FApi_Handler
 from dotenv import load_dotenv
 
-load_dotenv()
-
 from configs import NameReplacer
 from database_io.connection import get_session
 from database_io.repositories.metric_repo import DB_metric
 from database_io.repositories.player_repo import DB_player
 from database_io.repositories.schedule_repo import DB_schedule
 from database_io.repositories.squads_repo import DB_squads
+
+load_dotenv()
 
 nr = NameReplacer()
 

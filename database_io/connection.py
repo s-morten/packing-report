@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 

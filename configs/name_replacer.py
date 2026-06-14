@@ -5,7 +5,8 @@ from pathlib import Path
 class NameReplacer:
     def __init__(self):
         config_path = Path(__file__).resolve().parent / "teamname_replacements.json"
-        self.team_substitutes = json.load(open(config_path))
+        with open(config_path) as f:
+            self.team_substitutes = json.load(f)
 
     def replace_name(self, club_name: str) -> str:
         for replace in self.team_substitutes:

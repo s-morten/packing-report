@@ -1,11 +1,19 @@
+import logging
 import os
 from pathlib import PosixPath
 
+from data_retrieval.scraper.whoscored_chromeless import WhoScored
 from dotenv import load_dotenv
+from game.game_facts import GameFacts
+from game.game_metrics import GameMetrics
+from game.game_prepare import GamePrepare
+from tqdm import tqdm
+
+from database_io.connection import get_session, init_db
+from database_io.repositories.metric_repo import DB_metric
+from utils.date_utils import to_datetime
 
 load_dotenv()
-from data_retrieval.scraper.whoscored_chromeless import WhoScored
-from tqdm import tqdm
 
 ws = WhoScored(
     leagues=["GER-Bundesliga2", "GER-Bundesliga"],
@@ -14,15 +22,6 @@ ws = WhoScored(
 )
 schedule = ws.read_schedule().reset_index()
 schedule = schedule.sort_values("date")
-
-import logging
-
-from database_io.connection import get_session, init_db
-from database_io.repositories.metric_repo import DB_metric
-from game.game_facts import GameFacts
-from game.game_metrics import GameMetrics
-from game.game_prepare import GamePrepare
-from utils.date_utils import to_datetime
 
 logger = logging.getLogger()
 logger.disabled = True
@@ -37,7 +36,11 @@ schedule = schedule[~schedule["game_id"].isin(processed_game_ids)]
 for league, game, date, home in tqdm(
     list(
         zip(
-            schedule["league"].values, schedule["game_id"].values, schedule["date"].values, schedule["home_team"].values
+            schedule["league"].values,
+            schedule["game_id"].values,
+            schedule["date"].values,
+            schedule["home_team"].values,
+            strict=True,
         )
     ),
     desc="Processing games",

@@ -8,7 +8,7 @@ class Minutes:
         self.metric_repo = metric_repo or DB_metric()
 
     def calculate(self, game_facts):
-        loader_players_df = game_facts.loader_players_df[game_facts.loader_players_df["is_starter"] == True]
+        loader_players_df = game_facts.loader_players_df[game_facts.loader_players_df["is_starter"]]
         players = np.swapaxes(
             [
                 loader_players_df["player_id"].values,
@@ -16,7 +16,8 @@ class Minutes:
                 [0 for _ in range(len(loader_players_df["player_id"].values))],
                 [-1 for _ in range(len(loader_players_df["player_id"].values))],
             ],
-            0, 1,
+            0,
+            1,
         )
         sub_dataframe = game_facts.events.loc[
             (game_facts.events["type"] == "SubstitutionOn") | (game_facts.events["type"] == "SubstitutionOff")
@@ -30,7 +31,9 @@ class Minutes:
                 on_dataframe["team_id"].values,
                 on_dataframe["expanded_minute"].values,
                 [-1 for _ in range(len(on_dataframe["player_id"].values))],
-            ], 0, 1,
+            ],
+            0,
+            1,
         )
         subbed_off_players = np.swapaxes(
             [
@@ -38,7 +41,9 @@ class Minutes:
                 off_dataframe["team_id"].values,
                 [0 for _ in range(len(off_dataframe["player_id"].values))],
                 off_dataframe["expanded_minute"].values,
-            ], 0, 1,
+            ],
+            0,
+            1,
         )
         players_dict = {}
         for player in [*players, *subbed_on_players, *subbed_off_players]:

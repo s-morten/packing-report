@@ -20,7 +20,7 @@ class DB_player:
         return session.query(Player).filter(Player.id == id).first() is not None
 
     def player_has_no_bday(self, session, id: int) -> bool:
-        return session.query(Player).filter(Player.id == id, Player.birthday == None).first() is not None
+        return session.query(Player).filter(Player.id == id, Player.birthday.is_(None)).first() is not None
 
     def update_player_bday(self, session, id: int, birthday: str):
         birthday = datetime.strptime(birthday, "%d-%m-%y") if birthday else None

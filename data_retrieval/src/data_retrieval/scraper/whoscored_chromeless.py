@@ -591,9 +591,8 @@ class WhoScored:
         """
         # url = WHOSCORED_URL
         filepath = self.data_dir / "tiers.json"
-        reader = open(filepath, encoding="utf-8")
-
-        data = json.load(reader)
+        with open(filepath, encoding="utf-8") as reader:
+            data = json.load(reader)
 
         leagues = []
         for region in data:
@@ -634,10 +633,10 @@ class WhoScored:
             # )
             filemask = "seasons/{}.html"
             filepath = self.data_dir / filemask.format(lkey)
-            reader = open(filepath, encoding="utf-8")
+            with open(filepath, encoding="utf-8") as reader:
+                tree = html.parse(reader)
 
             # extract team links
-            tree = html.parse(reader)
             for node in tree.xpath("//select[contains(@id,'seasons')]/option"):
                 # extract team IDs from links
                 season_url = node.get("value")
@@ -687,8 +686,8 @@ class WhoScored:
             #     + f"/Seasons/{season['season_id']}"
             # )
             filepath = self.data_dir / filemask.format(lkey, skey)
-            reader = open(filepath, encoding="utf-8")
-            tree = html.parse(reader)
+            with open(filepath, encoding="utf-8") as reader:
+                tree = html.parse(reader)
 
             # get default season stage
             fixtures_url = tree.xpath("//a[text()='Fixtures']/@href")[0]
@@ -774,12 +773,12 @@ class WhoScored:
                 #     lkey,
                 #     skey,
                 # )
-            calendar = open(calendar_filepath, encoding="utf-8")
-            mask = json.load(calendar)["mask"]
+            with open(calendar_filepath, encoding="utf-8") as calendar:
+                mask = json.load(calendar)["mask"]
 
             # get the fixtures for each month
             it = [(year, month) for year in mask for month in mask[year]]
-            for i, (year, month) in enumerate(it):
+            for _i, (_year, month) in enumerate(it):
                 filepath = self.data_dir / filemask_schedule.format(lkey, skey, stage_id, month)
                 # url = WHOSCORED_URL + f"/tournaments/{stage_id}/data/?d={year}{(int(month)+1):02d}"
 
@@ -801,8 +800,8 @@ class WhoScored:
                 #         skey,
                 #     )
 
-                reader = open(filepath, encoding="utf-8")
-                data = json.load(reader)
+                with open(filepath, encoding="utf-8") as reader:
+                    data = json.load(reader)
                 for tournament in data["tournaments"]:
                     df_schedule = pd.DataFrame(tournament["matches"])
                     df_schedule["league"] = lkey
@@ -911,7 +910,7 @@ class WhoScored:
             iterator = df_schedule.sample(frac=1)
 
         match_sheets = []
-        for i, (_, game) in enumerate(iterator.iterrows()):
+        for _i, (_, game) in enumerate(iterator.iterrows()):
             # url = urlmask.format(game.game_id)
             filepath = self.data_dir / filemask.format(game["league"], game["season"], game["game_id"])
 
@@ -921,10 +920,10 @@ class WhoScored:
             #     len(iterator),
             #     game["game_id"],
             # )
-            reader = open(filepath, encoding="utf-8")
+            with open(filepath, encoding="utf-8") as reader:
+                tree = html.parse(reader)
 
             # extract missing players
-            tree = html.parse(reader)
             for node in tree.xpath("//div[@id='missing-players']/div[2]/table/tbody/tr"):
                 # extract team IDs from links
                 match_sheets.append(
@@ -1040,7 +1039,7 @@ class WhoScored:
                     "The socceraction package is required to use the 'spadl' "
                     "or 'atomic-spadl' output format. "
                     "Please install it with `pip install socceraction`."
-                )
+                ) from None
         # urlmask = WHOSCORED_URL + "/Matches/{}/Live"
         filemask = "events/{}_{}/{}.json"
 
@@ -1055,7 +1054,7 @@ class WhoScored:
         events = {}
         player_names = {}
         team_names = {}
-        for i, (_, game) in enumerate(iterator.iterrows()):
+        for _i, (_, game) in enumerate(iterator.iterrows()):
             # url = urlmask.format(game["game_id"])
             # get league and season
             # print(
@@ -1067,22 +1066,22 @@ class WhoScored:
             filepath = self.data_dir / filemask.format(game["league"], game["season"], game["game_id"])
 
             #            try:
-            reader = open(filepath, encoding="utf-8")
-            # reader_value = reader.read()
-            # if retry_missing and reader_value == b"null" or reader_value == b"":
-            #     reader = self.get(
-            #         url,
-            #         filepath,
-            #         var="require.config.params['args'].matchCentreData",
-            #         no_cache=True,
-            #     )
-            # except ConnectionError as e:
-            #     if on_error == "skip":
-            #         print("Error while scraping game %s: %s", game["game_id"], e)
-            #         continue
-            #     raise
-            # reader.seek(0)
-            json_data = json.load(reader)
+            with open(filepath, encoding="utf-8") as reader:
+                # reader_value = reader.read()
+                # if retry_missing and reader_value == b"null" or reader_value == b"":
+                #     reader = self.get(
+                #         url,
+                #         filepath,
+                #         var="require.config.params['args'].matchCentreData",
+                #         no_cache=True,
+                #     )
+                # except ConnectionError as e:
+                #     if on_error == "skip":
+                #         print("Error while scraping game %s: %s", game["game_id"], e)
+                #         continue
+                #     raise
+                # reader.seek(0)
+                json_data = json.load(reader)
             if json_data is not None:
                 player_names.update({int(k): v for k, v in json_data["playerIdNameDictionary"].items()})
                 team_names.update(

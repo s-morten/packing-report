@@ -18,10 +18,7 @@ def _find_latest_model(model_dir, pattern="xt_*.pkl"):
 class Xt:
     def __init__(self, metric_repo=None, model_path=None):
         self.metric_repo = metric_repo or DB_metric()
-        if model_path:
-            model_path = Path(model_path)
-        else:
-            model_path = _find_latest_model(_MODEL_DIR)
+        model_path = Path(model_path) if model_path else _find_latest_model(_MODEL_DIR)
 
         if model_path and model_path.exists():
             with open(model_path, "rb") as f:
@@ -67,8 +64,5 @@ class Xt:
         self.player_xt_mapping = player_xt_mapping
 
     def write(self, session, game_id):
-        metric_batch = [
-            [player, game_id, float(xt_value), "xt"]
-            for player, xt_value in self.player_xt_mapping.items()
-        ]
+        metric_batch = [[player, game_id, float(xt_value), "xt"] for player, xt_value in self.player_xt_mapping.items()]
         self.metric_repo.insert_batch_metric(session, metric_batch)

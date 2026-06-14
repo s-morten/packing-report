@@ -1,17 +1,13 @@
-import sys
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
-print(sys.path)
 from datetime import datetime
 
 from api.football_api import FApi_Handler
+from dotenv import load_dotenv
 
 from configs import NameReplacer
 from database_io.connection import get_session
 from database_io.repositories.schedule_repo import DB_schedule
+
+load_dotenv()
 
 fapi = FApi_Handler()
 nr = NameReplacer()

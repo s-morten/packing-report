@@ -38,10 +38,7 @@ class PlayerELO(Metric):
         # Linearly scale K from 0 to max_k
         k = (minutes_played / 90) * max_k
         minutes_3_mon = minutes_3_mon if minutes_3_mon is not None else 0
-        if minutes_3_mon < 500:
-            established = False
-        else:
-            established = True
+        established = minutes_3_mon >= 500
         k = k / 2 if established else k
         return k
 
@@ -66,23 +63,23 @@ class PlayerELO(Metric):
 # if self.db_handler.metric.get_player_count_per_league(self.game_league, self.version) < 50:
 #     if league_elo is None:
 #         # get Elo from Club Elo, because not enough players are
-#         league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)
+#         league_elo = ClubEloScraper().get_avg_league_elo_by_date(pd.to_datetime(self.game_date, format="%Y-%m-%d"), self.game_league)  # noqa: E501
 #     start_elo = league_elo if self.general_info_dict[int(player_id)]["starter"] else league_elo * 0.7
 #     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = start_elo
 #     print("league_elo", start_elo)
 # else:
-#     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)) # * 0.7
-#     print("50 players", np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)) * 0.7)
+#     self.player_info_df.loc[self.player_info_df["id"] == int(player_id), "elo"] = np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version))  # noqa: E501
+#     print("50 players", np.float64(self.db_handler.metric.average_elo(self.game_league, self.general_info_dict[int(player_id)]["team_id"], self.game_date, self.version)) * 0.7)  # noqa: E501
 
 
 # # METRIC Elo ################################
 # # update elo, elo calc
 # p_elo = self.player_info_df[self.player_info_df["id"] == player_id]["elo"].values[0]
-# p_team_elo = np.mean([self.game_timeline_dicts["elo"][team_id][str(minute)] for minute in range(player_on, player_off + 1)])
-# opp_elo = np.mean([self.game_timeline_dicts["elo"][opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])
+# p_team_elo = np.mean([self.game_timeline_dicts["elo"][team_id][str(minute)] for minute in range(player_on, player_off + 1)])  # noqa: E501
+# opp_elo = np.mean([self.game_timeline_dicts["elo"][opposition_team_id][str(minute)] for minute in range(player_on, player_off + 1)])  # noqa: E501
 
 # # update elo
-# exp_res_lower, exp_res_upper = self.metric_elo.predict( home, p_elo, p_team_elo, opp_elo, self.end_of_game - minutes, self.mov_regressor)
+# exp_res_lower, exp_res_upper = self.metric_elo.predict(home, p_elo, p_team_elo, opp_elo, self.end_of_game - minutes, self.mov_regressor)  # noqa: E501
 # updated_elo = self.metric_elo.update(p_mov, exp_res_lower, exp_res_upper, minutes, minutes_3_mon)
 
 # self.player_info_df.loc[self.player_info_df["id"] == player_id, "updated_elo"] = updated_elo

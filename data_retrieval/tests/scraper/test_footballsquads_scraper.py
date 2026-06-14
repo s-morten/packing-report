@@ -1,7 +1,7 @@
 # ruff: noqa: I001
 
 from collections import defaultdict
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

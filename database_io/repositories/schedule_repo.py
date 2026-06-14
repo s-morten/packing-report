@@ -6,8 +6,7 @@ from database_io.models.legacy import Schedule
 class DB_schedule:
     def insert_batch_schedule(self, session, schedule: list) -> None:
         batch = [
-            Schedule(schedule_id=sid, date_time=dt, home=h, away=a, league=l)
-            for sid, dt, h, a, l in schedule
+            Schedule(schedule_id=sid, date_time=dt, home=h, away=a, league=league) for sid, dt, h, a, league in schedule
         ]
         session.add_all(batch)
         session.commit()

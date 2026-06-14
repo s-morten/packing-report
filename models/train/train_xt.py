@@ -2,17 +2,16 @@ import json
 import logging
 import os
 import pickle
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
+from data_retrieval.scraper.whoscored_chromeless import WhoScored
 from dotenv import load_dotenv
+from socceraction.xthreat import ExpectedThreat
 from tqdm import tqdm
 
 load_dotenv()
-
-from data_retrieval.scraper.whoscored_chromeless import WhoScored
-from socceraction.xthreat import ExpectedThreat
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -86,7 +85,7 @@ def train_xt_model(
     model = ExpectedThreat(l=grid_size[0], w=grid_size[1])
     model.fit(spadl_clean)
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     model_path = Path(output_prefix + f"_{timestamp}.pkl")
     metadata_path = Path("models/meta") / f"xt_{timestamp}.json"
 
@@ -97,7 +96,7 @@ def train_xt_model(
 
     metadata = {
         "model": "xt",
-        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "created_utc": datetime.now(UTC).isoformat(),
         "leagues": leagues,
         "seasons": seasons,
         "n_games": len(game_ids),
