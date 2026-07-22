@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=83.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-dir]
@@ -19,7 +19,7 @@ dependencies = [
     "numpy>=1.26.4",
     "pandas>=2.3.3",
     "requests>=2.32.5",
-    "setuptools>=82.0.1",
+    "setuptools>=83.0.0",
     "soccerdata>=1.8.7",
     "toml>=0.10.2",
     "utils",
