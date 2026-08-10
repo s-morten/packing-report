@@ -6,7 +6,7 @@ import pytz
 from api.football_api import FApi_Handler
 from dotenv import load_dotenv
 
-from configs import NameReplacer
+from configs import replace_name
 from database_io.connection import get_session
 from database_io.repositories.metric_repo import DB_metric
 from database_io.repositories.player_repo import DB_player
@@ -14,8 +14,6 @@ from database_io.repositories.schedule_repo import DB_schedule
 from database_io.repositories.squads_repo import DB_squads
 
 load_dotenv()
-
-nr = NameReplacer()
 
 berlin_tz = pytz.timezone("Europe/Berlin")
 time_now = datetime.now(berlin_tz)
@@ -36,7 +34,7 @@ with get_session() as session:
         formations = fapi.get_formation(id)
         start_xis = defaultdict(list)
         for team in formations["response"]:
-            team_name = nr.replace_name(team["team"]["name"])
+            team_name = replace_name(team["team"]["name"])
             for p in team["startXI"]:
                 if wh_id := player.player_by_fapi_id(session, p) is not None:
                     elo = metric.extract_latest_elo(session, wh_id[0], elo_version)
