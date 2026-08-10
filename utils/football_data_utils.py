@@ -1,22 +1,35 @@
+from collections.abc import Iterable
+
 import pandas as pd
 
 
-def is_own_goal(qualifiers):
-    return [max([x["type"]["displayName"] == "OwnGoal" for x in events], default=False) for events in qualifiers]
+def is_own_goal(qualifiers: Iterable[list[dict] | None]) -> list[bool]:
+    return [
+        any(qualifier.get("type", {}).get("displayName") == "OwnGoal" for qualifier in events)
+        if isinstance(events, list)
+        else False
+        for events in qualifiers
+    ]
 
 
-def get_opposition_team(df_goals: pd.DataFrame, df_teams: pd.DataFrame):
-    switched_teams = df_goals.copy()
-    team_id_one = df_teams["team_id"].unique()[0]
-    team_id_two = df_teams["team_id"].unique()[1]
-    switched_teams.replace({team_id_one: team_id_two, team_id_two: team_id_one}, inplace=True)
-    return switched_teams
+def get_opposition_team(team_ids: pd.Series, df_teams: pd.DataFrame) -> pd.Series:
+    if "team_id" not in df_teams.columns:
+        raise ValueError("df_teams is missing required column 'team_id'")
+    unique_team_ids = df_teams["team_id"].unique()
+    if len(unique_team_ids) != 2:
+        raise ValueError(f"expected exactly 2 teams, got {len(unique_team_ids)}")
+    team_id_one, team_id_two = unique_team_ids
+    return team_ids.replace({team_id_one: team_id_two, team_id_two: team_id_one})
 
 
-def get_score(events_df: pd.DataFrame, df_teams: pd.DataFrame):
-    goals = events_df.loc[(events_df["is_goal"])].copy()
+def get_score(events_df: pd.DataFrame, df_teams: pd.DataFrame) -> pd.DataFrame:
+    required_columns = ("is_goal", "qualifiers", "team_id", "expanded_minute")
+    missing_columns = [column for column in required_columns if column not in events_df.columns]
+    if missing_columns:
+        raise KeyError(f"events_df is missing required columns: {missing_columns}")
+    goals = events_df.loc[events_df["is_goal"]].copy()
     goals["own_goal"] = is_own_goal(goals["qualifiers"])
-    goals.loc[~goals["own_goal"], "goal_team_id"] = goals.loc[~goals["own_goal"], "team_id"]
-    goals.loc[goals["own_goal"], "goal_team_id"] = get_opposition_team(goals["team_id"], df_teams)[goals["own_goal"]]
-    goals.reset_index(inplace=True)
-    return goals[["expanded_minute", "goal_team_id"]]
+    own_goal_mask = goals["own_goal"]
+    goals.loc[~own_goal_mask, "goal_team_id"] = goals.loc[~own_goal_mask, "team_id"]
+    goals.loc[own_goal_mask, "goal_team_id"] = get_opposition_team(goals.loc[own_goal_mask, "team_id"], df_teams)
+    return goals[["expanded_minute", "goal_team_id"]].reset_index(drop=True)

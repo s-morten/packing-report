@@ -200,7 +200,7 @@ def test_replace_from_config_invalid_option_raises():
 
 def test_replace_from_config_reads_mapping(monkeypatch):
     monkeypatch.setattr(module.json, "load", lambda file_obj: {"Arsenal": ["arsenal", "AFC"]})
-    monkeypatch.setattr(module, "open", lambda path: object(), raising=False)
+    monkeypatch.setattr(module, "open", lambda path: MagicMock(), raising=False)
 
     assert module.replace_from_config("arsenal", "teamname") == "Arsenal"
     assert module.replace_from_config("unknown", "teamname") is None
