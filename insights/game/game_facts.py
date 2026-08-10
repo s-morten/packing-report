@@ -1,6 +1,7 @@
 import soccerdata as sd
 from metrics.low_level.goals import Goals
 from metrics.low_level.minutes import Minutes
+from metrics.low_level.time_to_recovery import TimeToRecovery
 from metrics.low_level.vaep import Vaep
 from metrics.low_level.xt import Xt
 
@@ -52,3 +53,7 @@ class GameFacts:
         xt = Xt(self.metric)
         xt.calculate(self)
         xt.write(session, self.game_id)
+
+        time_to_recovery = TimeToRecovery(self.metric)
+        time_to_recovery.calculate(self)
+        time_to_recovery.write(session, self.game_id)
