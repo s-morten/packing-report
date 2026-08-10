@@ -3,14 +3,13 @@ from datetime import datetime
 from api.football_api import FApi_Handler
 from dotenv import load_dotenv
 
-from configs import NameReplacer
+from configs import replace_name
 from database_io.connection import get_session
 from database_io.repositories.schedule_repo import DB_schedule
 
 load_dotenv()
 
 fapi = FApi_Handler()
-nr = NameReplacer()
 
 league_id = [79]
 season = 2024
@@ -26,8 +25,8 @@ with get_session() as session:
             [
                 game["fixture"]["id"],
                 datetime.strptime(game["fixture"]["date"], "%Y-%m-%dT%H:%M:%S%z"),
-                nr.replace_name(game["teams"]["home"]["name"]),
-                nr.replace_name(game["teams"]["away"]["name"]),
+                replace_name(game["teams"]["home"]["name"]),
+                replace_name(game["teams"]["away"]["name"]),
                 league,
             ]
             for game in data["response"]
