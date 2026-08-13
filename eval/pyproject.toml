@@ -13,7 +13,7 @@ readme = "README.md"
 dependencies = [
     "database-io",
     "insights",
-    "matplotlib>=3.8",
+    "matplotlib>=3.11.1",
 ]
 
 [tool.uv.sources]
