@@ -16,7 +16,7 @@ readme = "README.md"
 
 dependencies = [
     "numpy>=1.26.4",
-    "oracledb>=3.4.2",
+    "oracledb>=4.0.2",
     "pandas>=2.3.3",
     "psycopg[binary]>=3.2.7",
     "sqlalchemy>=2.0.48",
