@@ -19,7 +19,7 @@ members = [
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
+    "pytest>=9.1.1",
     "ruff>=0.15.17",
     "pandas>=2.3.3",
 ]
