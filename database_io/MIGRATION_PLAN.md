@@ -64,12 +64,23 @@ player_id   INTEGER PK FK→PLAYER
 game_id     INTEGER PK FK→GAME
 team_id     INTEGER FK→TEAM
 minutes     INTEGER          -- minutes on pitch
+on_minute   DOUBLE PRECISION -- minute the player came on; 0 for starters
+off_minute  DOUBLE PRECISION -- minute the player went off; = game_minutes for full 90s
 starter     BOOLEAN
 goals_for   INTEGER          -- team goals while player on pitch
 goals_against INTEGER
 kit_number  INTEGER          -- per game kit number (no temporal SQUADS table needed)
 is_home     BOOLEAN
 ```
+
+`on_minute` / `off_minute` were added for the xT plus-minus regression. They are the only record of
+*when* a player was on the pitch, which is what stage 2 needs to rebuild each segment's line-up from
+the database without re-reading the raw events. `minutes` alone is not enough: a player who comes on
+at 70' and a starter who goes off at 70' both play 20 minutes but belong to opposite segments.
+
+> These two columns had to be added to the live PostgreSQL table by hand. `create_all()` only issues
+> `CREATE TABLE IF NOT EXISTS`, so it will not add columns to a table that already exists — any new
+> column on an existing table needs a manual `ALTER TABLE` (see Step 9).
 
 ### `METRICS.PLAYER_GAME_METRIC` *(new — replaces BASE_METRIC for derived values)*
 
@@ -211,4 +222,12 @@ DROP TABLE BASIS.SQUADS CASCADE CONSTRAINTS;
 DROP TABLE METRICS.BASE_METRIC CASCADE CONSTRAINTS;
 DROP TABLE METRICS.PREDICTION CASCADE CONSTRAINTS;
 DROP TABLE SCRAPING.SCHEDULE CASCADE CONSTRAINTS;
+```
+
+Columns added to a table *after* it was first created need their own `ALTER TABLE`. `create_all()`
+will not do it for you:
+
+```sql
+ALTER TABLE BASIS.PLAYER_GAME ADD COLUMN on_minute DOUBLE PRECISION;
+ALTER TABLE BASIS.PLAYER_GAME ADD COLUMN off_minute DOUBLE PRECISION;
 ```

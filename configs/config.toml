@@ -10,3 +10,18 @@ headless = true
 
 [training]
 version = 0.09
+
+[xtpm]
+# Ridge penalty on the plus-minus coefficients. Held outside the persisted state on purpose, so
+# changing it re-scores every match without replaying any of them.
+ridge = 1.0
+# Discount factor applied to the accumulated statistics once per game. 1.0 weights all matches
+# equally; below 1.0 gives the exponential recency weighting of Saebo & Hvattum (2015).
+forgetting = 1.0
+# Segment weight: "duration" (w = duration / 90, following Hvattum's w_DURATION) or "uniform".
+weight_mode = "duration"
+# Twelfth-man dummy column for home advantage (Saebo & Hvattum 2015). Leave on: it is profiled out
+# of the solve analytically, so it costs nothing.
+home_advantage_dummy = true
+# Where the accumulated state is written.
+state_path = "models/model/xtpm_state.npz"

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import distinct, func, select
+from sqlalchemy import delete, distinct, func, select
 
 from database_io.models.legacy import Games, Metric
 from database_io.models.metric import PlayerGameMetric
@@ -21,6 +21,21 @@ class DB_metric:
     def get_processed_game_ids(self, session) -> set[int]:
         rows = session.query(distinct(PlayerGameMetric.game_id)).all()
         return {r[0] for r in rows}
+
+    def delete_metrics(self, session, game_ids, metric_names) -> int:
+        """Delete the named metrics for the given games.
+
+        Used by the plus-minus runner so re-scoring a game replaces its rows instead of merging
+        into them: a rebuild that covers fewer games than a previous run would otherwise leave the
+        dropped games' ratings behind, since merging only touches the rows being written.
+        """
+        statement = delete(PlayerGameMetric).where(
+            PlayerGameMetric.game_id.in_(list(game_ids)),
+            PlayerGameMetric.metric.in_(list(metric_names)),
+        )
+        result = session.execute(statement)
+        session.commit()
+        return result.rowcount
 
     def get_metric(
         self, session, id: int, date: datetime, league: str, starter: bool, version: float, metric: str

@@ -142,3 +142,6 @@ srv/
 # model related
 models/meta/*
 models/model/*
+
+research/
+.codebase-memory/

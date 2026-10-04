@@ -2,6 +2,7 @@ __all__ = [
     "Birthday_Footballsquads",
     "FootballsquadsRaw",
     "Game",
+    "GameSegment",
     "Games",
     "Metric",
     "Player",
@@ -30,4 +31,5 @@ from database_io.models.metric import PlayerGameMetric
 from database_io.models.player import Player, PlayerAlias
 from database_io.models.player_game import PlayerGame
 from database_io.models.scrape import FootballsquadsRaw, ScrapeLog
+from database_io.models.segment import GameSegment
 from database_io.models.team import Team

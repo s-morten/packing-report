@@ -38,6 +38,9 @@ class Goals:
                 "off": player_off,
             }
         self.player_goal_minute_mapping = player_goal_minute_mapping
+        # GameMetrics (stage 1) needs goals_for / goals_against for BASIS.PLAYER_GAME and this is
+        # the only place they are resolved, so publish the mapping instead of recomputing it.
+        game_facts.player_goal_minute_mapping = player_goal_minute_mapping
 
     def write(self, session, game_id):
         metric_batch = [

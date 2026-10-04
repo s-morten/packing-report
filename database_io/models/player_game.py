@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer
+from sqlalchemy import Column, Float, Integer
 
 from database_io.models.base import Base
 
@@ -11,6 +11,12 @@ class PlayerGame(Base):
     game_id = Column(Integer, primary_key=True)
     team_id = Column(Integer)
     minutes = Column(Integer)
+    # Presence interval, both already clipped to the end of the match (which itself stops at the
+    # first red card). A player is on the pitch for segment [b_k, b_k+1) iff
+    # on_minute <= b_k and off_minute >= b_k+1, so these two columns are all that is needed to
+    # rebuild the plus-minus design matrix without a per-segment player table.
+    on_minute = Column(Float)
+    off_minute = Column(Float)
     starter = Column(Integer)
     goals_for = Column(Integer)
     goals_against = Column(Integer)

@@ -18,6 +18,8 @@ class GameFacts:
         self.metric = DB_metric()
         self.players_dict = {}
         self.end_of_game = None
+        # Published by metrics.low_level.goals.Goals and consumed by GameMetrics.
+        self.player_goal_minute_mapping = None
 
         self.spadl = ws.read_events(match_id=[game_id], output_fmt="spadl")
 

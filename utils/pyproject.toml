@@ -2,13 +2,15 @@
 requires = ["setuptools>=83.0.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["utils", "utils.*"]
-exclude = ["*.tests", "*.tests.*"]
+[tool.setuptools]
+packages = ["utils"]
 
+# An explicit per-package mapping, rather than `packages.find` with `package-dir {"": "."}`.
+# With the latter, setuptools emits a bare-path .pth pointing *at* this directory, and Python then
+# looks for `utils/utils` -- so `import utils` only resolves when the repo root happens to be the
+# cwd. Naming the package explicitly makes setuptools generate a path hook instead.
 [tool.setuptools.package-dir]
-"" = "."
+"utils" = "."
 
 [project]
 name = "utils"

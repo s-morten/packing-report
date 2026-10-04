@@ -1,8 +1,68 @@
 from datetime import datetime
 
 import pandas as pd
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.orm import Session
 
+from database_io.models.game import Game
 from database_io.models.legacy import Games
+
+
+class DB_game:
+    """Repository for the current ``BASIS.GAME`` table (the legacy ``Games`` table is separate)."""
+
+    @staticmethod
+    def _upsert_statement(session: Session):
+        bind = session.get_bind()
+        if bind.dialect.name == "postgresql":
+            return pg_insert(Game)
+        if bind.dialect.name == "sqlite":
+            return sqlite_insert(Game)
+        raise ValueError(f"Unsupported dialect '{bind.dialect.name}' for game upsert")
+
+    def upsert_game(
+        self,
+        session: Session,
+        game_id: int,
+        date,
+        home_team_id: int,
+        away_team_id: int,
+        league: str,
+        season: str,
+        game_minutes: float,
+    ) -> None:
+        stmt = self._upsert_statement(session)
+        session.execute(
+            stmt.values(
+                id=int(game_id),
+                date=date,
+                home_team=int(home_team_id),
+                away_team=int(away_team_id),
+                league=str(league),
+                season=str(season),
+                game_minutes=float(game_minutes),
+            ).on_conflict_do_update(
+                index_elements=[Game.id],
+                set_={
+                    "date": date,
+                    "home_team": int(home_team_id),
+                    "away_team": int(away_team_id),
+                    "league": str(league),
+                    "season": str(season),
+                    "game_minutes": float(game_minutes),
+                },
+            )
+        )
+        session.commit()
+
+    def get_games(self, session: Session, game_ids: list[int] | None = None) -> pd.DataFrame:
+        stmt = select(Game)
+        if game_ids is not None:
+            stmt = stmt.where(Game.id.in_([int(g) for g in game_ids]))
+        stmt = stmt.order_by(Game.date, Game.id)
+        return pd.read_sql(stmt, session.get_bind())
 
 
 class DB_games:
