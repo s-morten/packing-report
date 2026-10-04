@@ -31,6 +31,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from game.game_segments import Segment, build_segments
+from metrics.low_level.xg import XgRegressor
 from socceraction.spadl import config as spadl_config
 from socceraction.xthreat import ExpectedThreat, _get_cell_indexes
 
@@ -74,16 +75,19 @@ def rate_shots(
     -- one value per input row, positionally aligned -- so both pricing passes compose without
     any index juggling.
 
-    PLACEHOLDER IMPLEMENTATION. The project will eventually rate shots with a **custom xG model**
-    (trained by ``models/train/train_xg.py``, following ``models/train/train_xt.py``, and stored
-    as ``models/model/xg_*.pkl``). Until that model exists this function falls back to the xT
-    model's own cell-based scoring-probability surface, which knows nothing about the shot's
-    distance, angle, body part, assist type or defensive context.
+    Shots are rated by the **custom xG model** -- ``metrics.low_level.xg.XgRegressor``, trained by
+    ``models/train/train_xg.py`` and stored as ``models/model/xg_*.pkl``. If no such model is
+    present, this function falls back to the xT model's own cell-based scoring-probability surface,
+    which knows nothing about the shot's distance, angle, body part, assist type or defensive
+    context.
 
-    Passing the **whole** action frame, rather than a pre-filtered shot subset, is deliberate: a
-    real xG model needs the preceding actions and the full spatial context, so nothing about the
-    call site has to change when it arrives. Only the ``predict`` contract matters --
-    ``xg_model.predict(actions) -> np.ndarray`` of per-shot goal probabilities.
+    The **whole** action frame is forwarded to ``xg_model.predict``, not a pre-filtered shot
+    subset, because the xG features reach backwards: the assist type, the possession length and the
+    bodies inside the 12 m radius around the shooter are all read off the action that preceded the
+    shot and off the other players' positions at that instant. The model masks the shots out of the
+    frame itself, so the only contract this function relies on is
+    ``xg_model.predict(actions) -> np.ndarray`` with **one value per shot in ``actions``, in shot
+    order** -- not one value per input row.
 
     The value assigned to a shot is ``p_goal - xT[start_cell]``. The subtraction is what makes the
     per-possession sum telescope to ``goals + delta(possession xT)``: ``p_goal`` credits the
@@ -106,9 +110,9 @@ def rate_shots(
     shot_actions = actions[shot_mask]
 
     if xg_model is not None:
-        p_goal = np.asarray(xg_model.predict(shot_actions), dtype=float)
-        if len(p_goal) != len(shot_actions):
-            raise ValueError(f"xg_model.predict returned {len(p_goal)} values for {len(shot_actions)} shots")
+        p_goal = np.asarray(xg_model.predict(actions), dtype=float)
+        if len(p_goal) != int(shot_mask.sum()):
+            raise ValueError(f"xg_model.predict returned {len(p_goal)} values for {int(shot_mask.sum())} shots")
     else:
         # Placeholder: cell-based scoring probability of the xT surface (xthreat.scoring_prob).
         # Returns a per-cell matrix, so index it by the shot's own cell.
@@ -149,8 +153,7 @@ class Xt:
         # Resolved eagerly so the call site never changes when a real custom xG model lands.
         xg_model_path = Path(xg_model_path) if xg_model_path else _find_latest_model(_MODEL_DIR, "xg_*.pkl")
         if xg_model_path and xg_model_path.exists():
-            with open(xg_model_path, "rb") as f:
-                self.xg_model = pickle.load(f)
+            self.xg_model = XgRegressor(xg_model_path)
             logger.info("Loaded custom xG model from %s", xg_model_path)
         else:
             self.xg_model = None

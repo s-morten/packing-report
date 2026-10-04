@@ -13,6 +13,7 @@ Player-level football (soccer) analytics pipeline. Rates players on metrics that
 | **GDE** (Goal Difference Elo) | An Elo-based system that rates players on margin of victory. An advancement of the plus-minus score from basketball. |
 | **xT-impact** | Proportional Expected Threat impact of a player during a game. |
 | **VAEP** | Valuing Actions by Estimating Probabilities — rates every on-ball action by its impact on scoring/conceding probability. |
+| **xG** | Custom per-shot goal probability from an XGBoost model — replaces the xT surface's flat per-cell price with a learned one, so a one-touch shot from the six-yard box is not worth the same as a scuffed effort from thirty yards. |
 | **xTPM** (xT plus-minus) | Regression-based team-differential rating. Each match is split into segments of constant line-up; a team-level dependent variable is regressed on signed player indicators and every player gets a rating. |
 
 ### xT plus-minus
@@ -62,10 +63,51 @@ Note that `ridge` is a penalty on the accumulated statistics, so its useful magn
 how much weight has accumulated. A penalty that is mild over tens of games will shrink a multi-season
 run very hard; calibrate it against `state._n` rather than fixing it a priori.
 
+### Custom xG for shots
+
+The stock xT surface gives every shot the same price — the goal probability of the cell it came from
+— so distance and angle are the only things that matter. A learned per-shot model does better, and
+`insights/metrics/low_level/xg.py` supplies one that `Xt.rate_shots` picks up automatically whenever
+an `xg_*.pkl` artifact exists. Shots are still valued as goal probability minus the xT already earned
+by arriving in that cell, so the move into the cell is never paid twice.
+
+```bash
+uv run models/train/train_xg.py
+```
+
+Evaluation is grouped by match, so no shot is scored by a model that saw a different game. The
+trainer fits two feature sets over a small hyper-parameter grid and reports the nested ablation, so
+the claim that the lookback features earn their place is measured rather than assumed.
+
+Out-of-fold on the 2021/22 Bundesliga (7,847 non-penalty shots):
+
+| Model | Log loss | AUC |
+|---|---|---|
+| xT surface | 0.3136 | 0.7338 |
+| Geometry only (9 features) | 0.3057 | 0.7393 |
+| **Full (42 features)** | **0.2686** | **0.8255** |
+
+The geometry-only model barely beats the surface, because the surface already encodes distance and
+angle. The gain comes from the lookback block — most of it from one column: `time_since_assist`. In
+SPADL a shot's start position *is* the previous action's end position, so the gap between the two rows
+tells you whether the ball was still in flight. Shots struck within a second of the assist converted
+**0.7%** of the time; at three seconds, **17.8%**. That is the closest proxy available for a volley,
+because this feed carries no ball height at all.
+
+Two deliberate omissions are worth knowing about: `goalMouthY`/`goalMouthZ` are present on every raw
+shot and are the strongest predictors available (26% conversion aimed low vs 0% over the bar), but
+SPADL drops them, so restoring them is a conversion-layer task rather than a modelling one. Penalties
+are excluded from training and use a smoothed seasonal rate instead, so they never reach the tree.
+
+See `insights/README.md` for the feature breakdown and the leakage checks behind the time-gap
+feature.
+
 ### Backlog
 
 - Time to ball recovery
 - Average distance to opposition / separation (requires tracking data)
+- Ball height or an explicit volley flag at the moment of the shot — the current feed has neither, so
+  `time_since_assist` is the stand-in
 
 ## Architecture
 
@@ -76,7 +118,7 @@ packing-report/
 ├── insights/              # Metric computation pipeline (minutes, goals, VAEP, xT, xT plus-minus)
 ├── eval/                  # Model evaluation and plotting scripts
 ├── pipeline/              # ETL orchestration (fetch schedule, formations, event data, score segments)
-├── models/                # Trained ML models (xT grid, VAEP XGBoost) and training scripts
+├── models/                # Trained ML models (xT grid, custom xG, VAEP XGBoost) and training scripts
 ├── utils/                 # Shared utilities (date helpers, filesystem I/O, football data parsing)
 ├── configs/               # Configuration files and name-mapping dictionaries
 ├── tests/                 # Test suite
@@ -123,6 +165,15 @@ uv run insights/gi.py --force --limit 30
 ```bash
 uv run pipeline/update_metrics.py --rebuild
 ```
+
+### Retrain the custom shot model
+
+```bash
+uv run models/train/train_xg.py
+```
+
+> Scores shots with a learned probability instead of the xT surface, so already-processed games need
+> `uv run insights/gi.py --force` to be re-derived.
 
 ### Run evaluation scripts
 

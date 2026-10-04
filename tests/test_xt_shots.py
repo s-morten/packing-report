@@ -112,7 +112,8 @@ class TestRateShots:
 
         class StubXg:
             def predict(self, actions):
-                assert len(actions) == 2, "predict must receive the shot rows only"
+                # The whole frame, not the shot rows: the xG features read backwards from the shot.
+                assert len(actions) == 3, "predict must receive the whole action frame"
                 return np.array([0.42, 0.07])
 
         ratings = rate_shots(frame, model, StubXg())
